@@ -1,0 +1,1 @@
+{ "insecure-registries":["my-registry:5000","my-local-registry:5000"] }

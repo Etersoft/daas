@@ -1,0 +1,5 @@
+%_topdir	%homedir/RPM
+#%_tmppath	%homedir/tmp
+
+# %packager	Joe Hacker <joe@email.address>
+# %_gpg_name	joe@email.address

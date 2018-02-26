@@ -1,0 +1,2 @@
+vadmin ALL=(ALL) NOPASSWD: /usr/bin/pip, /bin/su, /usr/bin/docker
+
