@@ -1,0 +1,75 @@
+#services:
+#  - registry
+
+#variables:
+#  DOCKER_DRIVER: overlay
+
+stages:
+  - spawn
+  - build
+  - test
+  - release
+  - deploy
+  - cleanup
+
+spawn_containers:
+  stage: spawn
+  script:
+    - echo "Start docker-containers for compile sources"
+  tags:
+    - docker-builder-p8
+  only:
+    - local-gitlab-docker-build
+
+compile:
+  stage: build
+  image: my-local-registry:5000/theatre-builder-p8
+  script:
+    - echo "Compile sources"
+  tags:
+    - docker-builder-p8
+  only:
+    - local-gitlab-docker-build
+
+testing:
+  stage: test
+  script:
+    - echo "Testing"
+  tags:
+    - docker-builder-p8
+  only:
+    - local-gitlab-docker-build
+
+release-image:
+  stage: release
+  script:
+    - echo "Build docker-image with sources"
+
+deploy-to-review:
+  stage: deploy
+  script:
+    - echo "Deploy docker-image with sources to rewiew"
+  tags:
+    - docker-builder-p8
+  only:
+    - local-gitlab-docker-build
+
+deploy-to-prod:
+  stage: deploy
+  script:
+    - echo "Deploy docker-image with sources to production"
+  when: manual
+  tags:
+    - docker-builder-p8
+  only:
+    - local-gitlab-docker-build
+
+cleanup:
+  stage: cleanup
+  when: always
+  script:
+    - echo "Stop & remove containers"
+  tags:
+    - docker-builder-p8
+  only:
+    - local-gitlab-docker-build
