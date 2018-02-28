@@ -1,44 +1,59 @@
-#services:
-#  - registry
-
-#variables:
-#  DOCKER_DRIVER: overlay
-
+variables:
+  BASE_IMAGE_NAME: "theatre-builder-p8"
+  LOC_REGISTRY: "my-local-registry:5000"
+  TEST_IMAGE_NAME: "${LOC_REGISTRY}/${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}"
+  HOME_BUILDER: "/home/builder"
+  # CI_DEBUG_TRACE: "true"
+  ARTIFACTS_PATH: "artifacts"
+  
 stages:
-  - spawn
+  - init
   - build
   - test
   - release
   - deploy
   - cleanup
 
-spawn_containers:
-  stage: spawn
+prepare_containers:
+  stage: init
   script:
     - echo "Start docker-containers for compile sources"
+    - cat docker/builder.Dockerfile.tpl | sed "s|#BASE_IMAGE#|${BASE_IMAGE_NAME}|g;" > Dockerfile
+    - sudo docker build --force-rm -t ${TEST_IMAGE_NAME} -f Dockerfile .
+    - sudo docker push ${TEST_IMAGE_NAME}
   tags:
-    - docker-builder-p8
+    - builder-p8
   only:
-    - local-gitlab-docker-build
+    - develop
 
-compile:
+build package:
   stage: build
-  image: my-local-registry:5000/theatre-builder-p8
+  image: ${TEST_IMAGE_NAME}
   script:
-    - echo "Compile sources"
+    - rpmbb
+    - mkdir -p ${ARTIFACTS_PATH}
+    - cp $HOME/RPM/RPMS/x86_64/*.rpm ${ARTIFACTS_PATH}/
+    - cp $HOME/RPM/log/*.log ${ARTIFACTS_PATH}/
+    - ls -a ${ARTIFACTS_PATH}/
   tags:
     - docker-builder-p8
   only:
-    - local-gitlab-docker-build
-
+    - develop
+  artifacts:
+    paths:
+      - ${ARTIFACTS_PATH}/*
+    when: on_success
+    expire_in: 1h
+    
 testing:
   stage: test
   script:
     - echo "Testing"
+    - ls ${ARTIFACTS_PATH}/
   tags:
     - docker-builder-p8
   only:
-    - local-gitlab-docker-build
+    - develop
 
 release-image:
   stage: release
@@ -52,7 +67,7 @@ deploy-to-review:
   tags:
     - docker-builder-p8
   only:
-    - local-gitlab-docker-build
+    - develop
 
 deploy-to-prod:
   stage: deploy
@@ -62,14 +77,18 @@ deploy-to-prod:
   tags:
     - docker-builder-p8
   only:
-    - local-gitlab-docker-build
+    - develop
 
 cleanup:
   stage: cleanup
   when: always
   script:
     - echo "Stop & remove containers"
+    # ls для отладки
+    - sudo docker image ls
+    # - sudo docker stop ${TEST_IMAGE_NAME}
+    - sudo docker image rm ${TEST_IMAGE_NAME}
   tags:
-    - docker-builder-p8
+    - builder-p8
   only:
-    - local-gitlab-docker-build
+    - develop
