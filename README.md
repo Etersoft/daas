@@ -26,12 +26,24 @@ DaaS - "devops as a service" - это такой преднастроенный 
 
 Концепция:
 ----------
-Для того, чтобы обеспечить наличие независимой сети для каждого тестового стенда (узлы сети могут иметь одинаковые ip), 
+Для того, чтобы обеспечить наличие независимой сети для каждого тестового стенда (разные проекты могут иметь одинаковые ip), 
 стенды запускаются внутри ВМ (virtualbox) с виртуальной сетью. При этом чтобы обеспечить лёгкость запуска и сопровождения
 самих узлов используется docker. Поэтому основная идея: docker запускается внутри ВМ, при этом тестовый стенд
 работает с виртуальной сетью внутри ВМ (сеть наружу не выходит). 
 Имеется базовый преднастроенный образ ВМ тестового стенда. Для создания нового стенда под конкретный проект используется
 ansible и vagrant, которые на основе базового образа ВМ преднастраивают сервисы и всё необходимое для конкретного проекта. 
+
+debops-api-server
+------------------
+Это сервис с REST API, позволяющий единообразно общаться между разными сервисами.
+Например запустить задачу в jenkins, поменять статус задачи или создать новую в youtrack, gitlab, bugzilla
+и т.п. Его цель предоставить единый интерфейс к "разношёрстным" сервисам.
+Т.к. многие продукты и так умеют работать между собой (gilab + jenkins, jenkins + youtrack),
+то возможно этот слой "абстракции является лишним", с другой если есть единый неизменный интерфейс
+и все работают только через него, то изменения в API сторонних программ (gitlab, jenkins, youtrack и т.п.)
+не будут затрагивать работу, т.к. будет корректироваться только реализация общения с конкретным
+изменившимся API. Минусом зато является поддержка всего этого.
+
 
 Алгоритм запуска нового стенда
 -------------------------------
@@ -122,6 +134,7 @@ check_interval = 0
      shm_size = 0
      volumes = ["/var/run/docker.sock:/var/run/docker.sock", "/cache"]
      extra_hosts = ["pvbook:192.168.1.3"]
+     allowed_images = ["local-docker-registry:5000/*:*"]
   [runners.cache]
 
 [[runners]]
@@ -138,29 +151,36 @@ check_interval = 0
 
 6. НАСТРОЙКА СВОЕГО DOCKER-REGISTRY (https://docs.docker.com/registry/)
 ------------------------------------------------------------------------
-docker pull docker/dtr:2.4.2
+    docker pull docker/dtr:2.4.2
 
-docker run -d -p 5000:5000 -e REGISTRY_HTTP_ADDR=0.0.0.0:5000 --restart=always --name registry -v /srv/registry:/var/lib/registry registry:2
+    docker run -d -p 5000:5000 -e REGISTRY_HTTP_ADDR=0.0.0.0:5000 --restart=always --name registry -v /srv/registry:/var/lib/registry registry:2
 
 Для доступа без сертификатов,
 надо в /etc/docker/ создать файл daemon.json с таким содержимым
-{ "insecure-registries":["local-docker-registry:5000"] }
+    { "insecure-registries":["local-docker-registry:5000"] }
 
 
 НО ПРАВИЛЬНЕЕ НАСТРАИВАТЬ С СЕРТИФИКАТАМИ:
 DOCS: https://docs.docker.com/registry/deploying/#get-a-certificate
 
-mkdir -p certs
+    mkdir -p certs
+
 Copy the .crt and .key files from the CA into the certs directory. 
 The following steps assume that the files are named domain.crt and domain.key.
 
-$ docker run -d \
-  --restart=always \
-  --name registry \
-  -v `pwd`/certs:/certs \
-  -e REGISTRY_HTTP_ADDR=0.0.0.0:443 \
-  -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt \
-  -e REGISTRY_HTTP_TLS_KEY=/certs/domain.key \
-  -p 443:443 \
-  registry:2
+     $ docker run -d \
+	--restart=always \
+	--name registry \
+	-v `pwd`/certs:/certs \
+	-e REGISTRY_HTTP_ADDR=0.0.0.0:443 \
+	-e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt \
+	-e REGISTRY_HTTP_TLS_KEY=/certs/domain.key \
+	-p 443:443 \
+	registry:2
  
+
+7. Проброс устройств внутрь docker
+
+    docker run --privileged --cap-add=ALL -v /dev:/dev  -v  /lib/modules:/lib/modules ...
+
+Много интересных настроек: https://gitlab.com/gitlab-org/gitlab-runner/blob/master/docs/configuration/advanced-configuration.md
