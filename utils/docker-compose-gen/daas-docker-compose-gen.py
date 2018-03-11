@@ -106,14 +106,23 @@ def make_nodes(project, ctype, image):
         c['nodename'] = k
         c['Dockerfile.tpl'] = 'Dockerfile.%s.tpl' % image
         c['image'] = image
+        c['image-name'] = get_image_name(project, image)
         nlist.append(c)
 
     nlist.sort()
     return nlist
 
 
+def get_image_name(project, image):
+    return "%s-%s" % (project['name'], image)
+
+
 def usage():
-    print "[-c|--confile] project.yml  - Config file for project"
+    print "%s [-c|--confile] project.yml [command]" % sys.argv[0]
+    print "Commands:"
+    print "---------"
+    print "gen            - Generate files for docker-compose"
+    print "image-list     - Print list of images (bash format)"
 
 
 if __name__ == "__main__":
@@ -141,6 +150,18 @@ if __name__ == "__main__":
 
     # print conf
     project = conf['project']
+
+    if check_arg_param(['image-list']):
+        s = ''
+        for k, v in project['image'].items():
+            s = '%s %s' % (s, get_image_name(project, project['image'][k]))
+
+        print s.strip()
+        exit(0)
+
+    if not check_arg_param(['gen']):
+        print "Unknown command. Use -h for help"
+        exit(1)
 
     outdir = project['name']
 

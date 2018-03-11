@@ -2,9 +2,11 @@
 
 usage()
 {
-	echo "$0 compose-gen ..params.."
+	echo "$0 compose [-h | commands ]"
 }
 
 [ -z "$1" ] && usage && exit 1
 
-[ "$1" == "gen-compose-config" ] && shift && daas-docker-compose-gen.py "$@"
+[ "$1" == "compose" ] && shift && daas-docker-compose-gen.py "$@"
+
+# [ "$1" == "ansible" ] && shift && daas-docker-ansiblbe.py "$@"

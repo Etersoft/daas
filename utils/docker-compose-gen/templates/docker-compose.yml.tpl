@@ -6,7 +6,7 @@ services:
         build: 
            context: ./{{ node['nodename'] }}
            dockerfile: Dockerfile
-        image: {{ project['name'] }}-{{ node['image'] }}
+        image: {{ node['image-name'] }}
         hostname: {{ node['nodename'] }}
         networks: 
             {% for net in project['sorted_networks'] %}
