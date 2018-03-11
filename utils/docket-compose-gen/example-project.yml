@@ -1,0 +1,24 @@
+project:
+  name: "myproject"
+  rpmdir: "myproject"
+  pkgname: "myproject"
+  subnet1: "192.168.81"
+  subnet2: "192.168.82"
+  
+  image:
+    controller: p8-controller
+    gui: p8-gui
+    builder: p8-builder
+
+  builder:
+    ip1: 100
+    ip2: 100
+
+  controllers:
+    tnode1: { ip1: 3, ip2: 3 }
+    tnode2: { ip1: 4, ip2: 4 }
+
+  gui:
+    gui1: { ip1: 1, ip2: 1, vnc_host: gui1, vnc_port: 5901, novnc_port: 6081 }
+    gui2: { ip1: 2, ip2: 2, vnc_host: gui2, vnc_port: 5902, novnc_port: 6082 }
+
