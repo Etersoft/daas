@@ -1,2 +1,2 @@
-vadmin ALL=(ALL) NOPASSWD: /usr/bin/pip, /bin/su, /usr/bin/docker
+vadmin ALL=(ALL) NOPASSWD: /usr/bin/pip, /bin/su, /usr/bin/docker, /usr/bin/docker-compose
 

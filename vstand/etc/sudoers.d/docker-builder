@@ -1,0 +1,1 @@
+docker-builder ALL=(ALL) NOPASSWD: /usr/bin/docker, /usr/bin/docker-compose
