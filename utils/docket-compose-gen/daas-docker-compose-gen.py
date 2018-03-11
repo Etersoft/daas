@@ -112,14 +112,23 @@ def make_nodes(project, ctype, image):
     return nlist
 
 
+def usage():
+    print "[-c|--confile] project.yml  - Config file for project"
+
+
 if __name__ == "__main__":
+
+    if check_arg_param(['--help', '-h']):
+        usage()
+        exit(0)
+
     env = Environment(
         loader=FileSystemLoader('./templates')
     )
 
     confile = get_arg_param(['--confile', '-c'], '')
     if len(confile) == 0:
-        print "ERROR: Unknown confile. Use --confile filename"
+        print "ERROR: Unknown confile. Use [-h|--confile] filename"
         exit(1)
 
     conf = None

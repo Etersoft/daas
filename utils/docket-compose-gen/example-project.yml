@@ -6,6 +6,9 @@ project:
       # это не ip! 
       net1: "192.168.81"
       net2: "192.168.82"
+      
+      #net3: "192.168.83"
+      #...
   
   image:
     controller: p8-controller

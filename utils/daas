@@ -1,0 +1,10 @@
+#!/bin/sh
+
+usage()
+{
+	echo "$0 compose-gen ..params.."
+}
+
+[ -z "$1" ] && usage && exit 1
+
+[ "$1" == "gen-compose-config" ] && shift && daas-docker-compose-gen.py "$@"
