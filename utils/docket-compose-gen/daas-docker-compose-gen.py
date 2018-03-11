@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from datetime import date
 from jinja2 import Environment, FileSystemLoader
 import yaml
 
@@ -41,12 +40,8 @@ def get_arg_param(param, defval=""):
     return defval
 
 
-def make_ip1(project, ip):
-    return "%s.%s" % (project['subnet1'], ip)
-
-
-def make_ip2(project, ip):
-    return "%s.%s" % (project['subnet2'], ip)
+def make_ip(subnet, ip):
+    return "%s.%s" % (subnet, ip)
 
 
 def make_host_item(nodename, ip):
@@ -56,20 +51,48 @@ def make_host_item(nodename, ip):
     return h
 
 
+def sorted_networks(project):
+    networks = list()
+    klist = sorted(project['networks'].keys())
+    for n in klist:
+        net = dict()
+        net['name'] = n
+        net['subnet'] = project['networks'][n]
+        networks.append(net)
+
+    return networks
+
+
 def make_hosts(project):
     hosts_list = list()
     for k, v in project['controllers'].items():
-        hosts_list.append(make_host_item("%s r1_%s" % (k, k), make_ip1(project, v['ip1'])))
-        hosts_list.append(make_host_item("r2_%s" % k, make_ip2(project, v['ip2'])))
+        num = 1
+        for net in project['sorted_networks']:
+            if num == 1:
+                hosts_list.append(make_host_item("%s r1_%s" % (k, k), make_ip(net['subnet'], v['ip'])))
+            else:
+                hosts_list.append(make_host_item("r%d_%s" % (num, k), make_ip(net['subnet'], v['ip'])))
+            num = num + 1
 
     for k, v in project['gui'].items():
-        hosts_list.append(make_host_item("%s r1_%s" % (k, k), make_ip1(project, v['ip1'])))
-        hosts_list.append(make_host_item("r2_%s" % k, make_ip2(project, v['ip2'])))
+        num = 1
+        for net in project['sorted_networks']:
+            if num == 1:
+                hosts_list.append(make_host_item("%s r1_%s" % (k, k), make_ip(net['subnet'], v['ip'])))
+            else:
+                hosts_list.append(make_host_item("r%d_%s" % (num, k), make_ip(net['subnet'], v['ip'])))
+            num = num + 1
 
     # builder
-    hosts_list.append(make_host_item("builder r1_builder", make_ip1(project, project['builder']['ip1'])))
-    hosts_list.append(make_host_item("r2_builder", make_ip2(project, project['builder']['ip2'])))
+    num = 1
+    for net in project['sorted_networks']:
+        if num == 1:
+            hosts_list.append(make_host_item("builder r1_builder", make_ip(net['subnet'], project['builder']['ip'])))
+        else:
+            hosts_list.append(make_host_item("r%d_builder" % num, make_ip(net['subnet'], project['builder']['ip'])))
+        num = num + 1
 
+    hosts_list.sort()
     return hosts_list
 
 
@@ -77,18 +100,16 @@ def make_nodes(project, ctype, image):
     nlist = list()
     for k, v in project[ctype].items():
         c = dict()
-        c['ip1'] = make_ip1(project, v['ip1'])
-        c['ip2'] = make_ip2(project, v['ip2'])
+        for net in project['sorted_networks']:
+            c[net['name']] = make_ip(net['subnet'], v['ip'])
+
         c['nodename'] = k
         c['Dockerfile.tpl'] = 'Dockerfile.%s.tpl' % image
         c['image'] = image
         nlist.append(c)
 
+    nlist.sort()
     return nlist
-
-
-def make_node_item(name, params, image, project, tpl):
-    return tpl.render()
 
 
 if __name__ == "__main__":
@@ -116,6 +137,8 @@ if __name__ == "__main__":
 
     if not os.path.exists(outdir):
         os.mkdir(outdir)
+
+    project['sorted_networks'] = sorted_networks(project)
 
     project['extra_hosts'] = make_hosts(project)
     project['nodes'] = make_nodes(project, 'controllers', project['image']['controller']) \

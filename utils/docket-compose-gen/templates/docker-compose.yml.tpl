@@ -9,11 +9,10 @@ services:
         image: {{ project['name'] }}-{{ node['image'] }}
         hostname: {{ node['nodename'] }}
         networks: 
-            net1:
-                ipv4_address: {{ node['ip1'] }}
-            net2:
-                ipv4_address: {{ node['ip2'] }}
-            
+            {% for net in project['sorted_networks'] %}
+            {{net['name']}}:
+                ipv4_address: {{ node[net['name']] }}{% endfor %}
+                
         command: /usr/bin/start-project.sh
         tty: true
         extra_hosts:
@@ -22,22 +21,14 @@ services:
     {% endfor %}       
 
 networks:
-    net1:
+   {% for net in project['sorted_networks'] %}
+    {{net['name']}}:
         driver: bridge
         driver_opts:
             com.docker.network.enable_ipv6: "false"
         ipam:
             driver: default
             config:
-                - subnet: {{ project['subnet1'] }}.0/24
-                  gateway: {{ project['subnet1'] }}.{{ project['builder']['ip1']}}
-    net2:
-        driver: bridge
-        driver_opts:
-            com.docker.network.enable_ipv6: "false"
-        ipam:
-            driver: default
-            config:
-                - subnet: {{ project['subnet2'] }}.0/24
-                  gateway: {{ project['subnet2'] }}.{{ project['builder']['ip2']}}
-
+                - subnet: {{ net['subnet'] }}.0/24
+                  gateway: {{ net['subnet'] }}.{{ project['builder']['ip'] }}
+   {% endfor %}       
