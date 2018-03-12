@@ -123,6 +123,8 @@ wget -O /usr/bin/gitlab-runner https://gitlab-runner-downloads.s3.amazonaws.com/
 пришлось добавить в config.toml
 environment = ["TERM=ansi"]
 
+sudo usermod -aG docker gitlab-runner
+
 В одном config два runner (docker и shell). Запускаются под vadmin
 -------------------------------------------------------------------
 concurrent = 2

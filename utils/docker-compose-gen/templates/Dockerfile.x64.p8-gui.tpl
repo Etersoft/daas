@@ -9,6 +9,6 @@ RUN apt-get update \
 	&& rm -rf /etc/apt/sources.list.d/* \
 	&& apt-get update
 #COPY local.list /etc/apt/sources.list.d/
-RUN apt-get update
+#RUN apt-get update
 COPY start-project.sh /usr/bin/
 CMD ["/usr/bin/start-project.sh"]
