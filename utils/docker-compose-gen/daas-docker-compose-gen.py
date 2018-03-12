@@ -65,50 +65,56 @@ def sorted_networks(project):
     return networks
 
 
-def make_hosts(project):
-    hosts_list = list()
-    for k, v in project['controllers'].items():
-        num = 1
-        for net in project['sorted_networks']:
-            if num == 1:
-                hosts_list.append(make_host_item("%s r1_%s" % (k, k), make_ip(net['subnet'], v['ip'])))
-            else:
-                hosts_list.append(make_host_item("r%d_%s" % (num, k), make_ip(net['subnet'], v['ip'])))
-            num = num + 1
-
-    for k, v in project['gui'].items():
-        num = 1
-        for net in project['sorted_networks']:
-            if num == 1:
-                hosts_list.append(make_host_item("%s r1_%s" % (k, k), make_ip(net['subnet'], v['ip'])))
-            else:
-                hosts_list.append(make_host_item("r%d_%s" % (num, k), make_ip(net['subnet'], v['ip'])))
-            num = num + 1
-
-    # builder
+def add_host(project, name, ip):
+    hosts = list()
     num = 1
     for net in project['sorted_networks']:
         if num == 1:
-            hosts_list.append(make_host_item("builder r1_builder", make_ip(net['subnet'], project['builder']['ip'])))
+            hosts.append(make_host_item("%s r1_%s" % (name, name), make_ip(net['subnet'], ip)))
         else:
-            hosts_list.append(make_host_item("r%d_builder" % num, make_ip(net['subnet'], project['builder']['ip'])))
+            hosts.append(make_host_item("r%d_%s" % (num, name), make_ip(net['subnet'], ip)))
         num = num + 1
+
+    return hosts
+
+
+def make_hosts(project):
+    hosts_list = list()
+
+    # controllers
+    for k, v in project['controllers'].items():
+        hosts_list = hosts_list + add_host(project, k, v['ip'])
+
+    # gui
+    for k, v in project['gui'].items():
+        hosts_list = hosts_list + add_host(project, k, v['ip'])
+
+    # builder
+    hosts_list = hosts_list + add_host(project, 'builder', project['builder']['ip'])
+
+    # tester
+    hosts_list = hosts_list + add_host(project, 'tester', project['tester']['ip'])
 
     hosts_list.sort()
     return hosts_list
 
 
+def add_node(project, name, ip, image):
+    c = dict()
+    for net in project['sorted_networks']:
+        c[net['name']] = make_ip(net['subnet'], ip)
+
+    c['nodename'] = name
+    c['Dockerfile.tpl'] = 'Dockerfile.%s.tpl' % image
+    c['image'] = image
+    c['image-name'] = get_image_name(project, image)
+    return c
+
+
 def make_nodes(project, ctype, image):
     nlist = list()
     for k, v in project[ctype].items():
-        c = dict()
-        for net in project['sorted_networks']:
-            c[net['name']] = make_ip(net['subnet'], v['ip'])
-
-        c['nodename'] = k
-        c['Dockerfile.tpl'] = 'Dockerfile.%s.tpl' % image
-        c['image'] = image
-        c['image-name'] = get_image_name(project, image)
+        c = add_node(project, k, v['ip'], image)
         nlist.append(c)
 
     nlist.sort()
@@ -148,9 +154,10 @@ def usage():
     print "%s [-c|--confile] project.yml [options] command" % sys.argv[0]
     print "Commands:"
     print "---------"
-    print "gen             - Generate files for docker-compose"
-    print "image-list      - Print list of images (bash format)"
-    print "image-name node - Print image name for node"
+    print "gen              - Generate files for docker-compose"
+    print "image-list       - Print list of images (bash format)"
+    print "image-name node  - Print image name for node"
+    print "docker-add-host  - Print extra hosts in docker --add-host format"
     print
     print "Options:"
     print "---------"
@@ -192,7 +199,23 @@ if __name__ == "__main__":
     project['sorted_networks'] = sorted_networks(project)
     project['extra_hosts'] = make_hosts(project)
     project['nodes'] = make_nodes(project, 'controllers', project['image']['controller']) \
-                       + make_nodes(project, 'gui', project['image']['gui'])
+                       + make_nodes(project, 'gui', project['image']['gui']) \
+                       + [add_node(project, 'tester', project['tester']['ip'], project['image']['tester'])]
+
+    # [command]: docker-add-host
+    if check_arg_param(['docker-add-host']):
+        ret = ''
+        for h in project['extra_hosts']:
+
+            # split if nodename="node1 node2 node3"
+            hh = h['nodename'].split(' ')
+            if len(hh) > 1:
+                for n in hh:
+                    ret = '--add-host %s:%s %s' % (n, h['ip'], ret)
+            else:
+                ret = '--add-host %s:%s %s' % (h['nodename'], h['ip'], ret)
+        print ret.strip()
+        exit(0)
 
     # [command]: image-list
     if check_arg_param(['image-list']):

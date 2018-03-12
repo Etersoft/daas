@@ -14,10 +14,14 @@ project:
     controller: p8-controller
     gui: p8-gui
     builder: p8-builder
+    tester: p8-tester
 
   builder:
     ip: 100
 
+  tester:
+    ip: 101
+    
   controllers:
     tnode1: { ip: 3 }
     tnode2: { ip: 4 }
