@@ -8,6 +8,8 @@ import sys
 import os
 import shutil
 
+sources_dirs = ['./', '/usr/share/daas']
+
 
 def check_arg_param(param):
     plist = list()
@@ -133,6 +135,15 @@ def make_dockerfile(dirname, tplname, project):
         wfile.write('\n')  # fix bug: jinja cuts off the last line feed
 
 
+def get_source_dir(name):
+    for d in sources_dirs:
+        fpath = os.path.join(d, name)
+        if os.path.exists(fpath):
+            return fpath
+
+    return name
+
+
 def usage():
     print "%s [-c|--confile] project.yml [options] command" % sys.argv[0]
     print "Commands:"
@@ -153,8 +164,12 @@ if __name__ == "__main__":
         usage()
         exit(0)
 
+    tpldirs = list()
+    for d in sources_dirs:
+        tpldirs.append(os.path.join(d, 'templates'))
+
     env = Environment(
-        loader=FileSystemLoader(['./templates', '/usr/share/daas/templates'])
+        loader=FileSystemLoader(tpldirs)
     )
 
     confile = get_arg_param(['--confile', '-c'], '')
@@ -194,6 +209,9 @@ if __name__ == "__main__":
         if len(nodename) == 0:
             print "(image-name): Unknown nodename. Use -h for help"
             exit(1)
+        if nodename == 'builder':
+            print get_image_name(project, project['image']['builder'])
+            exit(0)
         for n in project['nodes']:
             if n['nodename'] == nodename:
                 print n['image-name']
@@ -234,7 +252,7 @@ if __name__ == "__main__":
         make_dockerfile(dirname, n['Dockerfile.tpl'], project)
 
         # copy addons
-        addonsdir = 'addons'
+        addonsdir = get_source_dir('addons')
         if os.path.exists(addonsdir):
             for f in os.listdir(addonsdir):
                 src = os.path.join(addonsdir, f)
