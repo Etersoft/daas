@@ -99,22 +99,28 @@ def make_hosts(project):
     return hosts_list
 
 
-def add_node(project, name, ip, image):
+def add_node(project, name, params, image):
     c = dict()
     for net in project['sorted_networks']:
-        c[net['name']] = make_ip(net['subnet'], ip)
+        c[net['name']] = make_ip(net['subnet'], params['ip'])
 
     c['nodename'] = name
     c['Dockerfile.tpl'] = 'Dockerfile.%s.tpl' % image
     c['image'] = image
     c['image-name'] = get_image_name(project, image)
+    vol = 'volumes'
+    if vol in params and len(params[vol]) > 0:
+        c[vol] = list()
+        for v in params[vol]:
+            c[vol].append(v)
+
     return c
 
 
 def make_nodes(project, ctype, image):
     nlist = list()
     for k, v in project[ctype].items():
-        c = add_node(project, k, v['ip'], image)
+        c = add_node(project, k, v, image)
         nlist.append(c)
 
     nlist.sort()
@@ -161,8 +167,8 @@ def usage():
     print
     print "Options:"
     print "---------"
-    print "--image-registry name   - docker registry name to use in container name ([registry-name]/image-name)"
-    print "--image-postfix name    - postfix for use in container name (image-name[postfix])"
+    print "--image-registry name     - docker registry name to use in image name ([registry-name]/image-name)"
+    print "--image-postfix name      - postfix for use in image name (image-name[postfix])"
 
 
 if __name__ == "__main__":
@@ -194,13 +200,20 @@ if __name__ == "__main__":
 
     project = conf['project']
 
+    # для узла tester
+    # обязательно прокидывается /var/run/docker.sock:/var/run/docker.sock
+    if 'volumes' in project['tester']:
+        project['tester']['volumes'].append("/var/run/docker.sock:/var/run/docker.sock")
+    else:
+        project['tester']['volumes'] = {"/var/run/docker.sock:/var/run/docker.sock"}
+
     project['image-registry'] = get_arg_param(['--image-registry'], '')
     project['image-postfix'] = get_arg_param(['--image-postfix'], '')
     project['sorted_networks'] = sorted_networks(project)
     project['extra_hosts'] = make_hosts(project)
     project['nodes'] = make_nodes(project, 'controllers', project['image']['controller']) \
                        + make_nodes(project, 'gui', project['image']['gui']) \
-                       + [add_node(project, 'tester', project['tester']['ip'], project['image']['tester'])]
+                       + [add_node(project, 'tester', project['tester'], project['image']['tester'])]
 
     # [command]: docker-add-host
     if check_arg_param(['docker-add-host']):
