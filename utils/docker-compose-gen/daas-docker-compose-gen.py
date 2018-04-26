@@ -8,7 +8,7 @@ import sys
 import os
 import shutil
 
-sources_dirs = ['./', '/usr/share/daas']
+sources_dirs = ['./', '.daas', '/usr/share/daas']
 
 
 def check_arg_param(param):
@@ -82,12 +82,14 @@ def make_hosts(project):
     hosts_list = list()
 
     # controllers
-    for k, v in project['controllers'].items():
-        hosts_list = hosts_list + add_host(project, k, v['ip'])
+    if 'controllers' in project and project['controllers'] and len(project['controllers']) > 0:
+        for k, v in project['controllers'].items():
+            hosts_list = hosts_list + add_host(project, k, v['ip'])
 
     # gui
-    for k, v in project['gui'].items():
-        hosts_list = hosts_list + add_host(project, k, v['ip'])
+    if 'gui' in project and project['gui'] and len(project['gui']) > 0:
+        for k, v in project['gui'].items():
+            hosts_list = hosts_list + add_host(project, k, v['ip'])
 
     # builder
     hosts_list = hosts_list + add_host(project, 'builder', project['builder']['ip'])
@@ -119,9 +121,11 @@ def add_node(project, name, params, image):
 
 def make_nodes(project, ctype, image):
     nlist = list()
-    for k, v in project[ctype].items():
-        c = add_node(project, k, v, image)
-        nlist.append(c)
+
+    if ctype in project and project[ctype] and len(project[ctype]) > 0:
+        for k, v in project[ctype].items():
+            c = add_node(project, k, v, image)
+            nlist.append(c)
 
     nlist.sort()
     return nlist
@@ -154,6 +158,17 @@ def get_source_dir(name):
             return fpath
 
     return name
+
+
+def copy_addons(fromdir, todirname):
+    # copy from all addons dirs
+    for d in sources_dirs:
+        addonsdir = os.path.join(d, fromdir)
+        if os.path.exists(addonsdir):
+            for f in os.listdir(addonsdir):
+                src = os.path.join(addonsdir, f)
+                dest = os.path.join(todirname, f)
+                shutil.copy(src, dest)
 
 
 def usage():
@@ -288,14 +303,11 @@ if __name__ == "__main__":
         make_dockerfile(dirname, n['Dockerfile.tpl'], project)
 
         # copy addons
-        addonsdir = get_source_dir('addons')
-        if os.path.exists(addonsdir):
-            for f in os.listdir(addonsdir):
-                src = os.path.join(addonsdir, f)
-                dest = os.path.join(dirname, f)
-                shutil.copy(src, dest)
+        copy_addons('addons', dirname)
 
     # make Dockerfile for builder
     dirname = os.path.join(outdir, 'builder')
     tplname = 'Dockerfile.%s.tpl' % project['image']['builder']
     make_dockerfile(dirname, tplname, project)
+    # copy addons
+    copy_addons('addons', dirname)
