@@ -2,7 +2,7 @@
 FROM fotengauer/altlinux-p8
 MAINTAINER Pavel Vainerman <pv@etersoft.ru>
 RUN apt-get update \
-	&& apt-get -y install libuniset2-extension-common libuniset2-utils libomniORB-names \
+	&& apt-get -y install libuniset2-extension-common libuniset2-utils libomniORB-names mc \
 	&& apt-get clean \
 	&& rm -rf /usr/share/doc/* \
 	&& rm -rf /usr/share/man/* \
