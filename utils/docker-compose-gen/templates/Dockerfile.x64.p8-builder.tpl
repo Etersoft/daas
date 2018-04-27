@@ -8,7 +8,17 @@ RUN apt-get update && apt-get -y install etersoft-build-utils git-core libuniset
     && rm -rf /etc/apt/sources.list.d/* \
     && apt-get update
 
+ARG USER=builder
+ARG HOME=/home/$USER
+ARG TMPDIR=/tmp/$USER
+
 RUN useradd builder
 RUN control su public
-USER "builder"
+COPY .rpmmacros $HOME/
+RUN mkdir -p $TMPDIR
+
+RUN chown $USER:$USER $HOME/.rpmmacros $TMPDIR
+ENV USER="$USER" TMPDIR="$TMPDIR" GCC_USE_CCACHE=1 CCACHE_DIR="$HOME/.ccache"
+
+USER "$USER"
 CMD ["/bin/bash"]
