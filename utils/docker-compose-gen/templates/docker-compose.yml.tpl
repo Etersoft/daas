@@ -15,6 +15,10 @@ services:
         volumes:{% for v in node['volumes'] %}
             - {{ v }}{% endfor %}
         {% endif %}
+        {% if 'devices' in node %}
+        devices:{% for v in node['devices'] %}
+            - {{ v }}{% endfor %}
+        {% endif %}
         command: /usr/bin/start-project.sh
         tty: true
         extra_hosts:{% for host in project['extra_hosts'] %}

@@ -116,6 +116,12 @@ def add_node(project, name, params, image):
         for v in params[vol]:
             c[vol].append(v)
 
+    vol = 'devices'
+    if vol in params and len(params[vol]) > 0:
+        c[vol] = list()
+        for v in params[vol]:
+            c[vol].append(v)
+
     return c
 
 
