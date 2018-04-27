@@ -16,10 +16,17 @@ project:
     builder: x64.p8-builder
     tester: x64.p8-tester
 
+  # global volumes
+  volumes:
+       - /var/run/docker.sock:/var/run/docker.sock
+
+  # global devices
+  devices:
+       - /rmp/dev1:/tmp/dev1
+
   builder:
     ip: 100
     volumes:
-       - /var/run/docker.sock:/var/run/docker.sock
        - /cache
        
   tester:

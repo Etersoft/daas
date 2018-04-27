@@ -101,6 +101,15 @@ def make_hosts(project):
     return hosts_list
 
 
+def add_to_list(fromlist, name, to):
+    if name in fromlist and len(fromlist[name]) > 0:
+        if name not in to:
+            to[name] = list()
+
+        for v in fromlist[name]:
+            to[name].append(v)
+
+
 def add_node(project, name, params, image):
     c = dict()
     for net in project['sorted_networks']:
@@ -110,17 +119,16 @@ def add_node(project, name, params, image):
     c['Dockerfile.tpl'] = 'Dockerfile.%s.tpl' % image
     c['image'] = image
     c['image-name'] = get_image_name(project, image)
-    vol = 'volumes'
-    if vol in params and len(params[vol]) > 0:
-        c[vol] = list()
-        for v in params[vol]:
-            c[vol].append(v)
 
-    vol = 'devices'
-    if vol in params and len(params[vol]) > 0:
-        c[vol] = list()
-        for v in params[vol]:
-            c[vol].append(v)
+    # global volumes
+    add_to_list(project, 'volumes', c)
+    # node volumes
+    add_to_list(params, 'volumes', c)
+
+    # global devices
+    add_to_list(project, 'devices', c)
+    # node devices
+    add_to_list(params, 'devices', c)
 
     return c
 
