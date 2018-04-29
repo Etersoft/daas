@@ -124,6 +124,10 @@ def get_apt_param(params, name):
     return params['apt'][name]
 
 
+def make_unique_list(srclist):
+    return list(set(srclist))
+
+
 def create_node(project, typenode, name, node, image):
     c = dict()
     for net in project['sorted_networks']:
@@ -141,19 +145,24 @@ def create_node(project, typenode, name, node, image):
     c['devices'] = list()
 
     # global + parameters for type + local
-    c['apt']['sources'] = get_apt_param(project, 'sources') \
-                          + get_apt_param(typenode, 'sources') \
-                          + get_apt_param(node, 'sources')
+    c['apt']['sources'] = make_unique_list(get_apt_param(project, 'sources') \
+                                           + get_apt_param(typenode, 'sources') \
+                                           + get_apt_param(node, 'sources'))
 
     if len(c['apt']['sources']) > 0:
         c['apt']['sources_list_filename'] = 'sources.list'
 
-    c['apt']['packages'] = get_apt_param(project, 'packages') \
-                           + get_apt_param(typenode, 'packages') \
-                           + get_apt_param(node, 'packages')
+    c['apt']['packages'] = make_unique_list(get_apt_param(project, 'packages') \
+                                            + get_apt_param(typenode, 'packages') \
+                                            + get_apt_param(node, 'packages'))
 
-    c['volumes'] = get_list(project, 'volumes') + get_list(typenode, 'volumes') + get_list(node, 'volumes')
-    c['devices'] = get_list(project, 'devices') + get_list(typenode, 'devices') + get_list(node, 'devices')
+    c['volumes'] = make_unique_list(get_list(project, 'volumes')
+                                    + get_list(typenode, 'volumes')
+                                    + get_list(node, 'volumes'))
+
+    c['devices'] = make_unique_list(get_list(project, 'devices')
+                                    + get_list(typenode, 'devices')
+                                    + get_list(node, 'devices'))
 
     return c
 
@@ -263,10 +272,12 @@ if __name__ == "__main__":
 
     # для узла tester
     # обязательно прокидывается /var/run/docker.sock:/var/run/docker.sock
+    v_sock = '/var/run/docker.sock:/var/run/docker.sock'
     if 'volumes' in project['tester']:
-        project['tester']['volumes'].append("/var/run/docker.sock:/var/run/docker.sock")
+        if v_sock not in project['tester']['volumes']:
+            project['tester']['volumes'].append(v_sock)
     else:
-        project['tester']['volumes'] = {"/var/run/docker.sock:/var/run/docker.sock"}
+        project['tester']['volumes'] = {v_sock}
 
     project['image-registry'] = get_arg_param(['--image-registry'], '')
     project['image-postfix'] = get_arg_param(['--image-postfix'], '')

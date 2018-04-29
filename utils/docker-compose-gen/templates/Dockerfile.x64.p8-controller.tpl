@@ -19,6 +19,6 @@ COPY {{ node['apt']['sources_list_filename'] }} /etc/apt/sources.list.d/
 {%- endif %}
 
 #RUN apt-get update
-RUN service ssh start
+RUN service sshd start
 COPY start-project.sh /usr/bin/
 CMD ["/usr/bin/start-project.sh"]
