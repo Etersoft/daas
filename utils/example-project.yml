@@ -34,6 +34,11 @@ project:
     volumes:
        - /cache
        - source:/source
+    apt:
+      sources:
+        - "rpm file://xxx"
+        - "rpm file://xxx"
+        - "rpm file://xxx"
     
   controllers:
     tnode1: { ip: 3 }

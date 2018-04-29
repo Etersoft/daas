@@ -70,7 +70,7 @@ Gitlab CI (или вручную) запускает ansible сценарий, �
 1. создал ВМ с docker-ом внутри
   - внутри создал пользователя vadmin (в /etc/sudoers.d прописал ему права на docker,su -и т.п.)
   - добавил vadmin в группу docker
-  - установил всякие пакеты типа wget,curl,htop,iotop,pip,docker-compose,cfdisk,python-module-jinja2
+  - установил всякие пакеты типа wget,curl,htop,iotop,pip,docker-compose,cfdisk,python-module-jinja2,apt-repo-tools
   - # cgroup iptables
   - # git-core
   - # etersoft-build-utils
@@ -118,6 +118,8 @@ sudo docker run --detach \
 wget -O /usr/bin/gitlab-runner https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
 
 4. Зарегистрировал gitlab-runner в gitlab
+
+# Простой пример: gitlab-runner register --name my-runner --url http://gitlab.example.com --registration-token my-registration-token
 По инструкции: https://wiki.office.etersoft.ru/Gitlab_ci
 
 пришлось добавить в config.toml
@@ -193,3 +195,12 @@ The following steps assume that the files are named domain.crt and domain.key.
     docker run --privileged --cap-add=ALL -v /dev:/dev  -v  /lib/modules:/lib/modules ...
 
 Много интересных настроек: https://gitlab.com/gitlab-org/gitlab-runner/blob/master/docs/configuration/advanced-configuration.md
+
+
+
+--------------
+Правки вновь запущенного шаблонного vstand:
+
+- перерегистрировать gitlab-runner-ов в gitlab
+- исправить /etc/hosts  на предмет доступа по hostname gitlab-server
+- переименовать машину (hostname) под проект (/etc/sysconfig/network и hostnamectl set-hostname <HOSTNAME>)

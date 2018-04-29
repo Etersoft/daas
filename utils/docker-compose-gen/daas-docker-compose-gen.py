@@ -110,6 +110,16 @@ def add_to_list(fromlist, name, to):
             to[name].append(v)
 
 
+def add_apt_param(params, name):
+    if not 'apt' in params:
+        return list()
+
+    if not name in params['apt']:
+        return list()
+
+    return params['apt'][name]
+
+
 def add_node(project, name, params, image):
     c = dict()
     for net in project['sorted_networks']:
@@ -119,6 +129,9 @@ def add_node(project, name, params, image):
     c['Dockerfile.tpl'] = 'Dockerfile.%s.tpl' % image
     c['image'] = image
     c['image-name'] = get_image_name(project, image)
+    c['apt'] = dict()
+    c['apt']['sources'] = add_apt_param(params, 'sources')
+    c['apt']['packages'] = add_apt_param(params, 'packages')
 
     # global volumes
     add_to_list(project, 'volumes', c)
@@ -165,6 +178,12 @@ def make_dockerfile(dirname, tplname, project):
         wfile.write('\n')  # fix bug: jinja cuts off the last line feed
 
 
+def make_apt_sources_list(node, filename, tplname='sources.list.tpl'):
+    with open(filename, 'w') as wfile:
+        wfile.write(env.get_template(tplname).render(node=node))
+        wfile.write('\n')  # fix bug: jinja cuts off the last line feed
+
+
 def get_source_dir(name):
     for d in sources_dirs:
         fpath = os.path.join(d, name)
@@ -182,7 +201,8 @@ def copy_addons(fromdir, todirname):
             for f in os.listdir(addonsdir):
                 src = os.path.join(addonsdir, f)
                 dest = os.path.join(todirname, f)
-                shutil.copy(src, dest)
+                if not os.path.exists(dest):
+                    shutil.copy(src, dest)
 
 
 def usage():
@@ -319,9 +339,17 @@ if __name__ == "__main__":
         # copy addons
         copy_addons('addons', dirname)
 
+        # gen sources list
+        apt_sourcefile = os.path.join(dirname, 'sources.list')
+        make_apt_sources_list(n, apt_sourcefile)
+
     # make Dockerfile for builder
     dirname = os.path.join(outdir, 'builder')
     tplname = 'Dockerfile.%s.tpl' % project['image']['builder']
     make_dockerfile(dirname, tplname, project)
     # copy addons
     copy_addons('addons', dirname)
+
+    # gen sources list
+    apt_sourcefile = os.path.join(dirname, 'sources.list')
+    make_apt_sources_list(n, apt_sourcefile)
