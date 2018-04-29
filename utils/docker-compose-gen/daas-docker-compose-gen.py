@@ -319,7 +319,7 @@ if __name__ == "__main__":
         print "Unknown command. Use -h for help"
         exit(1)
 
-    outdir = project['name']
+    outdir = '%s-compose' % project['name']
 
     if not os.path.exists(outdir):
         os.mkdir(outdir)
