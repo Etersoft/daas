@@ -9,13 +9,13 @@ RUN apt-get update \
 	&& rm -rf /etc/apt/sources.list.d/* \
 	&& apt-get update
 
+{%- if node['apt']['sources_list_filename'] %}
+COPY {{ node['apt']['sources_list_filename'] }} /etc/apt/sources.list.d/
+{%- endif %}
+
 {%- if 'packages' in node['apt'] and node['apt']['packages']|length > 0 %}
 # install special packages
 RUN apt-get -y install {% for v in node['apt']['packages'] %}{{ v }} {% endfor %}&& apt-get clean
-{%- endif %}
-
-{%- if node['apt']['sources_list_filename'] %}
-COPY {{ node['apt']['sources_list_filename'] }} /etc/apt/sources.list.d/
 {%- endif %}
 
 #RUN apt-get update
