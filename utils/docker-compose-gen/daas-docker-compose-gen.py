@@ -82,13 +82,13 @@ def make_hosts(project):
     hosts_list = list()
 
     # controllers
-    if 'controllers' in project and project['controllers'] and len(project['controllers']) > 0:
-        for k, v in project['controllers'].items():
+    if 'controllers' in project and 'nodes' in project['controllers'] and len(project['controllers']['nodes']) > 0:
+        for k, v in project['controllers']['nodes'].items():
             hosts_list = hosts_list + add_host(project, k, v['ip'])
 
     # gui
-    if 'gui' in project and project['gui'] and len(project['gui']) > 0:
-        for k, v in project['gui'].items():
+    if 'gui' in project and 'nodes' in project['gui'] and len(project['gui']['nodes']) > 0:
+        for k, v in project['gui']['nodes'].items():
             hosts_list = hosts_list + add_host(project, k, v['ip'])
 
     # builder
@@ -101,16 +101,14 @@ def make_hosts(project):
     return hosts_list
 
 
-def add_to_list(fromlist, name, to):
-    if name in fromlist and len(fromlist[name]) > 0:
-        if name not in to:
-            to[name] = list()
+def get_list(src, name):
+    if name in src and len(src[name]) > 0:
+        return src[name]
 
-        for v in fromlist[name]:
-            to[name].append(v)
+    return list()
 
 
-def add_apt_param(params, name):
+def get_apt_param(params, name):
     if not 'apt' in params:
         return list()
 
@@ -120,28 +118,32 @@ def add_apt_param(params, name):
     return params['apt'][name]
 
 
-def add_node(project, name, params, image):
+def create_node(project, typenode, name, node, image):
     c = dict()
     for net in project['sorted_networks']:
-        c[net['name']] = make_ip(net['subnet'], params['ip'])
+        c[net['name']] = make_ip(net['subnet'], node['ip'])
 
     c['nodename'] = name
     c['Dockerfile.tpl'] = 'Dockerfile.%s.tpl' % image
     c['image'] = image
     c['image-name'] = get_image_name(project, image)
     c['apt'] = dict()
-    c['apt']['sources'] = add_apt_param(params, 'sources')
-    c['apt']['packages'] = add_apt_param(params, 'packages')
+    c['apt']['sources'] = list()
+    c['apt']['packages'] = list()
+    c['volumes'] = list()
+    c['devices'] = list()
 
-    # global volumes
-    add_to_list(project, 'volumes', c)
-    # node volumes
-    add_to_list(params, 'volumes', c)
+    # global + parameters for type + local
+    c['apt']['sources'] = get_apt_param(project, 'sources') \
+                          + get_apt_param(typenode, 'sources') \
+                          + get_apt_param(node, 'sources')
 
-    # global devices
-    add_to_list(project, 'devices', c)
-    # node devices
-    add_to_list(params, 'devices', c)
+    c['apt']['packages'] = get_apt_param(project, 'packages') \
+                           + get_apt_param(typenode, 'packages') \
+                           + get_apt_param(node, 'packages')
+
+    c['volumes'] = get_list(project, 'volumes') + get_list(typenode, 'volumes') + get_list(node, 'volumes')
+    c['devices'] = get_list(project, 'devices') + get_list(typenode, 'devices') + get_list(node, 'devices')
 
     return c
 
@@ -149,9 +151,10 @@ def add_node(project, name, params, image):
 def make_nodes(project, ctype, image):
     nlist = list()
 
-    if ctype in project and project[ctype] and len(project[ctype]) > 0:
-        for k, v in project[ctype].items():
-            c = add_node(project, k, v, image)
+    if ctype in project and project[ctype] and 'nodes' in project[ctype] and len(project[ctype]['nodes']) > 0:
+        # and len(project[ctype]) > 0:
+        for k, v in project[ctype]['nodes'].items():
+            c = create_node(project, project[ctype], k, v, image)
             nlist.append(c)
 
     nlist.sort()
@@ -168,13 +171,13 @@ def get_image_name(project, image):
     return name
 
 
-def make_dockerfile(dirname, tplname, project):
+def make_dockerfile(dirname, node):
     if not os.path.exists(dirname):
         os.mkdir(dirname)
 
     dockerfile = os.path.join(dirname, 'Dockerfile')
     with open(dockerfile, 'w') as wfile:
-        wfile.write(env.get_template(tplname).render(project=project))
+        wfile.write(env.get_template(node['Dockerfile.tpl']).render(node=node))
         wfile.write('\n')  # fix bug: jinja cuts off the last line feed
 
 
@@ -262,7 +265,8 @@ if __name__ == "__main__":
     project['extra_hosts'] = make_hosts(project)
     project['nodes'] = make_nodes(project, 'controllers', project['image']['controller']) \
                        + make_nodes(project, 'gui', project['image']['gui']) \
-                       + [add_node(project, 'tester', project['tester'], project['image']['tester'])]
+                       + [create_node(project, project['tester'], 'tester', project['tester'],
+                                      project['image']['tester'])]
 
     # [command]: docker-add-host
     if check_arg_param(['docker-add-host']):
@@ -324,7 +328,11 @@ if __name__ == "__main__":
     with open(dc_file, 'w') as wfile:
         wfile.write(env.get_template('docker-compose.yml.tpl').render(project=project))
 
-    # make directories
+    # Добавляем builder в список, только после генерирования docker-compose.yml, т.к. он туда не должен попасть
+    builder = create_node(project, project['builder'], 'builder', project['builder'], project['image']['builder'])
+    project['nodes'].append(builder)
+
+    # make directories and configs
     for n in project['nodes']:
         dirname = os.path.join(outdir, n['nodename'])
         if not os.path.exists(dirname):
@@ -334,7 +342,7 @@ if __name__ == "__main__":
         # ....
 
         # make Dockerfile
-        make_dockerfile(dirname, n['Dockerfile.tpl'], project)
+        make_dockerfile(dirname, n)
 
         # copy addons
         copy_addons('addons', dirname)
@@ -342,14 +350,3 @@ if __name__ == "__main__":
         # gen sources list
         apt_sourcefile = os.path.join(dirname, 'sources.list')
         make_apt_sources_list(n, apt_sourcefile)
-
-    # make Dockerfile for builder
-    dirname = os.path.join(outdir, 'builder')
-    tplname = 'Dockerfile.%s.tpl' % project['image']['builder']
-    make_dockerfile(dirname, tplname, project)
-    # copy addons
-    copy_addons('addons', dirname)
-
-    # gen sources list
-    apt_sourcefile = os.path.join(dirname, 'sources.list')
-    make_apt_sources_list(n, apt_sourcefile)

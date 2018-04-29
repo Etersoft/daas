@@ -8,6 +8,11 @@ RUN apt-get update \
 	&& rm -rf /usr/share/man/* \
 	&& rm -rf /etc/apt/sources.list.d/* \
 	&& apt-get update
+{% if 'packages' in node['apt'] %}
+# install special packages
+RUN apt-get -y install {% for v in node['apt']['packages'] %}{{ v }} {% endfor %}&& apt-get clean
+{% endif %}
+
 #COPY local.list /etc/apt/sources.list.d/
 #RUN apt-get update
 RUN service ssh start

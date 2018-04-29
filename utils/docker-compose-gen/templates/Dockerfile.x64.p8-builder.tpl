@@ -9,6 +9,11 @@ RUN apt-get update && apt-get -y install etersoft-build-utils git-core libuniset
     && rm -rf /etc/apt/sources.list.d/* \
     && apt-get update
 
+{% if 'packages' in node['apt'] %}
+# install special packages
+RUN apt-get -y install {% for v in node['apt']['packages'] %}{{ v }} {% endfor %}&& apt-get clean
+{% endif %}
+
 ARG USER=builder
 ARG HOME=/home/$USER
 ARG TMPDIR=/tmp/$USER
