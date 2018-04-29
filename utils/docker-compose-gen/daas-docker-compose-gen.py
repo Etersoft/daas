@@ -109,10 +109,16 @@ def get_list(src, name):
 
 
 def get_apt_param(params, name):
-    if not 'apt' in params:
+    if not params:
         return list()
 
-    if not name in params['apt']:
+    if 'apt' not in params:
+        return list()
+
+    if name not in params['apt']:
+        return list()
+
+    if not params['apt'][name]:
         return list()
 
     return params['apt'][name]
@@ -151,8 +157,7 @@ def create_node(project, typenode, name, node, image):
 def make_nodes(project, ctype, image):
     nlist = list()
 
-    if ctype in project and project[ctype] and 'nodes' in project[ctype] and len(project[ctype]['nodes']) > 0:
-        # and len(project[ctype]) > 0:
+    if ctype in project and 'nodes' in project[ctype] and len(project[ctype]['nodes']) > 0:
         for k, v in project[ctype]['nodes'].items():
             c = create_node(project, project[ctype], k, v, image)
             nlist.append(c)
@@ -209,7 +214,7 @@ def copy_addons(fromdir, todirname):
 
 
 def usage():
-    print "%s [-c|--confile] project.yml [options] command" % sys.argv[0]
+    print "daas compose [-c|--confile] project.yml [options] command"
     print "Commands:"
     print "---------"
     print "gen              - Generate files for docker-compose"

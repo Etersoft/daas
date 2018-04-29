@@ -36,8 +36,8 @@ cp example-project.yml %buildroot%_datadir/%name/
 
 mkdir -p -m755 %buildroot%_datadir/%name/addons
 mkdir -p -m755 %buildroot%_datadir/%name/templates
-cp -r docker-compose-gen/addons %buildroot%_datadir/%name/addons
-cp -r docker-compose-gen/templates %buildroot%_datadir/%name/templates
+cp -r docker-compose-gen/addons %buildroot%_datadir/%name/
+cp -r docker-compose-gen/templates %buildroot%_datadir/%name
 
 
 %files
