@@ -1,0 +1,4 @@
+tar: utils name=@name@-@version@
+spec: daas.spec
+copy: README.md
+
