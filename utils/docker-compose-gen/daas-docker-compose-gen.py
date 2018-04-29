@@ -136,6 +136,7 @@ def create_node(project, typenode, name, node, image):
     c['apt'] = dict()
     c['apt']['sources'] = list()
     c['apt']['packages'] = list()
+    c['apt']['sources_list_filename'] = None
     c['volumes'] = list()
     c['devices'] = list()
 
@@ -143,6 +144,9 @@ def create_node(project, typenode, name, node, image):
     c['apt']['sources'] = get_apt_param(project, 'sources') \
                           + get_apt_param(typenode, 'sources') \
                           + get_apt_param(node, 'sources')
+
+    if len(c['apt']['sources']) > 0:
+        c['apt']['sources_list_filename'] = 'sources.list'
 
     c['apt']['packages'] = get_apt_param(project, 'packages') \
                            + get_apt_param(typenode, 'packages') \
@@ -346,12 +350,13 @@ if __name__ == "__main__":
         # make addons for gui (nginx, vnc config)
         # ....
 
+        # gen sources list
+        if n['apt']['sources_list_filename']:
+            apt_sourcefile = os.path.join(dirname, n['apt']['sources_list_filename'])
+            make_apt_sources_list(n, apt_sourcefile)
+
         # make Dockerfile
         make_dockerfile(dirname, n)
 
         # copy addons
         copy_addons('addons', dirname)
-
-        # gen sources list
-        apt_sourcefile = os.path.join(dirname, 'sources.list')
-        make_apt_sources_list(n, apt_sourcefile)

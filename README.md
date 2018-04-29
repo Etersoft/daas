@@ -70,7 +70,7 @@ Gitlab CI (или вручную) запускает ansible сценарий, �
 1. создал ВМ с docker-ом внутри
   - внутри создал пользователя vadmin (в /etc/sudoers.d прописал ему права на docker,su -и т.п.)
   - добавил vadmin в группу docker
-  - установил всякие пакеты типа wget,curl,htop,iotop,pip,docker-compose,cfdisk,python-module-jinja2,apt-repo-tools
+  - установил всякие пакеты типа wget,curl,htop,iotop,pip,docker-compose,cfdisk,python-module-jinja2,apt-repo-tools,unzip
   - # cgroup iptables
   - # git-core
   - # etersoft-build-utils

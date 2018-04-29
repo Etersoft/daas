@@ -8,12 +8,16 @@ RUN apt-get update \
 	&& rm -rf /usr/share/man/* \
 	&& rm -rf /etc/apt/sources.list.d/* \
 	&& apt-get update
-{% if 'packages' in node['apt'] %}
+
+{%- if 'packages' in node['apt'] and node['apt']['packages']|length > 0 %}
 # install special packages
 RUN apt-get -y install {% for v in node['apt']['packages'] %}{{ v }} {% endfor %}&& apt-get clean
-{% endif %}
+{%- endif %}
 
-#COPY local.list /etc/apt/sources.list.d/
+{%- if node['apt']['sources_list_filename'] %}
+COPY {{ node['apt']['sources_list_filename'] }} /etc/apt/sources.list.d/
+{%- endif %}
+
 #RUN apt-get update
 RUN service ssh start
 COPY start-project.sh /usr/bin/
