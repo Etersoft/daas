@@ -33,6 +33,10 @@ project:
   # global start command for container
   start_command: "start-project.sh"
 
+  # global 'copy' list
+  copy:
+    - testfile.copy:/tmp/testfile
+  
   builder:
     ip: 100
     volumes:

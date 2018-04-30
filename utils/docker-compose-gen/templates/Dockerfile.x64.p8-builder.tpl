@@ -18,6 +18,12 @@ COPY {{ node['apt']['sources_list_filename'] }} /etc/apt/sources.list.d/
 RUN apt-get update -m && apt-get -y install {% for v in node['apt']['packages'] %}{{ v }} {% endfor %}&& apt-get clean
 {%- endif %}
 
+{%- if 'copy' in node and node['copy']|length > 0 %}
+{%- for v in node['copy'] %}
+COPY {{ v['src'] }} {{ v['dest'] }}
+{%- endfor %}
+{%- endif %}
+
 ARG USER=builder
 ARG HOME=/home/$USER
 ARG TMPDIR=$HOME/tmp
@@ -28,7 +34,7 @@ COPY .rpmmacros $HOME/
 RUN mkdir -p $TMPDIR
 
 RUN chown $USER:$USER $HOME/.rpmmacros $TMPDIR
-ENV USER="$USER" TMPDIR="$TMPDIR" GCC_USE_CCACHE=1 CCACHE_DIR="$HOME/ccache"
+ENV USER="$USER" TMP="$TMPDIR" TMPDIR="$TMPDIR" GCC_USE_CCACHE=1 CCACHE_DIR="$HOME/ccache"
 
 USER "$USER"
 

@@ -137,6 +137,28 @@ def get_param(project, typenode, node, name):
     return None
 
 
+def make_copy_params(src):
+    '''
+    split 'copy' format 'src:dest' to param['src'],param['dest']
+    :param src: list of string 'copy'
+    :return: list of {'src':.., 'dest':...}
+    '''
+
+    if not src or len(src) == 0:
+        return
+
+    res = list()
+    for s in src:
+        tmp = s.split(':')
+        if len(tmp) > 1:
+            p = dict()
+            p['src'] = tmp[0]
+            p['dest'] = tmp[1]
+            res.append(p)
+
+    return res
+
+
 def make_unique_list(srclist):
     return list(set(srclist))
 
@@ -171,6 +193,12 @@ def create_node(project, typenode, name, node, image):
     c['env_file'] = make_unique_list(get_list(project, 'env_file')
                                      + get_list(typenode, 'env_file')
                                      + get_list(node, 'env_file'))
+
+    copy_list = make_unique_list(get_list(project, 'copy')
+                                 + get_list(typenode, 'copy')
+                                 + get_list(node, 'copy'))
+
+    c['copy'] = make_copy_params(copy_list)
 
     # global + parameters for type + local
     c['apt']['sources'] = make_unique_list(get_apt_param(project, 'sources') \

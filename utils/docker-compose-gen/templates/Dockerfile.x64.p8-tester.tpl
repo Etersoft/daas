@@ -20,6 +20,12 @@ COPY {{ node['apt']['sources_list_filename'] }} /etc/apt/sources.list.d/
 RUN apt-get update -m && apt-get -y install {% for v in node['apt']['packages'] %}{{ v }} {% endfor %}&& apt-get clean
 {%- endif %}
 
+{%- if 'copy' in node and node['copy']|length > 0 %}
+{%- for v in node['copy'] %}
+COPY {{ v['src'] }} {{ v['dest'] }}
+{%- endfor %}
+{%- endif %}
+
 {%- if 'start_command' in node %}
 COPY {{ node['start_command'] }} /usr/bin/
 CMD ["{{ node['start_command'] }}"]
