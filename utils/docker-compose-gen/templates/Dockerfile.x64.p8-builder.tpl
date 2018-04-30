@@ -15,12 +15,12 @@ COPY {{ node['apt']['sources_list_filename'] }} /etc/apt/sources.list.d/
 
 {%- if 'packages' in node['apt'] and node['apt']['packages']|length > 0 %}
 # install special packages
-RUN apt-get -y install {% for v in node['apt']['packages'] %}{{ v }} {% endfor %}&& apt-get clean
+RUN apt-get update -m && apt-get -y install {% for v in node['apt']['packages'] %}{{ v }} {% endfor %}&& apt-get clean
 {%- endif %}
 
 ARG USER=builder
 ARG HOME=/home/$USER
-ARG TMPDIR=/tmp/$USER
+ARG TMPDIR=$HOME/tmp
 
 RUN useradd builder
 RUN control su public
@@ -28,7 +28,7 @@ COPY .rpmmacros $HOME/
 RUN mkdir -p $TMPDIR
 
 RUN chown $USER:$USER $HOME/.rpmmacros $TMPDIR
-ENV USER="$USER" TMPDIR="$TMPDIR" GCC_USE_CCACHE=1 CCACHE_DIR="/ccache"
+ENV USER="$USER" TMPDIR="$TMPDIR" GCC_USE_CCACHE=1 CCACHE_DIR="$HOME/ccache"
 
 USER "$USER"
 CMD ["/bin/bash"]
