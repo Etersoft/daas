@@ -31,4 +31,10 @@ RUN chown $USER:$USER $HOME/.rpmmacros $TMPDIR
 ENV USER="$USER" TMPDIR="$TMPDIR" GCC_USE_CCACHE=1 CCACHE_DIR="$HOME/ccache"
 
 USER "$USER"
+
+{%- if 'start_command' in node %}
+COPY {{ node['start_command'] }} /usr/bin/
+CMD ["{{ node['start_command'] }}"]
+{% else %}
 CMD ["/bin/bash"]
+{%- endif %}

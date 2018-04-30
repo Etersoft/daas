@@ -21,5 +21,10 @@ RUN apt-get update -m && apt-get -y install {% for v in node['apt']['packages'] 
 
 #RUN apt-get update
 RUN service sshd start
-COPY start-project.sh /usr/bin/
-CMD ["/usr/bin/start-project.sh"]
+
+{%- if 'start_command' in node %}
+COPY {{ node['start_command'] }} /usr/bin/
+CMD ["{{ node['start_command'] }}"]
+{% else %}
+CMD ["/bin/bash"]
+{%- endif %}

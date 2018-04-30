@@ -124,6 +124,19 @@ def get_apt_param(params, name):
     return params['apt'][name]
 
 
+def get_param(project, typenode, node, name):
+    if node and name in node:
+        return node[name]
+
+    if typenode and name in typenode:
+        return typenode[name]
+
+    if project and name in project:
+        return project[name]
+
+    return None
+
+
 def make_unique_list(srclist):
     return list(set(srclist))
 
@@ -137,6 +150,7 @@ def create_node(project, typenode, name, node, image):
     c['Dockerfile.tpl'] = 'Dockerfile.%s.tpl' % image
     c['image'] = image
     c['image-name'] = get_image_name(project, image)
+    c['start_command'] = get_param(project, typenode, node, 'start_command')
     c['apt'] = dict()
     c['apt']['sources'] = list()
     c['apt']['packages'] = list()

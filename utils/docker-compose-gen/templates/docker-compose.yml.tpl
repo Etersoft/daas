@@ -8,22 +8,27 @@ services:
            dockerfile: Dockerfile
         image: {{ node['image-name'] }}
         hostname: {{ node['nodename'] }}
+        {%- if 'start_command' in node %}
+        command: {{ node['start_command'] }}
+        {%- endif %}
         networks:{% for net in project['sorted_networks'] %}
             {{net['name']}}:
                 ipv4_address: {{ node[net['name']] }}{% endfor %}
         {% if 'volumes' in node %}
-        volumes:{% for v in node['volumes'] %}
+        volumes:
+        {%- for v in node['volumes'] %}
             - {{ v }}{% endfor %}
-        {% endif %}
+        {%- endif %}
         {% if 'devices' in node %}
-        devices:{% for v in node['devices'] %}
+        devices:
+        {%- for v in node['devices'] %}
             - {{ v }}{% endfor %}
-        {% endif %}
-        command: /usr/bin/start-project.sh
+        {%- endif %}
         tty: true
-        extra_hosts:{% for host in project['extra_hosts'] %}
+        extra_hosts:
+        {%- for host in project['extra_hosts'] %}
                 - "{{ host['nodename'] }}: {{ host['ip'] }}"{% endfor %}
-    {% endfor %}       
+        {%- endfor %}       
 
 networks:{% for net in project['sorted_networks'] %}
     {{net['name']}}:

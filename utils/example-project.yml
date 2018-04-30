@@ -29,6 +29,9 @@ project:
     packages:
       - mc
       - libuniset2
+  
+  # global start command for container
+  start_command: "start-project.sh"
 
   builder:
     ip: 100
@@ -37,6 +40,7 @@ project:
        
   tester:
     ip: 101
+    start_command: "start-tester.sh"
     volumes:
        - /cache
        - source:/source
