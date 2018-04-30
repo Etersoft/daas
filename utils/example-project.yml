@@ -41,6 +41,8 @@ project:
   tester:
     ip: 101
     start_command: "start-tester.sh"
+    env_file:
+       - ./data/tester.env 
     volumes:
        - /cache
        - source:/source

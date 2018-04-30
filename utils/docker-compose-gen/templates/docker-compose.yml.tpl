@@ -14,14 +14,24 @@ services:
         networks:{% for net in project['sorted_networks'] %}
             {{net['name']}}:
                 ipv4_address: {{ node[net['name']] }}{% endfor %}
-        {% if 'volumes' in node %}
+        {% if 'volumes' in node and node['volumes']|length > 0 %}
         volumes:
         {%- for v in node['volumes'] %}
             - {{ v }}{% endfor %}
         {%- endif %}
-        {% if 'devices' in node %}
+        {% if 'devices' in node and node['devices']|length > 0 %}
         devices:
         {%- for v in node['devices'] %}
+            - {{ v }}{% endfor %}
+        {%- endif %}
+        {%- if 'environment' in node and node['environmen']|length > 0 %}
+        environment:
+        {%- for v in node['environment'] %}
+            - {{ v }}{% endfor %}
+        {%- endif %}
+        {% if 'env_file' in node and node['env_file']|length > 0 %}
+        env_file:
+        {%- for v in node['env_file'] %}
             - {{ v }}{% endfor %}
         {%- endif %}
         tty: true
@@ -30,7 +40,8 @@ services:
                 - "{{ host['nodename'] }}: {{ host['ip'] }}"{% endfor %}
         {%- endfor %}       
 
-networks:{% for net in project['sorted_networks'] %}
+networks:
+   {%- for net in project['sorted_networks'] %}
     {{net['name']}}:
         driver: bridge
         driver_opts:

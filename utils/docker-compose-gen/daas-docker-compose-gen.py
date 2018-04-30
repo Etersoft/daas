@@ -155,8 +155,22 @@ def create_node(project, typenode, name, node, image):
     c['apt']['sources'] = list()
     c['apt']['packages'] = list()
     c['apt']['sources_list_filename'] = None
-    c['volumes'] = list()
-    c['devices'] = list()
+
+    c['devices'] = make_unique_list(get_list(project, 'devices')
+                                    + get_list(typenode, 'devices')
+                                    + get_list(node, 'devices'))
+
+    c['volumes'] = make_unique_list(get_list(project, 'volumes')
+                                    + get_list(typenode, 'volumes')
+                                    + get_list(node, 'volumes'))
+
+    c['environment'] = make_unique_list(get_list(project, 'environment')
+                                        + get_list(typenode, 'environment')
+                                        + get_list(node, 'environment'))
+
+    c['env_file'] = make_unique_list(get_list(project, 'env_file')
+                                     + get_list(typenode, 'env_file')
+                                     + get_list(node, 'env_file'))
 
     # global + parameters for type + local
     c['apt']['sources'] = make_unique_list(get_apt_param(project, 'sources') \
@@ -169,14 +183,6 @@ def create_node(project, typenode, name, node, image):
     c['apt']['packages'] = make_unique_list(get_apt_param(project, 'packages') \
                                             + get_apt_param(typenode, 'packages') \
                                             + get_apt_param(node, 'packages'))
-
-    c['volumes'] = make_unique_list(get_list(project, 'volumes')
-                                    + get_list(typenode, 'volumes')
-                                    + get_list(node, 'volumes'))
-
-    c['devices'] = make_unique_list(get_list(project, 'devices')
-                                    + get_list(typenode, 'devices')
-                                    + get_list(node, 'devices'))
 
     return c
 
