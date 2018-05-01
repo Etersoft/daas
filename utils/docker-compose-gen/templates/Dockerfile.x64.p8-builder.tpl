@@ -10,7 +10,7 @@ RUN apt-get update && apt-get -y install etersoft-build-utils git-core libuniset
     && apt-get update
 
 # set LANG for root
-COPY root.i18n /root/.18n
+COPY root.i18n /root/.i18n
 {%- if node['apt']['sources_list_filename'] %}
 # project sources
 COPY {{ node['apt']['sources_list_filename'] }} /etc/apt/sources.list.d/

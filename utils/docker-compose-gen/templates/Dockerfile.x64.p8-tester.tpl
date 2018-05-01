@@ -12,7 +12,7 @@ RUN apt-get update && apt-get -y install uniset2-testsuite python-module-pip lib
     && pip install docker
 
 # set LANG for root
-COPY root.i18n /root/.18n
+COPY root.i18n /root/.i18n
 
 {%- if node['apt']['sources_list_filename'] %}
 # project sources
