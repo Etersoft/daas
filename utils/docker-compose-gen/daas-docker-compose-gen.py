@@ -139,9 +139,9 @@ def get_param(project, typenode, node, name):
 
 def make_copy_params(src):
     '''
-    split 'copy' format 'src:dest' to param['src'],param['dest']
+    split 'copy' format '[mode]src:dest' to param['src'],param['dest'],param['chmod']
     :param src: list of string 'copy'
-    :return: list of {'src':.., 'dest':...}
+    :return: list of {'src':.., 'dest':..., 'chmod':..}
     '''
 
     if not src or len(src) == 0:
@@ -149,11 +149,20 @@ def make_copy_params(src):
 
     res = list()
     for s in src:
+        chmod = None
+        if s.startswith('['):
+            pos = str(s).find(']', 1)
+            if pos:
+                chmod = s[1:pos]
+            s = s[pos + 1:]
+
         tmp = s.split(':')
         if len(tmp) > 1:
             p = dict()
             p['src'] = tmp[0]
             p['dest'] = tmp[1]
+            if chmod:
+                p['chmod'] = chmod
             res.append(p)
 
     return res

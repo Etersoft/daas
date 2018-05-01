@@ -22,6 +22,13 @@ RUN apt-get update -m && apt-get -y install {% for v in node['apt']['packages'] 
 {%- if 'copy' in node and node['copy']|length > 0 %}
 {%- for v in node['copy'] %}
 COPY {{ v['src'] }} {{ v['dest'] }}
+{%- if 'chmod' in v %}
+{%- if v['dest'].endswith('/') %}
+RUN chmod {{ v['chmod'] }} {{ v['dest'] }}{{ v['src'] }}
+{%- else %}
+RUN chmod {{ v['chmod'] }} {{ v['dest'] }}
+{%- endif %}
+{%- endif %}
 {%- endfor %}
 {%- endif %}
 

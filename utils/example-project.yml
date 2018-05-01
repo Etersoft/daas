@@ -35,7 +35,8 @@ project:
 
   # global 'copy' list
   copy:
-    - testfile.copy:/tmp/testfile
+    - '[a+r]testfile.copy:/tmp/testfile'
+    - '[a+rw]testfile2.copy:/tmp/'
   
   builder:
     ip: 100
