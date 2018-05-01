@@ -1,0 +1,5 @@
+LANGUAGE=ru_RU.UTF-8
+LANG=ru_RU.UTF-8
+LC_ALL=ru_RU.UTF-8
+
+eval `sed -n '/^LANG=[^.[:space:]]\+\.[Uu][Tt][Ff]-\?8[[:space:]]*$/ s/LANG=.*/NEED_UNICODE=1 LC_CTYPE=en_US.utf8/p' /etc/sysconfig/i18n 2>/dev/null` ||:

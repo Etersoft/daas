@@ -3,14 +3,18 @@ FROM fotengauer/altlinux-p8
 MAINTAINER Pavel Vainerman <pv@etersoft.ru>
 RUN apt-get update \
 	&& apt-get -y install libuniset2-extension-common libuniset2-utils libomniORB-names libglademm libcairomm libgtkmm2 mc \
-	openssh-clients openssh-server glibc-locales\
+	openssh-clients openssh-server glibc-locales console-scripts \
 	&& apt-get clean \
 	&& rm -rf /usr/share/doc/* \
 	&& rm -rf /usr/share/man/* \
 	&& rm -rf /etc/apt/sources.list.d/* \
 	&& apt-get update
 
+# set LANG for root
+COPY root.i18n /root/.18n
+
 {%- if node['apt']['sources_list_filename'] %}
+# project sources
 COPY {{ node['apt']['sources_list_filename'] }} /etc/apt/sources.list.d/
 {%- endif %}
 
@@ -20,6 +24,7 @@ RUN ( apt-get update || echo "ignore update packages error" ) && apt-get -y inst
 {%- endif %}
 
 {%- if 'copy' in node and node['copy']|length > 0 %}
+# copyies for project
 {%- for v in node['copy'] %}
 COPY {{ v['src'] }} {{ v['dest'] }}
 {%- if 'chmod' in v %}
@@ -32,8 +37,10 @@ RUN chmod {{ v['chmod'] }} {{ v['dest'] }}
 {%- endfor %}
 {%- endif %}
 
-#RUN apt-get update
+# start default services
 RUN service sshd start
+RUN service consolesaver start
+
 
 {%- if 'start_command' in node %}
 COPY {{ node['start_command'] }} /usr/bin/
