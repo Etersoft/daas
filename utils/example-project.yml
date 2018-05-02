@@ -1,7 +1,5 @@
 project:
   name: "myproject"
-  rpmdir: "myproject"
-  pkgname: "myproject"
   networks:
       # это не ip, это подсеть. Конкретный ip назначается у конкретного узла (см. ниже)
       net1: "192.168.81"
