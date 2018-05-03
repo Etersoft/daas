@@ -2,11 +2,50 @@
 
 usage()
 {
-	echo "daas compose [-h | commands ]"
+cat<<EOF
+daas subsystem [command]"
+daas nodename [command] - enter to node a.k.a 'docker-compose exec nodename command'. Default command='bash'
+
+subsystems: 
+  compose  - docker-compose subsytem (-h for help)
+  ansible  - ansible  subsytem (-h for help)
+  init     - init subsytem (-h for help)
+  gitlab   - subsytem (-h for help)
+
+-h|--help - show this message
+EOF
 }
 
 [ -z "$1" ] && usage && exit 1
 
-[ "$1" == "compose" ] && shift && daas-docker-compose-gen.py "$@"
+CMD="$1"
 
-# [ "$1" == "ansible" ] && shift && daas-docker-ansiblbe.py "$@"
+case $CMD in
+    compose)
+        shift && daas-docker-compose-gen.py "$@" 
+        exit $?
+        ;;
+    ansible)
+	echo "Not yet"
+	exit 1
+        ;;
+
+    init)
+	echo "Not yet"
+	exit 1
+        ;;
+
+    gitlab-ci)
+	echo "Not yet"
+	exit 1
+        ;;
+
+    -h|--help|help)
+        usage
+        ;;
+    *)
+        shift
+        [ -n "$1" ] && com="$*" || com="bash"
+        docker-compose exec "$1" ${com}
+        exit $?
+esac
