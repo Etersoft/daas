@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.1
-Release: alt0.1
+Release: alt0.2
 
 Group: System/Utilities
 License: MIT
@@ -48,3 +48,6 @@ cp -r docker-compose-gen/templates %buildroot%_datadir/%name
 # %doc README.md
 
 %changelog
+* Sat May 05 2018 Pavel Vainerman <pv@altlinux.ru> 0.1-alt0.2
+- initial release
+
