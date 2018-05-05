@@ -35,6 +35,9 @@ project:
   copy:
     - '[a+r]testfile.copy:/tmp/testfile'
     - '[a+rw]testfile2.copy:/tmp/'
+  before_command:
+    - apt-get install rpm
+    - apt-get install rp3
   
   builder:
     ip: 100

@@ -124,6 +124,11 @@ project:
     - '[a+r]testfile.copy:/tmp/testfile'
     - '[a+rw]testfile2.copy:/tmp/'
     
+  before_command:
+    - rpm -Uhv myproejct.rpm
+    - myproject-config config
+    - ...
+    
   env_file:
     - file1.env
     - file2.env
@@ -140,11 +145,13 @@ apt - секция задающая параметры для apt
   sources - задаёт список репозиториев. В итоге в контейнер генерируется файл /etc/apt/sources.list.d/sources.list с указанным списком.
 
 start_command - CMD попадающая в итоговый Dockerfile.
+
 copy - задаёт список файлов которые будут скопированы в контейнер на этапе сборки образа. Позволяет указать права
 на получающийся файл "[mode]src:dest".
 В итоге каждый элемент преобразуется в команды: 
 COPY src dest
 RUN chmod xxxx dest
 
+before_command - команды преобразуемые в RUN в Dockerfile.
 env_file - Файлы с переменными окружения для контейнера. Итоговые настройки напрямую попадают в docker-compose.yml
 environment - переменные окружения для контейнера. Итоговые настройки напрямую попадают в docker-compose.yml

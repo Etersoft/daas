@@ -37,10 +37,16 @@ RUN chmod {{ v['chmod'] }} {{ v['dest'] }}
 {%- endfor %}
 {%- endif %}
 
+{%- if 'before_command' in node and node['before_command']|length > 0 %}
+# 'before' commands
+{%- for v in node['before_command'] %}
+RUN  {{ v }}
+{%- endfor %}
+{%- endif %}
+
 # start default services
 RUN service sshd start
 RUN service consolesaver start
-
 
 {%- if 'start_command' in node %}
 COPY {{ node['start_command'] }} /usr/bin/

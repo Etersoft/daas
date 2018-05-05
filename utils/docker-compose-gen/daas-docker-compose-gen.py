@@ -207,6 +207,10 @@ def create_node(project, typenode, name, node, image):
                                  + get_list(typenode, 'copy')
                                  + get_list(node, 'copy'))
 
+    c['before_command'] = make_unique_list(get_list(project, 'before_command')
+                                     + get_list(typenode, 'before_command')
+                                     + get_list(node, 'before_command'))
+
     c['copy'] = make_copy_params(copy_list)
 
     # global + parameters for type + local
