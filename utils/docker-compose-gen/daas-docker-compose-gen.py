@@ -9,6 +9,7 @@ import os
 import shutil
 
 sources_dirs = ['./', '.daas', '/usr/share/daas']
+FORMAT_VERSION = '0.2'
 
 
 def check_arg_param(param):
@@ -48,21 +49,30 @@ def make_ip(subnet, ip):
 
 def make_host_item(nodename, ip):
     h = dict()
-    h['nodename'] = nodename
+    h['node_name'] = nodename
     h['ip'] = ip
     return h
 
 
 def sorted_networks(project):
-    networks = list()
+    netlist = list()
     klist = sorted(project['networks'].keys())
+    networks = project['networks']
     for n in klist:
+
+        if 'subnet' not in networks[n]:
+            print "ERROR: Unknown subnet for %s" % str(n)
+            exit(1)
+
         net = dict()
         net['name'] = n
-        net['subnet'] = project['networks'][n]
-        networks.append(net)
+        net['subnet'] = networks[n]['subnet']
+        if 'gateway' in networks[n]:
+            net['gateway'] = networks[n]['gateway']
 
-    return networks
+            netlist.append(net)
+
+    return netlist
 
 
 def add_host(project, name, ip):
@@ -81,21 +91,13 @@ def add_host(project, name, ip):
 def make_hosts(project):
     hosts_list = list()
 
-    # controllers
-    if 'controllers' in project and 'nodes' in project['controllers'] and len(project['controllers']['nodes']) > 0:
-        for k, v in project['controllers']['nodes'].items():
-            hosts_list = hosts_list + add_host(project, k, v['ip'])
+    for groupname, group in project['groups'].items():
 
-    # gui
-    if 'gui' in project and 'nodes' in project['gui'] and len(project['gui']['nodes']) > 0:
-        for k, v in project['gui']['nodes'].items():
-            hosts_list = hosts_list + add_host(project, k, v['ip'])
+        if 'nodes' not in group:
+            continue
 
-    # builder
-    hosts_list = hosts_list + add_host(project, 'builder', project['builder']['ip'])
-
-    # tester
-    hosts_list = hosts_list + add_host(project, 'tester', project['tester']['ip'])
+        for nodename, node in group['nodes'].items():
+            hosts_list = hosts_list + add_host(project, nodename, node['ip'])
 
     hosts_list.sort()
     return hosts_list
@@ -124,12 +126,12 @@ def get_apt_param(params, name):
     return params['apt'][name]
 
 
-def get_param(project, typenode, node, name):
+def get_param(project, group, node, name):
     if node and name in node:
         return node[name]
 
-    if typenode and name in typenode:
-        return typenode[name]
+    if group and name in group:
+        return group[name]
 
     if project and name in project:
         return project[name]
@@ -138,11 +140,11 @@ def get_param(project, typenode, node, name):
 
 
 def make_copy_params(src):
-    '''
+    """
     split 'copy' format '[mode]src:dest' to param['src'],param['dest'],param['chmod']
     :param src: list of string 'copy'
     :return: list of {'src':.., 'dest':..., 'chmod':..}
-    '''
+    """
 
     if not src or len(src) == 0:
         return
@@ -172,76 +174,93 @@ def make_unique_list(srclist):
     return list(set(srclist))
 
 
-def create_node(project, typenode, name, node, image):
-    c = dict()
+def create_node(project, group, node):
+    c = dict(node)
     for net in project['sorted_networks']:
         c[net['name']] = make_ip(net['subnet'], node['ip'])
 
-    c['nodename'] = name
-    c['Dockerfile.tpl'] = 'Dockerfile.%s.tpl' % image
-    c['image'] = image
-    c['image-name'] = get_image_name(project, image)
-    c['start_command'] = get_param(project, typenode, node, 'start_command')
+    imagename = get_param(project, group, node, 'image')
+    if not imagename:
+        imagename = 'default'
+
+    c['Dockerfile.tpl'] = 'Dockerfile.%s.tpl' % imagename
+    c['image'] = imagename
+    c['image_name'] = make_image_name(project, imagename)
+    c['start_command'] = get_param(project, group, node, 'start_command')
     c['apt'] = dict()
     c['apt']['sources'] = list()
     c['apt']['packages'] = list()
     c['apt']['sources_list_filename'] = None
 
+    if 'skip_compose' in group:
+        c['skip_compose'] = 'yes'
+
     c['devices'] = make_unique_list(get_list(project, 'devices')
-                                    + get_list(typenode, 'devices')
+                                    + get_list(group, 'devices')
                                     + get_list(node, 'devices'))
 
     c['volumes'] = make_unique_list(get_list(project, 'volumes')
-                                    + get_list(typenode, 'volumes')
+                                    + get_list(group, 'volumes')
                                     + get_list(node, 'volumes'))
 
     c['environment'] = make_unique_list(get_list(project, 'environment')
-                                        + get_list(typenode, 'environment')
+                                        + get_list(group, 'environment')
                                         + get_list(node, 'environment'))
 
     c['env_file'] = make_unique_list(get_list(project, 'env_file')
-                                     + get_list(typenode, 'env_file')
+                                     + get_list(group, 'env_file')
                                      + get_list(node, 'env_file'))
 
     copy_list = make_unique_list(get_list(project, 'copy')
-                                 + get_list(typenode, 'copy')
+                                 + get_list(group, 'copy')
                                  + get_list(node, 'copy'))
 
     c['before_command'] = make_unique_list(get_list(project, 'before_command')
-                                     + get_list(typenode, 'before_command')
-                                     + get_list(node, 'before_command'))
+                                           + get_list(group, 'before_command')
+                                           + get_list(node, 'before_command'))
 
     c['copy'] = make_copy_params(copy_list)
 
     # global + parameters for type + local
-    c['apt']['sources'] = make_unique_list(get_apt_param(project, 'sources') \
-                                           + get_apt_param(typenode, 'sources') \
+    c['apt']['sources'] = make_unique_list(get_apt_param(project, 'sources')
+                                           + get_apt_param(group, 'sources')
                                            + get_apt_param(node, 'sources'))
 
     if len(c['apt']['sources']) > 0:
         c['apt']['sources_list_filename'] = 'sources.list'
 
-    c['apt']['packages'] = make_unique_list(get_apt_param(project, 'packages') \
-                                            + get_apt_param(typenode, 'packages') \
+    c['apt']['packages'] = make_unique_list(get_apt_param(project, 'packages')
+                                            + get_apt_param(group, 'packages')
                                             + get_apt_param(node, 'packages'))
 
     return c
 
 
-def make_nodes(project, ctype, image):
+def make_project_nodes(project):
+    nodes = list()
+
+    for name, group in project['groups'].items():
+        group['group_name'] = name
+        nodes = nodes + make_nodes(project, group)
+
+    return nodes
+
+
+def make_nodes(project, group):
     nlist = list()
 
-    if ctype in project and 'nodes' in project[ctype] and len(project[ctype]['nodes']) > 0:
-        for k, v in project[ctype]['nodes'].items():
-            c = create_node(project, project[ctype], k, v, image)
+    if 'nodes' in group and len(group['nodes']) > 0:
+        for name, node in group['nodes'].items():
+            node['node_name'] = name
+            c = create_node(project, group, node)
             nlist.append(c)
 
     nlist.sort()
     return nlist
 
 
-def get_image_name(project, image):
-    name = "%s-%s" % (project['name'], image)
+def make_image_name(project, imgname):
+    name = "%s-%s" % (project['name'], imgname)
     if len(project['image-registry']) > 0:
         name = "%s/%s" % (project['image-registry'], name)
     if len(project['image-postfix']) > 0:
@@ -329,25 +348,21 @@ if __name__ == "__main__":
             print(ex)
             exit(1)
 
-    project = conf['project']
+    if 'version' not in conf:
+        print "ERROR: Unknown config file format. Supported by %s" % FORMAT_VERSION
+        exit(1)
 
-    # для узла tester
-    # обязательно прокидывается /var/run/docker.sock:/var/run/docker.sock
-    v_sock = '/var/run/docker.sock:/var/run/docker.sock'
-    if 'volumes' in project['tester']:
-        if v_sock not in project['tester']['volumes']:
-            project['tester']['volumes'].append(v_sock)
-    else:
-        project['tester']['volumes'] = {v_sock}
+    if str(conf['version']) != str(FORMAT_VERSION):
+        print "ERROR: Unsupported file format '%s'. Must be '%s'" % (conf['version'], FORMAT_VERSION)
+        exit(1)
+
+    project = conf
 
     project['image-registry'] = get_arg_param(['--image-registry'], '')
     project['image-postfix'] = get_arg_param(['--image-postfix'], '')
     project['sorted_networks'] = sorted_networks(project)
     project['extra_hosts'] = make_hosts(project)
-    project['nodes'] = make_nodes(project, 'controllers', project['image']['controller']) \
-                       + make_nodes(project, 'gui', project['image']['gui']) \
-                       + [create_node(project, project['tester'], 'tester', project['tester'],
-                                      project['image']['tester'])]
+    project['nodes'] = make_project_nodes(project)
 
     # [command]: docker-add-host
     if check_arg_param(['docker-add-host']):
@@ -355,20 +370,20 @@ if __name__ == "__main__":
         for h in project['extra_hosts']:
 
             # split if nodename="node1 node2 node3"
-            hh = h['nodename'].split(' ')
+            hh = h['node_name'].split(' ')
             if len(hh) > 1:
                 for n in hh:
                     ret = '--add-host %s:%s %s' % (n, h['ip'], ret)
             else:
-                ret = '--add-host %s:%s %s' % (h['nodename'], h['ip'], ret)
+                ret = '--add-host %s:%s %s' % (h['node_name'], h['ip'], ret)
         print ret.strip()
         exit(0)
 
     # [command]: image-list
     if check_arg_param(['image-list']):
         s = ''
-        for k, v in project['image'].items():
-            s = '%s %s' % (s, get_image_name(project, project['image'][k]))
+        for node in project['nodes']:
+            s = '%s %s' % (s, node['image_name'])
 
         print s.strip()
         exit(0)
@@ -377,17 +392,15 @@ if __name__ == "__main__":
     if check_arg_param(['image-name']):
         nodename = get_arg_param(['image-name'])
         if len(nodename) == 0:
-            print "(image-name): Unknown nodename. Use -h for help"
+            print "(image-name): Unknown node name. Use -h for help"
             exit(1)
-        if nodename == 'builder':
-            print get_image_name(project, project['image']['builder'])
-            exit(0)
+
         for n in project['nodes']:
-            if n['nodename'] == nodename:
-                print n['image-name']
+            if n['node_name'] == nodename:
+                print n['image_name']
                 exit(0)
 
-        print "(image-name): ERROR: Not found nodename '%s'" % nodename
+        print "(image-name): ERROR: Not found node '%s'" % nodename
         exit(1)
 
     # [command]: gen
@@ -409,13 +422,9 @@ if __name__ == "__main__":
     with open(dc_file, 'w') as wfile:
         wfile.write(env.get_template('docker-compose.yml.tpl').render(project=project))
 
-    # Добавляем builder в список, только после генерирования docker-compose.yml, т.к. он туда не должен попасть
-    builder = create_node(project, project['builder'], 'builder', project['builder'], project['image']['builder'])
-    project['nodes'].append(builder)
-
     # make directories and configs
     for n in project['nodes']:
-        dirname = os.path.join(outdir, n['nodename'])
+        dirname = os.path.join(outdir, n['node_name'])
         if not os.path.exists(dirname):
             os.mkdir(dirname)
 

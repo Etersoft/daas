@@ -1,13 +1,13 @@
 version: '2'
 
 services:
-    {% for node in project['nodes'] %}
-    {{ node['nodename'] }}:
+    {%- for node in project['nodes'] if not 'skip_compose' in node %}
+    {{ node['node_name'] }}:
         build: 
-           context: ./{{ node['nodename'] }}
+           context: ./{{ node['node_name'] }}
            dockerfile: Dockerfile
         image: {{ node['image-name'] }}
-        hostname: {{ node['nodename'] }}
+        hostname: {{ node['node_name'] }}
         {%- if 'start_command' in node %}
         command: {{ node['start_command'] }}
         {%- endif %}
@@ -37,7 +37,7 @@ services:
         tty: true
         extra_hosts:
         {%- for host in project['extra_hosts'] %}
-                - "{{ host['nodename'] }}: {{ host['ip'] }}"{% endfor %}
+                - "{{ host['node_name'] }}: {{ host['ip'] }}"{% endfor %}
         {%- endfor %}       
 
 networks:
@@ -50,5 +50,7 @@ networks:
             driver: default
             config:
                 - subnet: {{ net['subnet'] }}.0/24
-                  gateway: {{ net['subnet'] }}.{{ project['builder']['ip'] }}
+                  {%- if 'gateway' in net %}
+                  gateway: {{ net['subnet'] }}.{{ net['gateway'] }}
+                  {%- endif %}
    {% endfor %}       
