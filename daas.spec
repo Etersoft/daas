@@ -15,6 +15,8 @@ Packager: Pavel Vainerman <pv@altlinux.org>
 
 BuildArch: noarch
 
+%add_findreq_skiplist %_datadir/%name/addons/* %_bindir/daas
+
 %py_requires yaml jinja2
 
 %description

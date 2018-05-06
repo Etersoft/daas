@@ -4,6 +4,7 @@
 from jinja2 import Environment, FileSystemLoader
 import yaml
 
+from itertools import groupby
 import sys
 import os
 import shutil
@@ -171,7 +172,19 @@ def make_copy_params(src):
 
 
 def make_unique_list(srclist):
-    return list(set(srclist))
+
+    # с сохранением порядка
+    return [el for el, _ in groupby(srclist)]
+
+    # без сохранения порядка
+    # return list(set(srclist))
+
+def get_vnc_ports(node):
+    ret = list()
+    if 'vnc_port' in node:
+        p = '%s:%s' % (node['vnc_port'], node['vnc_port'])
+        ret.append(p)
+    return ret
 
 
 def create_node(project, group, node):
@@ -202,6 +215,11 @@ def create_node(project, group, node):
     c['volumes'] = make_unique_list(get_list(project, 'volumes')
                                     + get_list(group, 'volumes')
                                     + get_list(node, 'volumes'))
+
+    c['ports'] = make_unique_list(get_list(project, 'ports')
+                                  + get_list(group, 'ports')
+                                  + get_list(node, 'ports')
+                                  + get_vnc_ports(node))
 
     c['environment'] = make_unique_list(get_list(project, 'environment')
                                         + get_list(group, 'environment')
@@ -269,13 +287,13 @@ def make_image_name(project, imgname):
     return name
 
 
-def make_dockerfile(dirname, node):
+def make_dockerfile(dirname, node, project):
     if not os.path.exists(dirname):
         os.mkdir(dirname)
 
     dockerfile = os.path.join(dirname, 'Dockerfile')
     with open(dockerfile, 'w') as wfile:
-        wfile.write(env.get_template(node['Dockerfile.tpl']).render(node=node))
+        wfile.write(env.get_template(node['Dockerfile.tpl']).render(node=node, project=project))
         wfile.write('\n')  # fix bug: jinja cuts off the last line feed
 
 
@@ -437,7 +455,7 @@ if __name__ == "__main__":
             make_apt_sources_list(n, apt_sourcefile)
 
         # make Dockerfile
-        make_dockerfile(dirname, n)
+        make_dockerfile(dirname, n, project)
 
         # copy addons
         copy_addons('addons', dirname)

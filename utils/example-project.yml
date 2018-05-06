@@ -91,6 +91,9 @@ groups:
 
   gui: # specific group
     image: x64.p8-gui
+    before_command:
+      - groupadd myproject
+      - useradd -G myproject guest
     nodes:
       gui1: { ip: 1, vnc_host: gui1, vnc_port: 5901, novnc_port: 6081 }
       gui2: { ip: 2, vnc_host: gui2, vnc_port: 5902, novnc_port: 6082 }

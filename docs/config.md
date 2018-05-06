@@ -119,8 +119,14 @@ gateway - задаёт ip шлюза.
     - VAR1=VAL1
     - VAR2=VAL2
     
+  ports:
+    - port1:port2
+    - port3:port3
+    - port4:port5
+    
 volumes - Задаёт список проброса каталогов, который попадает в генерируемый docker-compose.yml
 devices - Задаёт список проброса устройств, который попадает в генерируемый docker-compose.yml
+ports - список пробрасываемых портов, который попадает в генерируемый docker-compose.yml
 
 apt - секция задающая параметры для apt
   packages - список пакетов, которые необходимо установить. В итоговый Dockerfile попадает команда apt-get install ..packages..
@@ -166,4 +172,11 @@ groupX:
 	  - openssh-server
 
     mynode2: { ip: 2 }
-    mynode3: { ip: 3 }
+    mynode3: { ip: 3, vnc_port: 5900, novnc_port: 6900 }
+
+Свойства 'vnc_port' и novnc_port не является обязательными.
+Если задан 'vnc_port' то в итоговый docker-compose.yml этот порт добавляется в секцию 'ports:'.
+Если помимо vnc_port задаётся и novnc_port, но при настройке виртуального стенда,
+этот порт будет использован как порт подключения к стенду "снаружи". См. так же раздел 
+документации по VNC (vnc.md).
+

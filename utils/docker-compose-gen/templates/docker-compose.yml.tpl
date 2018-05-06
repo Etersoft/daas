@@ -6,7 +6,7 @@ services:
         build: 
            context: ./{{ node['node_name'] }}
            dockerfile: Dockerfile
-        image: {{ node['image-name'] }}
+        image: {{ node['image_name'] }}
         hostname: {{ node['node_name'] }}
         {%- if 'start_command' in node %}
         command: {{ node['start_command'] }}
@@ -14,6 +14,11 @@ services:
         networks:{% for net in project['sorted_networks'] %}
             {{net['name']}}:
                 ipv4_address: {{ node[net['name']] }}{% endfor %}
+        {%- if 'ports' in node and node['ports']|length > 0 %}
+        ports:
+        {%- for p in node['ports'] %}
+            - {{ p }}{% endfor %}
+        {%- endif %}
         {% if 'volumes' in node and node['volumes']|length > 0 %}
         volumes:
         {%- for v in node['volumes'] %}
