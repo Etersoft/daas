@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.1
-Release: alt0.3
+Release: alt0.4
 
 Group: System/Utilities
 License: MIT
@@ -50,6 +50,9 @@ cp -r docker-compose-gen/templates %buildroot%_datadir/%name
 # %doc README.md
 
 %changelog
+* Mon May 07 2018 Pavel Vainerman <pv@altlinux.ru> 0.1-alt0.4
+- added generate 'novnc' services
+
 * Sat May 05 2018 Pavel Vainerman <pv@altlinux.ru> 0.1-alt0.3
 - change format config file to 0.2
 

@@ -11,9 +11,11 @@ services:
         {%- if 'start_command' in node %}
         command: {{ node['start_command'] }}
         {%- endif %}
-        networks:{% for net in project['sorted_networks'] %}
-            {{net['name']}}:
-                ipv4_address: {{ node[net['name']] }}{% endfor %}
+        networks:
+            hostnet:
+        {%- for net in project['sorted_networks'] %}
+            {{net['name']}}: { ipv4_address: {{ node[net['name']] }} }
+        {%- endfor %}
         {%- if 'ports' in node and node['ports']|length > 0 %}
         ports:
         {%- for p in node['ports'] %}
@@ -29,7 +31,7 @@ services:
         {%- for v in node['devices'] %}
             - {{ v }}{% endfor %}
         {%- endif %}
-        {%- if 'environment' in node and node['environmen']|length > 0 %}
+        {%- if 'environment' in node and node['environment']|length > 0 %}
         environment:
         {%- for v in node['environment'] %}
             - {{ v }}{% endfor %}
@@ -45,8 +47,31 @@ services:
                 - "{{ host['node_name'] }}: {{ host['ip'] }}"{% endfor %}
         {%- endfor %}       
 
+    # noVNC services
+    {%- for node in project['nodes'] if not 'skip_compose' in node and 'novnc_port' in node %}
+    {{ node['node_name'] }}-novnc:
+        build: 
+           context: ./{{ node['node_name'] }}
+           dockerfile: Dockerfile.novnc
+        image: {{ project['name'] }}-novnc
+        hostname: novnc-{{ node['node_name'] }}
+        networks:
+            - hostnet
+        environment:
+             VNC_RUN_PARAMS: "--vnc {{ node['node_name'] }}:{{ node['vnc_port'] }} --listen {{ node['novnc_port'] }}"
+        ports:
+            - {{ node['novnc_port'] }}:{{ node['novnc_port'] }}
+    {%- endfor %}
+        
 networks:
-   {%- for net in project['sorted_networks'] %}
+    hostnet:
+        driver: bridge
+        driver_opts:
+            com.docker.network.enable_ipv6: "false"
+        ipam:
+            driver: default
+
+    {%- for net in project['sorted_networks'] %}
     {{net['name']}}:
         driver: bridge
         driver_opts:

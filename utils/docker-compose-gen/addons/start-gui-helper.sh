@@ -18,6 +18,7 @@ xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f /Xauthority/xserver.xau
 [ -z "$XFB_SCREEN" ] && XFB_SCREEN=1024x768x24
 [ -n "$XFB_SCREEN_DPI" ] && DPI_OPTIONS="-dpi $XFB_SCREEN_DPI"
 [ -z "$VNC_NO_SHARED" ] && VNC_SHARED='' || VNC_SHARED="-shared"
+[ -n "$VNC_PORT" ] || VNC_PORT=5900
 
 VNC_AUTH="-passwd $VNC_PASSWORD"
 if [ -n "$VNC_PASSWORD_FROM_FILE" ]; then
@@ -33,6 +34,6 @@ sleep 2
 # xsetroot -solid "#666699"
 # xsetroot -cursor_name left_ptr
 
-[ -z "$NO_RUN_VNC" ] && x11vnc -forever $VNC_AUTH -bg $VNC_SHARED -display $DISPLAY
+[ -z "$NO_RUN_VNC" ] && x11vnc -forever $VNC_AUTH -bg $VNC_SHARED -rfbport $VNC_PORT -display $DISPLAY
 
 $CMD $*

@@ -172,17 +172,25 @@ def make_copy_params(src):
 
 
 def make_unique_list(srclist):
-
     # с сохранением порядка
     return [el for el, _ in groupby(srclist)]
 
     # без сохранения порядка
     # return list(set(srclist))
 
+
 def get_vnc_ports(node):
     ret = list()
     if 'vnc_port' in node:
         p = '%s:%s' % (node['vnc_port'], node['vnc_port'])
+        ret.append(p)
+    return ret
+
+
+def get_vnc_environment(node):
+    ret = list()
+    if 'vnc_port' in node:
+        p = 'VNC_PORT=%s' % node['vnc_port']
         ret.append(p)
     return ret
 
@@ -223,7 +231,8 @@ def create_node(project, group, node):
 
     c['environment'] = make_unique_list(get_list(project, 'environment')
                                         + get_list(group, 'environment')
-                                        + get_list(node, 'environment'))
+                                        + get_list(node, 'environment')
+                                        + get_vnc_environment(node))
 
     c['env_file'] = make_unique_list(get_list(project, 'env_file')
                                      + get_list(group, 'env_file')
@@ -294,13 +303,23 @@ def make_dockerfile(dirname, node, project):
     dockerfile = os.path.join(dirname, 'Dockerfile')
     with open(dockerfile, 'w') as wfile:
         wfile.write(env.get_template(node['Dockerfile.tpl']).render(node=node, project=project))
-        wfile.write('\n')  # fix bug: jinja cuts off the last line feed
+
+
+def make_novnc_dockerfile(dirname, node, project):
+    if 'vnc_port' not in node:
+        return
+
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
+
+    dockerfile = os.path.join(dirname, 'Dockerfile.novnc')
+    with open(dockerfile, 'w') as wfile:
+        wfile.write(env.get_template('Dockerfile.novnc.tpl').render(node=node, project=project))
 
 
 def make_apt_sources_list(node, filename, tplname='sources.list.tpl'):
     with open(filename, 'w') as wfile:
         wfile.write(env.get_template(tplname).render(node=node))
-        wfile.write('\n')  # fix bug: jinja cuts off the last line feed
 
 
 def get_source_dir(name):
@@ -456,6 +475,9 @@ if __name__ == "__main__":
 
         # make Dockerfile
         make_dockerfile(dirname, n, project)
+
+        # make Dockerfile.novnc
+        make_novnc_dockerfile(dirname, n, project)
 
         # copy addons
         copy_addons('addons', dirname)
