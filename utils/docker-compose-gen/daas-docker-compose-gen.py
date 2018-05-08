@@ -7,6 +7,7 @@ import yaml
 from itertools import groupby
 import sys
 import os
+import socket
 import shutil
 
 sources_dirs = ['./', '.daas', '/usr/share/daas']
@@ -317,6 +318,43 @@ def make_novnc_dockerfile(dirname, node, project):
         wfile.write(env.get_template('Dockerfile.novnc.tpl').render(node=node, project=project))
 
 
+def make_nginx_node(dirname, project):
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
+
+    dockerfile = os.path.join(dirname, 'Dockerfile')
+    with open(dockerfile, 'w') as wfile:
+        wfile.write(env.get_template('Dockerfile.nginx.tpl').render(project=project))
+
+    confile = os.path.join(dirname, '%s-nginx.conf' % project['name'])
+    with open(confile, 'w') as wfile:
+        wfile.write(env.get_template('nginx.conf.tpl').render(project=project))
+
+    # copy addons
+    copy_addons('addons', dirname)
+
+
+def make_config_for_nginx(basedirname, node, project):
+    if 'novnc_port' not in node:
+        return
+
+    confdir = os.path.join(basedirname, 'vnc.d')
+
+    if not os.path.exists(confdir):
+        os.mkdir(confdir)
+
+    loc_confname = '%s-locations.conf' % node['node_name']
+
+    loc_outfile = os.path.join(confdir, loc_confname)
+    with open(loc_outfile, 'w') as wfile:
+        wfile.write(env.get_template('novnc-locations.conf.tpl').render(node=node, project=project))
+
+    upstream_confname = '%s-upstream.conf' % node['node_name']
+    upstream_outfile = os.path.join(confdir, upstream_confname)
+    with open(upstream_outfile, 'w') as wfile:
+        wfile.write(env.get_template('novnc-upstream.conf.tpl').render(node=node, project=project))
+
+
 def make_apt_sources_list(node, filename, tplname='sources.list.tpl'):
     with open(filename, 'w') as wfile:
         wfile.write(env.get_template(tplname).render(node=node))
@@ -400,6 +438,17 @@ if __name__ == "__main__":
     project['sorted_networks'] = sorted_networks(project)
     project['extra_hosts'] = make_hosts(project)
     project['nodes'] = make_project_nodes(project)
+    if 'VSTAND_HOSTNAME' in os.environ:
+        project['stand_hostname'] = os.environ['VSTAND_HOSTNAME']
+    else:
+        project['stand_hostname'] = socket.gethostbyaddr(socket.gethostname())[0]
+
+    # check require nginx
+    project['required_nginx'] = False
+    for node in project['nodes']:
+        if 'novnc_port' in node:
+            project['required_nginx'] = True
+            break
 
     # [command]: docker-add-host
     if check_arg_param(['docker-add-host']):
@@ -459,14 +508,19 @@ if __name__ == "__main__":
     with open(dc_file, 'w') as wfile:
         wfile.write(env.get_template('docker-compose.yml.tpl').render(project=project))
 
+    # make nginx container
+    if project['required_nginx']:
+        nginxdir = os.path.join(outdir, 'nginx')
+        make_nginx_node(nginxdir, project)
+
     # make directories and configs
     for n in project['nodes']:
         dirname = os.path.join(outdir, n['node_name'])
         if not os.path.exists(dirname):
             os.mkdir(dirname)
 
-        # make addons for gui (nginx, vnc config)
-        # ....
+        # make conf for nginx
+        make_config_for_nginx(nginxdir, n, project)
 
         # gen sources list
         if n['apt']['sources_list_filename']:

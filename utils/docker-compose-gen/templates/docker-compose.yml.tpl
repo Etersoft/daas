@@ -62,6 +62,20 @@ services:
         ports:
             - {{ node['novnc_port'] }}:{{ node['novnc_port'] }}
     {%- endfor %}
+    
+    {%- if project['required_nginx'] %}
+    nginx:
+        build: 
+           context: ./nginx
+           dockerfile: Dockerfile
+        image: {{ project['name'] }}-nginx
+        hostname: nginx
+        tty: true
+        networks:
+            - hostnet
+        ports:
+            - 80:80
+    {%- endif %}
         
 networks:
     hostnet:
