@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.1
-Release: alt0.5
+Release: alt0.6
 
 Group: System/Utilities
 License: MIT
@@ -50,6 +50,9 @@ cp -r docker-compose-gen/templates %buildroot%_datadir/%name
 # %doc README.md
 
 %changelog
+* Thu May 10 2018 Pavel Vainerman <pv@altlinux.ru> 0.1-alt0.6
+- added logdb container
+
 * Tue May 08 2018 Pavel Vainerman <pv@altlinux.ru> 0.1-alt0.5
 - added nginx container
 

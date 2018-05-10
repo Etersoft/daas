@@ -10,7 +10,11 @@ RUN apt-get update && apt-get -y install nginx \
 
 COPY run-nginx.sh /usr/local/bin/
 COPY *nginx.conf /etc/nginx/sites-enabled.d/
+
 RUN mkdir -p /etc/nginx/vnc.d/
 COPY vnc.d/* /etc/nginx/vnc.d/
+
+RUN mkdir -p /etc/nginx/logdb.d/
+COPY logdb.d/* /etc/nginx/logdb.d/
 
 CMD ["run-nginx.sh"]

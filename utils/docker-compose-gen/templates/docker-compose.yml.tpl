@@ -76,6 +76,34 @@ services:
         ports:
             - 80:80
     {%- endif %}
+    
+    {%- if project['required_logdb'] and not 'skip_compose' in project['logdb'] %}
+    logdb:
+        build: 
+           context: ./logdb
+           dockerfile: Dockerfile
+        image: {{ project['name'] }}-logdb
+        hostname: logdb
+        tty: true
+        networks:
+            - hostnet
+        ports:
+            - {{ project['logdb']['port'] }}:{{ project['logdb']['port'] }} 
+        {% if 'db_disable' not in project['logdb'] %}
+        volumes:
+            - ./logdb/logdb:/var/logdb
+        {%- endif %}
+        environment:
+            {%- if 'debug' in project['logdb'] and project['logdb']['debug'].lower() != 'none' %}
+            - LOGDB_LOG="{{ project['logdb']['debug'] }}"
+            {%- endif %}
+            {%- if 'db_disable' in project['logdb'] %}
+            - LOGDB_DB_DISABLE=--logdb-db-disable
+            {%- endif %}
+            - LOGDB_HOST=logdb
+            - LOGDB_PORT={{ project['logdb']['port'] }}
+            - LOGDB_EXTPARAMS=--logdb-httpserver-reply-addr {{ project['stand_hostname'] }}
+    {%- endif %}
         
 networks:
     hostnet:

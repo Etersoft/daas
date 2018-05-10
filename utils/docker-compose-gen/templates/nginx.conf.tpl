@@ -2,6 +2,7 @@
 #deny  all;
 
 include vnc.d/*-upstream.conf;
+include logdb.d/*-upstream.conf;
 
 # default server
 server {
@@ -10,5 +11,7 @@ server {
 
 	# vnc
 	include vnc.d/*-locations.conf;
+	
+	# logdb
+	include logdb.d/*-locations.conf;
 }
-

@@ -330,8 +330,44 @@ def make_nginx_node(dirname, project):
     with open(confile, 'w') as wfile:
         wfile.write(env.get_template('nginx.conf.tpl').render(project=project))
 
+    # make logdb configs
+    logdbconfdir = os.path.join(dirname, 'logdb.d')
+    if not os.path.exists(logdbconfdir):
+        os.mkdir(logdbconfdir)
+
+    if project['required_logdb']:
+        logdb_upstream = os.path.join(logdbconfdir, '%s-logdb-upstream.conf' % project['name'])
+        with open(logdb_upstream, 'w') as wfile:
+            wfile.write(env.get_template('logdb-upstream.conf.tpl').render(project=project))
+
+        logdb_locations = os.path.join(logdbconfdir, '%s-logdb-locations.conf' % project['name'])
+        with open(logdb_locations, 'w') as wfile:
+            wfile.write(env.get_template('logdb-locations.conf.tpl').render(project=project))
+
     # copy addons
     copy_addons('addons', dirname)
+
+
+def make_logdb_node(dirname, project):
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
+
+    dockerfile = os.path.join(dirname, 'Dockerfile')
+    with open(dockerfile, 'w') as wfile:
+        wfile.write(env.get_template('Dockerfile.logdb.tpl').render(project=project))
+
+    # make logdb-conf.xml
+    confile = os.path.join(dirname, '%s-logdb-conf.xml' % project['name'])
+    with open(confile, 'w') as wfile:
+        wfile.write(env.get_template('logdb-conf.xml.tpl').render(project=project).encode('utf-8'))
+
+    # copy addons
+    copy_addons('addons', dirname)
+
+    # create logdb directory
+    dbdir = os.path.join(dirname, 'logdb')
+    if not os.path.exists(dbdir):
+        os.mkdir(dbdir)
 
 
 def make_config_for_nginx(basedirname, node, project):
@@ -443,12 +479,26 @@ if __name__ == "__main__":
     else:
         project['stand_hostname'] = socket.gethostbyaddr(socket.gethostname())[0]
 
-    # check require nginx
+    # check require 'nginx'
     project['required_nginx'] = False
     for node in project['nodes']:
         if 'novnc_port' in node:
             project['required_nginx'] = True
             break
+
+    # check require 'logdb'
+    project['required_logdb'] = False
+    if 'logdb' in project and 'disable' not in project['logdb']:
+        for node in project['nodes']:
+            if 'logservers' in node and len(node['logservers']) > 0:
+                project['required_logdb'] = True
+                break
+
+    if project['required_logdb']:
+        project['required_nginx'] = True
+
+    if project['required_logdb'] and 'port' not in project['logdb']:
+        project['logdb']['port'] = 42000  # <-- просто какое-то число
 
     # [command]: docker-add-host
     if check_arg_param(['docker-add-host']):
@@ -507,6 +557,11 @@ if __name__ == "__main__":
     dc_file = os.path.join(outdir, 'docker-compose.yml')
     with open(dc_file, 'w') as wfile:
         wfile.write(env.get_template('docker-compose.yml.tpl').render(project=project))
+
+    # make logdb container
+    if project['required_logdb']:
+        logdbdir = os.path.join(outdir, 'logdb')
+        make_logdb_node(logdbdir, project)
 
     # make nginx container
     if project['required_nginx']:
