@@ -318,9 +318,31 @@ def make_novnc_dockerfile(dirname, node, project):
         wfile.write(env.get_template('Dockerfile.novnc.tpl').render(node=node, project=project))
 
 
+def create_apt_configs(node):
+    if 'apt' not in node:
+        node['apt'] = dict()
+
+    if 'packages' not in node['apt']:
+        node['apt']['packages'] = list()
+
+    if 'sources' not in node['apt']:
+        node['apt']['sources'] = list()
+
+    node['apt']['sources_list_filename'] = None
+
+
 def make_nginx_node(dirname, project):
     if not os.path.exists(dirname):
         os.mkdir(dirname)
+
+    if 'nginx' not in project:
+        return
+
+    nginx = project['nginx']
+    create_apt_configs(nginx)
+
+    if len(nginx['apt']['sources']) > 0:
+        nginx['apt']['sources_list_filename'] = 'nginx-sources.list'
 
     dockerfile = os.path.join(dirname, 'Dockerfile')
     with open(dockerfile, 'w') as wfile:
@@ -329,6 +351,11 @@ def make_nginx_node(dirname, project):
     confile = os.path.join(dirname, '%s-nginx.conf' % project['name'])
     with open(confile, 'w') as wfile:
         wfile.write(env.get_template('nginx.conf.tpl').render(project=project))
+
+    # gen sources list
+    if nginx['apt']['sources_list_filename']:
+        apt_sourcefile = os.path.join(dirname, nginx['apt']['sources_list_filename'])
+        make_apt_sources_list(nginx, apt_sourcefile)
 
     # make logdb configs
     logdbconfdir = os.path.join(dirname, 'logdb.d')
@@ -349,12 +376,27 @@ def make_nginx_node(dirname, project):
 
 
 def make_logdb_node(dirname, project):
+    if 'logdb' not in project:
+        return
+
+    logdb = project['logdb']
+
     if not os.path.exists(dirname):
         os.mkdir(dirname)
+
+    create_apt_configs(logdb)
+
+    if len(logdb['apt']['sources']) > 0:
+        logdb['apt']['sources_list_filename'] = 'logdb-sources.list'
 
     dockerfile = os.path.join(dirname, 'Dockerfile')
     with open(dockerfile, 'w') as wfile:
         wfile.write(env.get_template('Dockerfile.logdb.tpl').render(project=project))
+
+    # gen sources list
+    if logdb['apt']['sources_list_filename']:
+        apt_sourcefile = os.path.join(dirname, logdb['apt']['sources_list_filename'])
+        make_apt_sources_list(logdb, apt_sourcefile)
 
     # make logdb-conf.xml
     confile = os.path.join(dirname, '%s-logdb-conf.xml' % project['name'])
@@ -497,6 +539,12 @@ if __name__ == "__main__":
     if project['required_logdb']:
         project['required_nginx'] = True
 
+    if project['required_nginx'] and 'nginx' not in project:
+        project['nginx'] = dict()
+
+    if project['required_logdb'] and 'logdb' not in project:
+        project['logdb'] = dict()
+
     if project['required_logdb'] and 'port' not in project['logdb']:
         project['logdb']['port'] = 42000  # <-- просто какое-то число
 
@@ -564,8 +612,8 @@ if __name__ == "__main__":
         make_logdb_node(logdbdir, project)
 
     # make nginx container
+    nginxdir = os.path.join(outdir, 'nginx')
     if project['required_nginx']:
-        nginxdir = os.path.join(outdir, 'nginx')
         make_nginx_node(nginxdir, project)
 
     # make directories and configs

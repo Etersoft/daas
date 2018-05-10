@@ -12,7 +12,10 @@ logdb:
   port: 6000
   # db_disable: yes
   debug: none
-  
+  apt:
+    sources:
+      - "rpm file://updates/xxx"
+      
 # global volumes
 volumes:
   - /var/run/docker.sock:/var/run/docker.sock

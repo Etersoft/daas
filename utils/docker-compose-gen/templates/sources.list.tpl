@@ -1,3 +1,3 @@
-{% for s in node['apt']['sources'] %}
+{%- for s in node['apt']['sources'] %}
 {{ s }}
 {%- endfor %}
