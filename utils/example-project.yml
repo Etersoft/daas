@@ -8,6 +8,7 @@ networks:
 
 # Глобальные настройки logdb-сервера.
 logdb: 
+  ip: 250
   # skip_compose: yes
   port: 6000
   # db_disable: yes
@@ -15,7 +16,8 @@ logdb:
   apt:
     sources:
       - "rpm file://updates/xxx"
-      
+ 
+  
 # global volumes
 volumes:
   - /var/run/docker.sock:/var/run/docker.sock

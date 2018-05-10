@@ -70,11 +70,11 @@ services:
            dockerfile: Dockerfile
         image: {{ project['name'] }}-nginx
         hostname: nginx
+        ports:
+            - 80:80
         tty: true
         networks:
             - hostnet
-        ports:
-            - 80:80
     {%- endif %}
     
     {%- if project['required_logdb'] and not 'skip_compose' in project['logdb'] %}
@@ -85,8 +85,6 @@ services:
         image: {{ project['name'] }}-logdb
         hostname: logdb
         tty: true
-        networks:
-            - hostnet
         ports:
             - {{ project['logdb']['port'] }}:{{ project['logdb']['port'] }} 
         {% if 'db_disable' not in project['logdb'] %}
@@ -100,9 +98,18 @@ services:
             {%- if 'db_disable' in project['logdb'] %}
             - LOGDB_DB_DISABLE=--logdb-db-disable
             {%- endif %}
-            - LOGDB_HOST=logdb
+            - LOGDB_HOST=0.0.0.0
             - LOGDB_PORT={{ project['logdb']['port'] }}
             - LOGDB_EXTPARAMS=--logdb-httpserver-reply-addr {{ project['stand_hostname'] }}
+        networks:
+            hostnet:
+        {%- for net in project['sorted_networks'] %}
+            {{net['name']}}: { ipv4_address: {{ project['logdb'][net['name']] }} }
+        {%- endfor %}
+        extra_hosts:
+        {%- for host in project['extra_hosts'] %}
+                - "{{ host['node_name'] }}: {{ host['ip'] }}"
+        {%- endfor %}
     {%- endif %}
         
 networks:

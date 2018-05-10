@@ -13,6 +13,8 @@ import shutil
 sources_dirs = ['./', '.daas', '/usr/share/daas']
 FORMAT_VERSION = '0.2'
 
+DEFAULT_LOGDB_SERVICE_IP = 250
+
 
 def check_arg_param(param):
     plist = list()
@@ -100,6 +102,12 @@ def make_hosts(project):
 
         for nodename, node in group['nodes'].items():
             hosts_list = hosts_list + add_host(project, nodename, node['ip'])
+
+    # if 'logdb' in project:
+    #     ip = DEFAULT_LOGDB_SERVICE_IP
+    #     if 'ip' in project['logdb']:
+    #         ip = project['logdb']['ip']
+    #     hosts_list = hosts_list + add_host(project, 'logdb', ip)
 
     hosts_list.sort()
     return hosts_list
@@ -389,6 +397,12 @@ def make_logdb_node(dirname, project):
     if len(logdb['apt']['sources']) > 0:
         logdb['apt']['sources_list_filename'] = 'logdb-sources.list'
 
+    if 'ip' not in logdb:
+        logdb['ip'] = DEFAULT_LOGDB_SERVICE_IP
+
+    for net in project['sorted_networks']:
+        logdb[net['name']] = make_ip(net['subnet'], logdb['ip'])
+
     dockerfile = os.path.join(dirname, 'Dockerfile')
     with open(dockerfile, 'w') as wfile:
         wfile.write(env.get_template('Dockerfile.logdb.tpl').render(project=project))
@@ -601,11 +615,6 @@ if __name__ == "__main__":
         print "Unknown command. Use -h for help"
         exit(1)
 
-    # make docker-compose.yml
-    dc_file = os.path.join(outdir, 'docker-compose.yml')
-    with open(dc_file, 'w') as wfile:
-        wfile.write(env.get_template('docker-compose.yml.tpl').render(project=project))
-
     # make logdb container
     if project['required_logdb']:
         logdbdir = os.path.join(outdir, 'logdb')
@@ -615,6 +624,11 @@ if __name__ == "__main__":
     nginxdir = os.path.join(outdir, 'nginx')
     if project['required_nginx']:
         make_nginx_node(nginxdir, project)
+
+    # make docker-compose.yml
+    dc_file = os.path.join(outdir, 'docker-compose.yml')
+    with open(dc_file, 'w') as wfile:
+        wfile.write(env.get_template('docker-compose.yml.tpl').render(project=project))
 
     # make directories and configs
     for n in project['nodes']:
