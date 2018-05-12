@@ -1,4 +1,4 @@
-#allow 192.168.3.0/24;
+allow 0.0.0.0/24;
 #deny  all;
 
 include vnc.d/*-upstream.conf;
