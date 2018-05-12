@@ -18,6 +18,9 @@ services:
         {%- endfor %}
         {%- if 'ports' in node and node['ports']|length > 0 %}
         ports:
+        {%- if 'ssh_port' in node %}
+            - {{ node['ssh_port'] }}:{{ node['ssh_internal_port'] }}
+        {%- endif %}
         {%- for p in node['ports'] %}
             - {{ p }}{% endfor %}
         {%- endif %}

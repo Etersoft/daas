@@ -222,6 +222,10 @@ def create_node(project, group, node):
     c['apt']['packages'] = list()
     c['apt']['sources_list_filename'] = None
 
+    if 'ssh_port' in node:
+        if 'ssh_internal_port' not in c:
+            c['ssh_internal_port'] = 22
+
     if 'skip_compose' in group:
         c['skip_compose'] = 'yes'
 
@@ -498,7 +502,7 @@ if __name__ == "__main__":
         usage()
         exit(-1)
 
-    cmd = sys.argv[1]
+    cmd = sys.argv[1].strip().lower()
 
     tpldirs = list()
     for d in sources_dirs:
@@ -612,8 +616,10 @@ if __name__ == "__main__":
         print "(image-name): ERROR: Not found node '%s'" % nodename
         exit(1)
 
-    # [command]: gen
-    if not check_arg_param(['gen']):
+
+    # --------------- command: GEN ------------------
+
+    if cmd != 'gen':
         print "Unknown command. Use -h for help"
         exit(1)
 
@@ -621,10 +627,6 @@ if __name__ == "__main__":
 
     if not os.path.exists(outdir):
         os.mkdir(outdir)
-
-    if get_arg_param(['gen']):
-        print "Unknown command. Use -h for help"
-        exit(1)
 
     # make logdb container
     if project['required_logdb']:

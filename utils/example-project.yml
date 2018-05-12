@@ -108,7 +108,8 @@ groups:
       station1: 
          ip: 1
          vnc_port: 5901
-         novnc_port: 6901 }
+         novnc_port: 6901 
+         ssh_port: 33
          logservers:
             - { name: "logserver5", port: 4444, cmd: "-s level2", description: 'Процесс управления N2' }
 
