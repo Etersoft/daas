@@ -474,13 +474,13 @@ def copy_addons(fromdir, todirname):
 
 
 def usage():
-    print "daas compose [-c|--confile] project.yml [options] command"
+    print "daas compose command [-c|--confile] project.yml [options]"
     print "Commands:"
     print "---------"
     print "gen              - Generate files for docker-compose"
     print "image-list       - Print list of images (bash format)"
     print "image-name node  - Print image name for node"
-    print "docker-add-host  - Print extra hosts in docker --add-host format"
+    print "docker-add-host  - Print extra hosts for docker (--add-host format)"
     print
     print "Options:"
     print "---------"
@@ -494,6 +494,12 @@ if __name__ == "__main__":
         usage()
         exit(0)
 
+    if len(sys.argv) < 2:
+        usage()
+        exit(-1)
+
+    cmd = sys.argv[1]
+
     tpldirs = list()
     for d in sources_dirs:
         tpldirs.append(os.path.join(d, 'templates'))
@@ -504,7 +510,7 @@ if __name__ == "__main__":
 
     confile = get_arg_param(['--confile', '-c'], '')
     if len(confile) == 0:
-        print "ERROR: Unknown confile. Use [-h|--confile] filename"
+        print "ERROR: Unknown confile. Use [-c|--confile] filename"
         exit(1)
 
     conf = None
@@ -563,7 +569,7 @@ if __name__ == "__main__":
         project['logdb']['port'] = 42000  # <-- просто какое-то число
 
     # [command]: docker-add-host
-    if check_arg_param(['docker-add-host']):
+    if cmd == 'docker-add-host':
         ret = ''
         for h in project['extra_hosts']:
 
@@ -578,16 +584,21 @@ if __name__ == "__main__":
         exit(0)
 
     # [command]: image-list
-    if check_arg_param(['image-list']):
+    if cmd == 'image-list':
+        img_list = list()
         s = ''
         for node in project['nodes']:
-            s = '%s %s' % (s, node['image_name'])
+            img_list.append(node['image_name'])
+
+        uniq_list = make_unique_list(img_list)
+        for n in uniq_list:
+            s = '%s %s' % (s, n)
 
         print s.strip()
         exit(0)
 
     # [command]: image-name
-    if check_arg_param(['image-name']):
+    if cmd == 'image-name':
         nodename = get_arg_param(['image-name'])
         if len(nodename) == 0:
             print "(image-name): Unknown node name. Use -h for help"
