@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.1
-Release: alt0.7
+Release: alt0.8
 
 Group: System/Utilities
 License: MIT
@@ -50,6 +50,9 @@ cp -r docker-compose-gen/templates %buildroot%_datadir/%name
 # %doc README.md
 
 %changelog
+* Sat May 12 2018 Pavel Vainerman <pv@altlinux.ru> 0.1-alt0.8
+- added 'ssh_port' for ssh access
+
 * Thu May 10 2018 Pavel Vainerman <pv@altlinux.ru> 0.1-alt0.7
 - added set ip for logdb and nginx containers
 

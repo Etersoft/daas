@@ -19,10 +19,10 @@ services:
         {%- if 'ports' in node and node['ports']|length > 0 %}
         ports:
         {%- if 'ssh_port' in node %}
-            - {{ node['ssh_port'] }}:{{ node['ssh_internal_port'] }}
+            - "{{ node['ssh_port'] }}:{{ node['ssh_internal_port'] }}"
         {%- endif %}
         {%- for p in node['ports'] %}
-            - {{ p }}{% endfor %}
+            - "{{ p }}{% endfor %}"
         {%- endif %}
         {% if 'volumes' in node and node['volumes']|length > 0 %}
         volumes:
@@ -63,7 +63,7 @@ services:
         environment:
              VNC_RUN_PARAMS: "--vnc {{ node['node_name'] }}:{{ node['vnc_port'] }} --listen {{ node['novnc_port'] }}"
         ports:
-            - {{ node['novnc_port'] }}:{{ node['novnc_port'] }}
+            - "{{ node['novnc_port'] }}:{{ node['novnc_port'] }}"
     {%- endfor %}
     
     {%- if project['required_nginx'] %}
@@ -74,7 +74,7 @@ services:
         image: {{ project['name'] }}-nginx
         hostname: nginx
         ports:
-            - 80:80
+            - "80:80"
         tty: true
         networks:
             - hostnet
@@ -89,7 +89,7 @@ services:
         hostname: logdb
         tty: true
         ports:
-            - {{ project['logdb']['port'] }}:{{ project['logdb']['port'] }} 
+            - "{{ project['logdb']['port'] }}:{{ project['logdb']['port'] }}"
         {% if 'db_disable' not in project['logdb'] %}
         volumes:
             - ./logdb/logdb:/var/logdb

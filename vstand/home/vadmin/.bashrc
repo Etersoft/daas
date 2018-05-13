@@ -8,3 +8,4 @@ if [ -r /etc/bashrc ]; then
 fi
 
 export TERM=xterm
+alias doc='docker-compose'
