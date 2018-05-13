@@ -47,6 +47,7 @@ before_command:
   - service xxx start
   
 groups:
+  
   simple: # specific group
     nodes:
       builder:

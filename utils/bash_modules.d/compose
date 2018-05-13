@@ -1,0 +1,27 @@
+#!/bin/sh
+
+module_help()
+{
+    daas-project -h
+}
+
+module_usage()
+{
+    echo "daas compose - module for generate docker compose files"
+    echo "Usage: daas compose [command] parameters"
+}
+
+[ -z "$1" ] && module_help && exit 1
+
+case $1 in
+    -h|--help|help)
+        module_help
+        exit 0
+        ;;
+    --usage|usage)
+        module_usage
+        exit 0
+        ;;
+esac       
+
+exec daas-project $@

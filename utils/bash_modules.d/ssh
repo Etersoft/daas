@@ -1,0 +1,59 @@
+#!/bin/sh
+
+DEFAULT_SSH_OPTIONS="-o StrictHostKeychecking=no"
+
+module_usage()
+{
+    echo "daas ssh - ssh module"
+    echo "Usage: daas ssh [command] parameters"
+}
+
+module_help()
+{
+    echo "daas ssh [ -c|--confile project.yml ] [user@]nodename [hostname] [ssh parameters]"
+    echo "Defaults:"
+    echo "  hostname=localhost, user=root, confile='.daas.yml' ssh_parameters='$DEFAULT_SSH_OPTIONS'"
+}
+
+[ -z "$1" ] && module_help && exit 1
+
+CONFILE=.daas.yml
+
+[ "$2" == "-c" ] && shift && CONFILE="$1" && shift
+[ "$2" == "--confile" ] && shift && CONFILE="$1" && shift
+
+CMD="$1"
+[ -z "$CMD" ] && module_help && exit 1
+
+case $CMD in
+    -h|--help|help)
+        module_help
+        exit 0
+        ;;
+    --usage|usage)
+        module_usage
+        exit 0
+        ;;
+esac
+NODENAME="$CMD"
+shift
+SSH_PORT=$(daas-project ssh-port $NODENAME -c $CONFILE)
+[ "$?" == "1" ] && echo "$SSH_PORT" && exit 1
+[ -z "$SSH_PORT" ] && echo $SSH_HELP && exit 1
+
+# default user for container
+USER="root@"
+if echo "$NODENAME" | grep -q '@'; then
+    USER=
+fi
+
+# Т.к. это обращение к проброшенным портам. То заходим на localhost
+NODENAME=localhost
+
+# Если дальше идут параметры для ssh то они должны начинаться с '-'
+# иначе трактуем следующий аргумент как указание узла (hostname)
+NEXT=${1:0:1};
+[ -n "$NEXT" ] && [ "$NEXT" != "-" ] && NODENAME="$1" && shift
+  
+echo "Run: ssh -p $SSH_PORT ${DEFAULT_SSH_OPTIONS} $* ${USER}${NODENAME}"
+exec ssh -p $SSH_PORT ${DEFAULT_SSH_OPTIONS} $* ${USER}${NODENAME}

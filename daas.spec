@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.1
-Release: alt0.8
+Release: alt1
 
 Group: System/Utilities
 License: MIT
@@ -15,7 +15,7 @@ Packager: Pavel Vainerman <pv@altlinux.org>
 
 BuildArch: noarch
 
-%add_findreq_skiplist %_datadir/%name/addons/* %_bindir/daas
+%add_findreq_skiplist %_datadir/%name/addons/* %_datadir/%name/bash_modules.d/* %_bindir/daas
 
 %py_requires yaml jinja2
 
@@ -33,13 +33,18 @@ Group of utilities for the organization of the devops
 mkdir -p -m755 %buildroot%_datadir/%name
 mkdir -p -m755 %buildroot%_bindir
 cp daas %buildroot%_bindir/
-cp docker-compose-gen/daas-docker-compose-gen.py %buildroot%_bindir/
+subst 's|datadir=.|datadir=%_datadir/%name|g' %buildroot%_bindir/daas
+
+cp daas-project/daas-project %buildroot%_bindir/
 cp example-project.yml %buildroot%_datadir/%name/
 
 mkdir -p -m755 %buildroot%_datadir/%name/addons
 mkdir -p -m755 %buildroot%_datadir/%name/templates
-cp -r docker-compose-gen/addons %buildroot%_datadir/%name/
-cp -r docker-compose-gen/templates %buildroot%_datadir/%name
+cp -r daas-project/addons %buildroot%_datadir/%name/
+cp -r daas-project/templates %buildroot%_datadir/%name
+
+mkdir -p -m755 %buildroot%_datadir/%name/bash_modules.d
+cp -r bash_modules.d %buildroot%_datadir/%name/
 
 
 %files
@@ -50,6 +55,9 @@ cp -r docker-compose-gen/templates %buildroot%_datadir/%name
 # %doc README.md
 
 %changelog
+* Sun May 13 2018 Pavel Vainerman <pv@altlinux.ru> 0.1-alt1
+- refactoring: use modules
+
 * Sat May 12 2018 Pavel Vainerman <pv@altlinux.ru> 0.1-alt0.8
 - added 'ssh_port' for ssh access
 

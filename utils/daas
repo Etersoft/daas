@@ -1,51 +1,38 @@
 #!/bin/sh
 
-usage()
-{
-cat<<EOF
-daas subsystem [command]"
-daas nodename [command] - enter to node a.k.a 'docker-compose exec nodename command'. Default command='bash'
+datadir=.
 
-subsystems: 
-  compose  - docker-compose subsytem (-h for help)
-  ansible  - ansible  subsytem (-h for help)
-  init     - init subsytem (-h for help)
-  gitlab   - subsytem (-h for help)
-
--h|--help - show this message
-EOF
-}
-
-[ -z "$1" ] && usage && exit 1
+export DAAS_DATADIR=${datadir}
 
 CMD="$1"
 
+usage()
+{
+    echo "daas module [command] parameters"
+    echo ""
+    echo "Use: daas module -h|--help|usage - for help module commands"
+    echo ""
+    echo "Available modules:"
+    echo "------------------"
+    MODULES=$( find ${datadir}/bash_modules.d/ -type f )
+    for m in $MODULES;
+    do
+	echo $(basename "$m")
+    done
+}
+
+[ -z "$CMD" ] && usage && exit 1
+
 case $CMD in
-    compose)
-        shift && daas-docker-compose-gen.py "$@" 
-        exit $?
-        ;;
-    ansible)
-	echo "Not yet"
-	exit 1
-        ;;
-
-    init)
-	echo "Not yet"
-	exit 1
-        ;;
-
-    gitlab-ci)
-	echo "Not yet"
-	exit 1
-        ;;
-
     -h|--help|help)
         usage
         ;;
-    *)
-        shift
-        [ -n "$1" ] && com="$*" || com="bash"
-        docker-compose exec "$1" ${com}
-        exit $?
 esac
+
+if ! test -f "${DAAS_DATADIR}/bash_modules.d/$CMD"; then
+    echo "Unknown command '$CMD'. Use -h|--help for help"
+    exit 1
+fi
+
+shift
+exec $DAAS_DATADIR/bash_modules.d/$CMD $@

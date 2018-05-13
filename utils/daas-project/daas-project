@@ -478,18 +478,19 @@ def copy_addons(fromdir, todirname):
 
 
 def usage():
-    print "daas compose command [-c|--confile] project.yml [options]"
+    print "daas-project command [ -c|--confile project.yml ] [options]"
     print "Commands:"
     print "---------"
-    print "gen              - Generate files for docker-compose"
-    print "image-list       - Print list of images (bash format)"
-    print "image-name node  - Print image name for node"
-    print "docker-add-host  - Print extra hosts for docker (--add-host format)"
+    print "gen                        - Generate files for docker-compose"
+    print "image-list                 - Print list of images (bash format)"
+    print "image-name nodename        - Print image name for nodename"
+    print "docker-add-host            - Print extra hosts for docker (--add-host format)"
+    print "ssh-port [user@]nodename   - Print ssh-port for nodename"
     print
     print "Options:"
     print "---------"
-    print "--image-registry name     - docker registry name to use in image name ([registry-name]/image-name)"
-    print "--image-postfix name      - postfix for use in image name (image-name[postfix])"
+    print "--image-registry name   - docker registry name to use in image name ([registry-name]/image-name)"
+    print "--image-postfix name    - postfix for use in image name (image-name[postfix])"
 
 
 if __name__ == "__main__":
@@ -512,9 +513,9 @@ if __name__ == "__main__":
         loader=FileSystemLoader(tpldirs)
     )
 
-    confile = get_arg_param(['--confile', '-c'], '')
-    if len(confile) == 0:
-        print "ERROR: Unknown confile. Use [-c|--confile] filename"
+    confile = get_arg_param(['--confile', '-c'], '.daas.yml')
+    if not os.path.exists(confile):
+        print "ERROR: Not found '.daas.yml'. Use [-c|--confile] filename"
         exit(1)
 
     conf = None
@@ -616,6 +617,27 @@ if __name__ == "__main__":
         print "(image-name): ERROR: Not found node '%s'" % nodename
         exit(1)
 
+    if cmd == 'ssh-port':
+        nodename = get_arg_param(['ssh-port'])
+        if '@' in nodename:
+            tmp = nodename.split('@')
+            nodename = tmp[1]
+
+        if len(nodename) == 0:
+            print "(ssh): Unknown node name. Use -h for help"
+            exit(1)
+
+        for node in project['nodes']:
+            if node['node_name'] == nodename:
+                if 'ssh_port' in node:
+                    print node['ssh_port']
+                    exit(0)
+                else:
+                    print "Unknown ssh port for node '%s'" % nodename
+                    exit(1)
+
+        print "(ssh): ERROR: Not found node '%s'" % nodename
+        exit(1)
 
     # --------------- command: GEN ------------------
 

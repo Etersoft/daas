@@ -1,0 +1,30 @@
+#!/bin/sh
+
+module_help()
+{
+    docker-compose exec -h
+}
+
+module_usage()
+{
+    echo "daas exec - docker-compose exec command"
+    echo "Usage: daas exec [params] nodename [command]"
+    echo "Default command: 'bash'"
+}
+
+[ -z "$1" ] && module_help && exit 1
+
+case $1 in
+    -h|--help|help)
+        module_help
+        exit 0
+        ;;
+    --usage|usage)
+        module_usage
+        exit 0
+        ;;
+esac       
+
+[ -n "$2" ] && CMD="$2" || CMD=bash
+
+exec docker-compose exec $1 $CMD
