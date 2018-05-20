@@ -24,6 +24,11 @@ services:
         {%- for p in node['ports'] %}
             - "{{ p }}{% endfor %}"
         {%- endif %}
+        {% if 'cap_add' in node and node['cap_add']|length > 0 %}
+        cap_add:
+        {%- for v in node['cap_add'] %}
+            - {{ v }}{% endfor %}
+        {%- endif %}
         {% if 'volumes' in node and node['volumes']|length > 0 %}
         volumes:
         {%- for v in node['volumes'] %}

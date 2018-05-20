@@ -184,7 +184,7 @@ groupX:
         - { name: "logserver2", port: 4444, cmd: "-s level2", description: 'Процесс управления N2' }
 
     mynode2: { ip: 2 }
-    mynode3: { ip: 3, vnc_port: 5900, novnc_port: 6900 }
+    mynode3: { ip: 3, vnc_port: 5900, novnc_port: 6900, ssh_port: 10003 }
 
 Свойства 'vnc_port' и novnc_port не является обязательными.
 Если задан 'vnc_port' то в итоговый docker-compose.yml этот порт добавляется в секцию 'ports:'.

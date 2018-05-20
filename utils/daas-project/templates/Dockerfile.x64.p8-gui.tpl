@@ -24,7 +24,7 @@ COPY {{ node['apt']['sources_list_filename'] }} /etc/apt/sources.list.d/
 RUN ( apt-get update || echo "ignore update packages error" ) && apt-get -y install {% for v in node['apt']['packages'] %}{{ v }} {% endfor %}&& apt-get clean
 {%- endif %}
 
-{%- if 'copy' in node and node['copy']|length > 0 %}
+{%- if 'copy' in node and node['copy'] and node['copy']|length > 0 %}
 # copyies for project
 {%- for v in node['copy'] %}
 COPY {{ v['src'] }} {{ v['dest'] }}

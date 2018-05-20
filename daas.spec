@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.1
-Release: alt1
+Release: alt2
 
 Group: System/Utilities
 License: MIT
@@ -55,6 +55,9 @@ cp -r bash_modules.d %buildroot%_datadir/%name/
 # %doc README.md
 
 %changelog
+* Sun May 20 2018 Pavel Vainerman <pv@altlinux.ru> 0.1-alt2
+- supported 'cap_add'
+
 * Sun May 13 2018 Pavel Vainerman <pv@altlinux.ru> 0.1-alt1
 - refactoring: use modules
 

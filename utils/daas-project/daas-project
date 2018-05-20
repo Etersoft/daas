@@ -237,6 +237,10 @@ def create_node(project, group, node):
                                     + get_list(group, 'volumes')
                                     + get_list(node, 'volumes'))
 
+    c['cap_add'] = make_unique_list(get_list(project, 'cap_add')
+                                    + get_list(group, 'cap_add')
+                                    + get_list(node, 'cap_add'))
+
     c['ports'] = make_unique_list(get_list(project, 'ports')
                                   + get_list(group, 'ports')
                                   + get_list(node, 'ports')
