@@ -383,9 +383,9 @@ def make_nginx_node(dirname, project):
         with open(logdb_upstream, 'w') as wfile:
             wfile.write(env.get_template('logdb-upstream.conf.tpl').render(project=project))
 
-        logdb_locations = os.path.join(logdbconfdir, '%s-logdb-locations.conf' % project['name'])
-        with open(logdb_locations, 'w') as wfile:
-            wfile.write(env.get_template('logdb-locations.conf.tpl').render(project=project))
+        logdb_location = os.path.join(logdbconfdir, '%s-logdb-location.conf' % project['name'])
+        with open(logdb_location, 'w') as wfile:
+            wfile.write(env.get_template('logdb-location.conf.tpl').render(project=project))
 
     # copy addons
     copy_addons('addons', dirname)
@@ -443,11 +443,11 @@ def make_config_for_nginx(basedirname, node, project):
     if not os.path.exists(confdir):
         os.mkdir(confdir)
 
-    loc_confname = '%s-locations.conf' % node['node_name']
+    loc_confname = '%s-location.conf' % node['node_name']
 
     loc_outfile = os.path.join(confdir, loc_confname)
     with open(loc_outfile, 'w') as wfile:
-        wfile.write(env.get_template('novnc-locations.conf.tpl').render(node=node, project=project))
+        wfile.write(env.get_template('novnc-location.conf.tpl').render(node=node, project=project))
 
     upstream_confname = '%s-upstream.conf' % node['node_name']
     upstream_outfile = os.path.join(confdir, upstream_confname)
@@ -552,9 +552,13 @@ if __name__ == "__main__":
 
     # check require 'nginx'
     project['required_nginx'] = False
+    if 'any' in project['nginx'] and len(project['nginx']['any']) > 0:
+        project['required_nginx'] = True
+
     for node in project['nodes']:
         if 'novnc_port' in node:
             project['required_nginx'] = True
+            project['nginx']['vnc'] = True
             break
 
     # check require 'logdb'
@@ -563,6 +567,7 @@ if __name__ == "__main__":
         for node in project['nodes']:
             if 'logservers' in node and len(node['logservers']) > 0:
                 project['required_logdb'] = True
+                project['nginx']['logdb'] = True
                 break
 
     if project['required_logdb']:

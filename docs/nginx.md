@@ -14,7 +14,9 @@ http://stand-hostname/vnc/_node_name_  - доступ к графике (vnc) н
 
 Настройка сервиса nginx
 ========================
-Настройки для сервиса nginx находятся в глобальной секции настроек файла проекта
+Настройки для сервиса nginx находятся в глобальной секции настроек файла проекта.
+Эта секкция не является обязательной.
+
 nginx:
   apt:
     packages:
@@ -22,6 +24,52 @@ nginx:
       - curl
     sources:
       - "rpm http://my-updates/pub x86_64 my"
+      
+  any:
+    - myconf.location
+    - myconf.upstream
 
-Эта секкция не является обязательной. Но если есть необходимость достустановить пакеты или 
-установить более новые пакеты в это контейнер, то для этого предусмотрен раздел 'apt'
+Если есть необходимость достустановить пакеты или 
+установить более новые пакеты в этот контейнер, то для этого предусмотрен раздел 'apt'
+
+Секция 'any' позволяет добавлять в nginx свои конфигурационные файлы. В итоге они попадают в каталог
+/etc/nginx/any.d/
+При этом nginx.conf файле настройки разделяются на upstream-файлы и location-файлы.
+
+...
+include any.d/*-upstream.conf;
+
+# default server
+server {
+	listen  *:80 default_server;
+	...
+	
+	# any
+	include any.d/*-location.conf;
+}	
+
+Сами файлы должны находиться в каталоге addons, оттуда они будут копироваться при сборке контейнера nginx
+
+Пример my-location.conf
+
+    location /weblog/ {
+        proxy_redirect off;
+        proxy_pass http://weblog-backend/;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Server $host;
+        proxy_set_header x-forwarded-proto https;
+        proxy_set_header Host $host;
+        proxy_http_version 1.1;
+        proxy_read_timeout 15s;
+
+       proxy_set_header Upgrade $http_upgrade;
+       proxy_set_header Connection "upgrade";
+    }
+
+Пример my-upstream.conf
+
+    upstream weblog-backend {
+         server my-backend:8080 fail_timeout=0;
+    }

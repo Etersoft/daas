@@ -17,6 +17,10 @@ logdb:
     sources:
       - "rpm file://updates/xxx"
  
+nginx:
+  any:
+    - my-location.conf
+    - my-upstream.conf
   
 # global volumes
 volumes:
