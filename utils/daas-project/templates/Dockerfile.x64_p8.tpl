@@ -3,13 +3,9 @@
 # Version: 0.0.1
 FROM fotengauer/altlinux-p8
 MAINTAINER Pavel Vainerman <pv@etersoft.ru>
-RUN apt-get update \
-	&& apt-get -y install mc openssh-clients openssh-server console-scripts \
-	&& apt-get clean \
-	&& rm -rf /usr/share/doc/* \
+RUN rm -rf /usr/share/doc/* \
 	&& rm -rf /usr/share/man/* \
-	&& rm -rf /etc/apt/sources.list.d/* \
-	&& apt-get update
+	&& rm -rf /etc/apt/sources.list.d/*
 
 # set LANG for root
 COPY root.i18n /root/.i18n
