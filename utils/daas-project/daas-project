@@ -47,6 +47,25 @@ def get_arg_param(param, defval=""):
     return defval
 
 
+def check_static_network(project):
+    if 'networks' not in project:
+        return False
+
+    for netname in project['networks']:
+        net = project['networks'][netname]
+        if net and 'subnet' in net:
+            return True
+
+    return False
+
+
+def is_static_network(project):
+    if 'static_network' not in project:
+        project['static_network'] = check_static_network(project)
+
+    return project['static_network']
+
+
 def make_ip(subnet, ip):
     return "%s.%s" % (subnet, ip)
 
@@ -59,22 +78,26 @@ def make_host_item(nodename, ip):
 
 
 def sorted_networks(project):
+    if 'networks' not in project:
+        return list()
+
     netlist = list()
     klist = sorted(project['networks'].keys())
     networks = project['networks']
     for n in klist:
-
-        if 'subnet' not in networks[n]:
-            print "ERROR: Unknown subnet for %s" % str(n)
-            exit(1)
-
         net = dict()
         net['name'] = n
-        net['subnet'] = networks[n]['subnet']
-        if 'gateway' in networks[n]:
-            net['gateway'] = networks[n]['gateway']
 
-            netlist.append(net)
+        if is_static_network(project):
+            if 'subnet' not in networks[n]:
+                print "ERROR: Unknown subnet for %s" % str(n)
+                exit(1)
+
+            net['subnet'] = networks[n]['subnet']
+            if 'gateway' in networks[n]:
+                net['gateway'] = networks[n]['gateway']
+
+        netlist.append(net)
 
     return netlist
 
@@ -95,19 +118,13 @@ def add_host(project, name, ip):
 def make_hosts(project):
     hosts_list = list()
 
-    for groupname, group in project['groups'].items():
+    if is_static_network(project):
+        for groupname, group in project['groups'].items():
+            if 'nodes' not in group:
+                continue
 
-        if 'nodes' not in group:
-            continue
-
-        for nodename, node in group['nodes'].items():
-            hosts_list = hosts_list + add_host(project, nodename, node['ip'])
-
-    # if 'logdb' in project:
-    #     ip = DEFAULT_LOGDB_SERVICE_IP
-    #     if 'ip' in project['logdb']:
-    #         ip = project['logdb']['ip']
-    #     hosts_list = hosts_list + add_host(project, 'logdb', ip)
+            for nodename, node in group['nodes'].items():
+                hosts_list = hosts_list + add_host(project, nodename, node['ip'])
 
     hosts_list.sort()
     return hosts_list
@@ -206,8 +223,10 @@ def get_vnc_environment(node):
 
 def create_node(project, group, node):
     c = dict(node)
-    for net in project['sorted_networks']:
-        c[net['name']] = make_ip(net['subnet'], node['ip'])
+
+    if is_static_network(project):
+        for net in project['sorted_networks']:
+            c[net['name']] = make_ip(net['subnet'], node['ip'])
 
     imagename = get_param(project, group, node, 'image')
     if not imagename:
@@ -405,11 +424,12 @@ def make_logdb_node(dirname, project):
     if len(logdb['apt']['sources']) > 0:
         logdb['apt']['sources_list_filename'] = 'logdb-sources.list'
 
-    if 'ip' not in logdb:
-        logdb['ip'] = DEFAULT_LOGDB_SERVICE_IP
+    if is_static_network(project):
+        if 'ip' not in logdb:
+            logdb['ip'] = DEFAULT_LOGDB_SERVICE_IP
 
-    for net in project['sorted_networks']:
-        logdb[net['name']] = make_ip(net['subnet'], logdb['ip'])
+        for net in project['sorted_networks']:
+            logdb[net['name']] = make_ip(net['subnet'], logdb['ip'])
 
     dockerfile = os.path.join(dirname, 'Dockerfile')
     with open(dockerfile, 'w') as wfile:
@@ -542,6 +562,7 @@ if __name__ == "__main__":
 
     project['image-registry'] = get_arg_param(['--image-registry'], '')
     project['image-postfix'] = get_arg_param(['--image-postfix'], '')
+
     project['sorted_networks'] = sorted_networks(project)
     project['extra_hosts'] = make_hosts(project)
     project['nodes'] = make_project_nodes(project)

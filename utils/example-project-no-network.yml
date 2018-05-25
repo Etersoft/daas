@@ -1,10 +1,10 @@
 version: 0.2
 
 name: "myproject"
+
 networks:
-  # это не ip, это подсеть. Конкретный ip назначается у конкретного узла (см. ниже)
-  net1: { subnet: "192.168.81", gateway: "100" }
-  net2: { subnet: "192.168.82", gateway: "100" }
+  net1:
+  net2:
 
 # Глобальные настройки logdb-сервера.
 logdb: 

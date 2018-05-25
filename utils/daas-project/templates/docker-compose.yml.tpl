@@ -14,8 +14,12 @@ services:
         networks:
             hostnet:
         {%- for net in project['sorted_networks'] %}
+	    {%- if node[net['name']] %}
             {{net['name']}}: { ipv4_address: {{ node[net['name']] }} }
-        {%- endfor %}
+            {%- else %}
+            {{net['name']}}:
+            {%- endif -%}
+        {%- endfor -%}
         {%- if 'ports' in node and node['ports']|length > 0 %}
         ports:
         {%- if 'ssh_port' in node %}
@@ -24,12 +28,12 @@ services:
         {%- for p in node['ports'] %}
             - "{{ p }}{% endfor %}"
         {%- endif %}
-        {% if 'cap_add' in node and node['cap_add']|length > 0 %}
+        {%- if 'cap_add' in node and node['cap_add']|length > 0 %}
         cap_add:
         {%- for v in node['cap_add'] %}
             - {{ v }}{% endfor %}
         {%- endif %}
-        {% if 'volumes' in node and node['volumes']|length > 0 %}
+        {%- if 'volumes' in node and node['volumes']|length > 0 %}
         volumes:
         {%- for v in node['volumes'] %}
             - {{ v }}{% endfor %}
@@ -50,10 +54,12 @@ services:
             - {{ v }}{% endfor %}
         {%- endif %}
         tty: true
+        {% if 'extra_hosts' in project and project['extra_hosts']|length > 0 %}
         extra_hosts:
         {%- for host in project['extra_hosts'] %}
                 - "{{ host['node_name'] }}: {{ host['ip'] }}"{% endfor %}
-        {%- endfor %}       
+        {%- endif %}
+        {%- endfor %}
 
     # noVNC services
     {%- for node in project['nodes'] if not 'skip_compose' in node and 'novnc_port' in node %}
@@ -112,12 +118,18 @@ services:
         networks:
             hostnet:
         {%- for net in project['sorted_networks'] %}
+	    {%- if project['logdb'][net['name']] %}
             {{net['name']}}: { ipv4_address: {{ project['logdb'][net['name']] }} }
+            {%- else %}
+            {{net['name']}}:
+            {%- endif %}
         {%- endfor %}
+        {% if 'extra_hosts' in project and project['extra_hosts']|length > 0 %}
         extra_hosts:
         {%- for host in project['extra_hosts'] %}
                 - "{{ host['node_name'] }}: {{ host['ip'] }}"
         {%- endfor %}
+        {%- endif %}
     {%- endif %}
         
 networks:
@@ -135,9 +147,11 @@ networks:
             com.docker.network.enable_ipv6: "false"
         ipam:
             driver: default
+            {%- if net['subnet'] %}
             config:
                 - subnet: {{ net['subnet'] }}.0/24
                   {%- if 'gateway' in net %}
                   gateway: {{ net['subnet'] }}.{{ net['gateway'] }}
                   {%- endif %}
+            {% endif %}
    {% endfor %}       

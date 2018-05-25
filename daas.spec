@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
-Version: 0.1
-Release: alt3
+Version: 0.2
+Release: alt1
 
 Group: System/Utilities
 License: MIT
@@ -55,6 +55,9 @@ cp -r bash_modules.d %buildroot%_datadir/%name/
 # %doc README.md
 
 %changelog
+* Fri May 25 2018 Pavel Vainerman <pv@altlinux.ru> 0.2-alt1
+- supported 'no network section' (no ip, no subnet)
+
 * Sun May 20 2018 Pavel Vainerman <pv@altlinux.ru> 0.1-alt3
 - nginx: supported user configs (any.d)
 
