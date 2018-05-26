@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.2
-Release: alt1
+Release: alt2
 
 Group: System/Utilities
 License: MIT
@@ -31,6 +31,8 @@ Group of utilities for the organization of the devops
 
 %install
 mkdir -p -m755 %buildroot%_datadir/%name
+mkdir -p -m755 %buildroot%_datadir/%name/addons.d
+mkdir -p -m755 %buildroot%_datadir/%name/templates.d
 mkdir -p -m755 %buildroot%_bindir
 cp daas %buildroot%_bindir/
 subst 's|datadir=.|datadir=%_datadir/%name|g' %buildroot%_bindir/daas
@@ -55,6 +57,9 @@ cp -r bash_modules.d %buildroot%_datadir/%name/
 # %doc README.md
 
 %changelog
+* Fri May 25 2018 Pavel Vainerman <pv@altlinux.ru> 0.2-alt2
+- supported templates.d, addons.d
+
 * Fri May 25 2018 Pavel Vainerman <pv@altlinux.ru> 0.2-alt1
 - supported 'no network section' (no ip, no subnet)
 

@@ -7,9 +7,6 @@ RUN rm -rf /usr/share/doc/* \
 	&& rm -rf /usr/share/man/* \
 	&& rm -rf /etc/apt/sources.list.d/*
 
-# set LANG for root
-COPY root.i18n /root/.i18n
-
 {%- if node['apt']['sources_list_filename'] %}
 # project sources
 COPY {{ node['apt']['sources_list_filename'] }} /etc/apt/sources.list.d/
@@ -40,10 +37,6 @@ RUN chmod {{ v['chmod'] }} {{ v['dest'] }}
 RUN  {{ v }}
 {%- endfor %}
 {%- endif %}
-
-# start default services
-RUN service sshd start
-RUN service consolesaver start
 
 {%- if 'start_command' in node %}
 COPY {{ node['start_command'] }} /usr/bin/
