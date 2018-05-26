@@ -5,41 +5,38 @@
 В частности, на основе этого файла генерируются Dockerfile-ы для всех указанных узлов,
 а так же общий docker-compose.yml для запуска всего проекта.
 
-
 Структура файла проекта
 ------------------------
 Файл проекта представляет из себя файл в формате yaml и имеет следующую структуру:
-
+```yaml
 version: 0.2
-
-..общие параметры..
-
 ..глобальные настройки..
 
 groups:
   group1:
     nodes:
-      builder:
-	..параметры для узла сборки проекта..
+       builder:
+          ..параметры для узла сборки проекта..
      
-    tester:
-	..параметры для узла тестирования..
-     
+       tester:
+          ..параметры для узла тестирования..
+      
   group2:
-     ..общие параметры для узлов типа "group2"..
+    ..общие параметры для узлов типа "group2"..
      
-     nodes:
-        - node1
-           ..параметры для узла node1
-        - node2
-           ..параметры для узла node2
-        - nodeX
-           ..
+    nodes:
+      node1:
+         ..параметры для узла node1
+      node2:
+         ..параметры для узла node2
+      nodeX:
+         ..
+```
 
 Общие параметры описания проекта:
 ---------------------------------
 Структура имеет следующий вид
-
+```yaml
 name: "myproject"
 networks:
   net1: { subnet: "192.168.81", gateway: "100" }
@@ -52,151 +49,160 @@ logdb:
 
 nginx:
   ... nginx parameters.. см. nginx.md
+```
 
-name - название проекта
-networks - список подсетей которые будут доступны на узле. 
+* **name** - название проекта
+* **networks** - список подсетей которые будут доступны на узле. 
 Обратите внимание, что задаются не ip адреса, а именно подсети.
-gateway - задаёт ip шлюза.
+* **gateway** - задаёт ip шлюза.
 
 
 Области задания общих параметров
 ---------------------------------
 Существует три области задания параметров.
 
-1. Глобальная (задействуется для всех узлов в проекте)
+* Глобальная (задействуется для всех узлов в проекте)
 
+```yaml
+name: projectname
 ...global paramaters..
+```
 
-2. Параметры для всех узлов группы
- 
+* Параметры для всех узлов группы
+
+```yaml
   group1:
-      ..parameters for all nodes in group1..
+   ..parameters for all nodes in group1..
  
   group2:
-      ..parameters for all nodes in group2..
+   ..parameters for all nodes in group2..
+```
 
-3. Уровень конкретного узла
+* Уровень конкретного узла
 
-   group1:
-      ..
-      nodes:
-         - node1
-            ..параметры конкретного узла..
-         - node2
-            ..параметры конкретного узла..
-
+```yaml
+  group1:
+    ..
+    nodes:
+      node1:
+        ..параметры конкретного узла..
+      node2:
+        ..параметры конкретного узла..
+```
 Итоговые параметры попадающие в Dockerfile узла и docker-compose.yml складываются из этих трёх областей.
-            
+
 
 Доступные параметры
 --------------------
-  ...
+```yaml
+...
 
-  volumes:
-       - /var/run/docker.sock:/var/run/docker.sock
+volumes:
+  - /var/run/docker.sock:/var/run/docker.sock
 
-  devices:
-       - /rmp/dev1:/tmp/dev1
+devices:
+  - /rmp/dev1:/tmp/dev1
 
-  apt:
-    packages:
-      - mc
-      - libuniset2
-    sources:
-      - "rpm http://ftp.etersoft.ru/pub ALTLinux/p8/branch/x86_64 classic"
-      - "rpm http://ftp.etersoft.ru/pub ALTLinux/p8/branch/noarch classic"
+apt:
+   packages:
+     - mc
+     - libuniset2
+   sources:
+     - "rpm http://ftp.etersoft.ru/pub ALTLinux/p8/branch/x86_64 classic"
+     - "rpm http://ftp.etersoft.ru/pub ALTLinux/p8/branch/noarch classic"
 
-  start_command: "start-project.sh"
+start_command: "start-project.sh"
 
-  copy:
-    - '[a+r]testfile.copy:/tmp/testfile'
-    - '[a+rw]testfile2.copy:/tmp/'
+copy:
+   - '[a+r]testfile.copy:/tmp/testfile'
+   - '[a+rw]testfile2.copy:/tmp/'
     
-  before_command:
-    - rpm -Uhv myproejct.rpm
-    - myproject-config config
-    - ...
+before_command:
+   - rpm -Uhv myproejct.rpm
+   - myproject-config config
+   - ...
     
-  env_file:
-    - file1.env
-    - file2.env
+env_file:
+   - file1.env
+   - file2.env
 
-  environment:
-    - VAR1=VAL1
-    - VAR2=VAL2
+environment:
+   - VAR1=VAL1
+   - VAR2=VAL2
     
-  ports:
-    - port1:port2
-    - port3:port3
-    - port4:port5
-    
-volumes - Задаёт список проброса каталогов, который попадает в генерируемый docker-compose.yml
-devices - Задаёт список проброса устройств, который попадает в генерируемый docker-compose.yml
-ports - список пробрасываемых портов, который попадает в генерируемый docker-compose.yml
+ports:
+   - port1:port2
+   - port3:port3
+   - port4:port5
+```
+* **volumes** - Задаёт список проброса каталогов, который попадает в генерируемый docker-compose.yml
+* **devices** - Задаёт список проброса устройств, который попадает в генерируемый docker-compose.yml
+* **ports** - список пробрасываемых портов, который попадает в генерируемый docker-compose.yml
 
-apt - секция задающая параметры для apt
-  packages - список пакетов, которые необходимо установить. В итоговый Dockerfile попадает команда apt-get install ..packages..
-  sources - задаёт список репозиториев. В итоге в контейнер генерируется файл /etc/apt/sources.list.d/sources.list с указанным списком.
-
-start_command - CMD попадающая в итоговый Dockerfile.
-
-copy - задаёт список файлов которые будут скопированы в контейнер на этапе сборки образа. Позволяет указать права
-на получающийся файл "[mode]src:dest".
-В итоге каждый элемент преобразуется в команды: 
-COPY src dest
-RUN chmod xxxx dest
-
-before_command - команды преобразуемые в RUN в Dockerfile.
-env_file - Файлы с переменными окружения для контейнера. Итоговые настройки напрямую попадают в docker-compose.yml
-environment - переменные окружения для контейнера. Итоговые настройки напрямую попадают в docker-compose.yml
+* **apt** - секция задающая параметры для apt
+  * **packages** - список пакетов, которые необходимо установить. В итоговый Dockerfile попадает команда 
+            apt-get install ..packages..
+  * **sources** - задаёт список репозиториев. В итоге в контейнер генерируется файл /etc/apt/sources.list.d/sources.list с указанным списком.
+* **start_command** - CMD попадающая в итоговый Dockerfile.
+* **copy** - задаёт список файлов которые будут скопированы в контейнер на этапе сборки образа. Позволяет указать права
+на получающийся файл **"[mode]src:dest"**. В итоге каждый элемент преобразуется в команды: 
+```      
+ COPY src dest
+ RUN chmod xxxx dest
+```
+* **before_command** - команды преобразуемые в RUN в Dockerfile.
+* **env_file** - Файлы с переменными окружения для контейнера. Итоговые настройки напрямую попадают в docker-compose.yml
+* **environment** - переменные окружения для контейнера. Итоговые настройки напрямую попадают в docker-compose.yml
 
 Дополнительно для конкретного узла или группы узлов можно указать параметр
+```yaml  
   node1:
     skip_compose: yes
+```
 или
+```yaml
   group1:
     skip_compose: yes
     nodes:
        ...
-
+```
 Такой узел или группа узлов не будут включены в итоговый docker-compose.yml
 
 Параметры узла (node)
 ---------------------
-В случае если используется "статическая сеть" (см. network.md)
-для каждого узла обязетельно должен быть указан 'ip'. 
-При этом задаётся только "последняя" цифра адреса.
-Итоговый адрес формируется на основе секции 'networks' как {{subnet}}.{{ip}}
+В случае если используется "статическая сеть" (см. [network](docs/network.md))
+для каждого узла обязательно должен быть указан 'ip'. При этом задаётся только "последняя" цифра адреса.
+Итоговый адрес формируется на основе секции 'networks' как **subnet.ip**
 Пример:
+```yaml
+ groupX:
+   nodes:
+     mynode1: 
+       ip: 1
+       ssh_port: 10001
+       ssh_internal_port: 32
+       .. другие параметры переопределяющие или дополняющие глобальные для проекта и групповые..
+       apt:
+         packages:
+           - openssh-server
 
-groupX:
-  nodes:
-    mynode1: 
-      ip: 1
-      ssh_port: 10001
-      ssh_internal_port: 32
-      .. другие параметры переопределяющие или дополняющие глобальные для проекта и групповые..
-      apt:
-        packages:
-          - openssh-server
+       logservers:
+         - { name: "logserver1", port: 3333, cmd: "-s level1", description: 'Процесс управления N1' }
+         - { name: "logserver2", port: 4444, cmd: "-s level2", description: 'Процесс управления N2' }
 
-      logservers:
-        - { name: "logserver1", port: 3333, cmd: "-s level1", description: 'Процесс управления N1' }
-        - { name: "logserver2", port: 4444, cmd: "-s level2", description: 'Процесс управления N2' }
-
-    mynode2: { ip: 2 }
-    mynode3: { ip: 3, vnc_port: 5900, novnc_port: 6900, ssh_port: 10003 }
-
-Свойства 'vnc_port' и novnc_port не является обязательными.
-Если задан 'vnc_port' то в итоговый docker-compose.yml этот порт добавляется в секцию 'ports:'.
-Если помимо vnc_port задаётся и novnc_port, но при настройке виртуального стенда,
+     mynode2: { ip: 2 }
+     mynode3: { ip: 3, vnc_port: 5900, novnc_port: 6900, ssh_port: 10003 }
+```
+Свойств **vnc_port** и **novnc_port** не является обязательными.
+Если задан **vnc_port** то в итоговый docker-compose.yml этот порт добавляется в секцию **ports:**.
+Если помимо *vnc_port* задаётся и **novnc_port**, но при настройке виртуального стенда,
 этот порт будет использован как порт подключения к стенду "снаружи". См. так же раздел 
-документации по VNC (vnc.md).
+документации по [VNC](docs/vnc.md)
 
-'ssh_port' - Задаёт внешний порт (на машине стенда) который будет проброшен для доступа к контейнеру по ssh.
+**ssh_port** - Задаёт внешний порт (на машине стенда) который будет проброшен для доступа к контейнеру по ssh.
 Не обязательный параметр 'ssh_internal_port' задаёт куда пробрасывать. По умолчанию: ssh_internal_port=22
 (см. ssh.md)
 
-'logserver' - не обязательный параметр задающий список логсерверов для данного узла, 
-которые будут опрашиваться logdb (см. секцию 'logdb') и логи будут доступны через web-интерфейс
+**logserver** - не обязательный параметр задающий список логсерверов для данного узла, 
+которые будут опрашиваться logdb (см. секцию [logdb](docs/logdb.md) и логи будут доступны через web-интерфейс
 http://stand-node/logdb/ws
