@@ -4,19 +4,20 @@
 запуск специального контейнера nginx.
 В его задачи входит предоставление web-доступа к внутренним службам виртуального стенда.
 
-При своём запуске он занимает 80-ый порт и работает как прокси для внутрениих сервисов.
+При своём запуске он занимает 80-ый порт и работает как прокси для внутренних сервисов.
 Работа ведётся по адресу: http://stand-hostname/...
 
 На текущий момент доступны следующие сервисы
 
-http://stand-hostname/logdb/ws         - сервис просмотра логов во время тестирования (см. logdb.md)
-http://stand-hostname/vnc/_node_name_  - доступ к графике (vnc) на узле _node_name_  (см. novnc.md)
+* http://stand-hostname/logdb/ws         - сервис просмотра логов во время тестирования (см. [logdb](docs/logdb.md))
+* http://stand-hostname/vnc/_node_name_  - доступ к графике (vnc) на узле _node_name_  (см. [novnc](docs/novnc.md))
 
 Настройка сервиса nginx
 ========================
 Настройки для сервиса nginx находятся в глобальной секции настроек файла проекта.
-Эта секкция не является обязательной.
+Эта секция не является обязательной.
 
+```yaml
 nginx:
   apt:
     packages:
@@ -28,14 +29,17 @@ nginx:
   any:
     - myconf.location
     - myconf.upstream
+```
 
 Если есть необходимость доустановить пакеты или 
-установить более новые пакеты в этот контейнер, то для этого предусмотрен раздел 'apt'
+установить более новые пакеты в этот контейнер, то для этого предусмотрен раздел [apt](docs/apt.md)
 
-Секция 'any' позволяет добавлять в nginx свои конфигурационные файлы. В итоге они попадают в каталог
-/etc/nginx/any.d/
-При этом nginx.conf файле настройки разделяются на upstream-файлы и location-файлы.
+Секция *any* позволяет добавлять в nginx свои конфигурационные файлы. В итоге они попадают в каталог
+**/etc/nginx/any.d/**
 
+При этом *nginx.conf* файле настройки разделяются на upstream-файлы и location-файлы.
+
+```
 ...
 include any.d/*-upstream.conf;
 
@@ -47,11 +51,13 @@ server {
 	# any
 	include any.d/*-location.conf;
 }	
+```
 
-Сами файлы должны находиться в каталоге addons, оттуда они будут копироваться при сборке контейнера nginx
+Сами файлы должны находиться в каталоге [addons](docs/addons.md), оттуда они будут копироваться при сборке контейнера nginx
 
 Пример my-location.conf
 
+```
     location /weblog/ {
         proxy_redirect off;
         proxy_pass http://weblog-backend/;
@@ -67,9 +73,12 @@ server {
        proxy_set_header Upgrade $http_upgrade;
        proxy_set_header Connection "upgrade";
     }
+```
 
 Пример my-upstream.conf
 
+```
     upstream weblog-backend {
          server my-backend:8080 fail_timeout=0;
     }
+```
