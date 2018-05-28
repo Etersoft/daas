@@ -19,7 +19,7 @@
 - bugtracker (надо ли)
 - ВМ c docker (для развёртывания виртуальных тестовых стендов в замкнутой сети)
 - ansible
-- vagrant (может он будет внутри docker) для поднятия ВМ Virtualbox
+- vagrant (может он будет внутри docker) для поднятия ВМ Virtualbox ( а может minukube? https://habr.com/company/flant/blog/333470/ )
 - devops-api-server - REST API(единая точка входа для интерграции с jenkins, bugzilla, youtrack и т.п.)
 - какая-то backup система
 - мониторинг (grafana + netdata)
