@@ -234,9 +234,9 @@ def create_node(project, group, node):
     if not imagename:
         imagename = 'default'
 
-    c['Dockerfile.tpl'] = 'Dockerfile.%s.tpl' % imagename
+    c['Dockerfile.tpl'] = get_image_template(imagename)
     c['image'] = imagename
-    c['image_name'] = make_image_name(project, imagename)
+    c['image_name'] = make_image_name(project, get_image_name(imagename))
     c['start_command'] = get_param(project, group, node, 'start_command')
     c['apt'] = dict()
     c['apt']['sources'] = list()
@@ -325,13 +325,29 @@ def make_nodes(project, group):
 
 
 def make_image_name(project, imgname):
-    name = "%s-%s" % (project['name'], imgname)
+    name = "%s-%s" % (project['name'], get_image_name(imgname))
     if len(project['image-registry']) > 0:
         name = "%s/%s" % (project['image-registry'], name)
     if len(project['image-postfix']) > 0:
         name = "%s%s" % (name, project['image-postfix'])
 
     return name
+
+
+def get_image_name(iname):
+    if os.path.sep not in iname:
+        return iname
+
+    return iname.replace(os.path.sep, '.')
+
+
+def get_image_template(iname):
+    if os.path.sep not in iname:
+        return 'Dockerfile.%s.tpl' % iname
+
+    dirname = os.path.dirname(iname)
+    tname = 'Dockerfile.%s.tpl' % os.path.basename(iname)
+    return os.path.join(dirname, tname)
 
 
 def make_dockerfile(dirname, node, project):

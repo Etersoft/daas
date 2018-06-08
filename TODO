@@ -119,3 +119,8 @@ network:
 37. daas log get buildnum [gitlab-addr]
 Вообщем команда на получение логов сборки (artifacts)
 
+39 Всякие способы чистки
+docker images | grep -e '[23] weeks ago' | grep -v regis | awk '{print $1}' | xargs docker image rm
+
+# Самый крутой! Удаляет почти всё что можно..
+docker system prune
