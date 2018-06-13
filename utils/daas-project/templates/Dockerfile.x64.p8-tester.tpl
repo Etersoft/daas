@@ -8,8 +8,7 @@ RUN apt-get update && apt-get -y install uniset2-testsuite python-module-pip lib
     && apt-get clean \
     && rm -rf /etc/apt/sources.list.d/* \
     && apt-get update \
-    && pip install docker-compose==1.18.0 \
-    && pip install docker
+    && pip install docker-compose
 
 # set LANG for root
 COPY root.i18n /root/.i18n

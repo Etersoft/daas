@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.2
-Release: alt2
+Release: alt3
 
 Group: System/Utilities
 License: MIT
@@ -57,6 +57,9 @@ cp -r bash_modules.d %buildroot%_datadir/%name/
 # %doc README.md
 
 %changelog
+* Thu Jun 14 2018 Pavel Vainerman <pv@altlinux.ru> 0.2-alt3
+- remove "pip install docker" (because upgrade p8)
+
 * Fri May 25 2018 Pavel Vainerman <pv@altlinux.ru> 0.2-alt2
 - supported templates.d, addons.d
 
