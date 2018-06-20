@@ -597,6 +597,10 @@ if __name__ == "__main__":
     project['sorted_networks'] = sorted_networks(project)
     project['extra_hosts'] = make_hosts(project)
     project['nodes'] = make_project_nodes(project)
+
+    if 'net_name' not in project:
+        project['net_name'] = '%s_net' % project['name']
+
     if 'VSTAND_HOSTNAME' in os.environ:
         project['stand_hostname'] = os.environ['VSTAND_HOSTNAME']
     else:

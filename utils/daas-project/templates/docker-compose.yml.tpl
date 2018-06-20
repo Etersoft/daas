@@ -12,7 +12,7 @@ services:
         command: {{ node['start_command'] }}
         {%- endif %}
         networks:
-            hostnet:
+            {{ project['net_name'] }}:
         {%- for net in project['sorted_networks'] %}
 	    {%- if node[net['name']] %}
             {{net['name']}}: { ipv4_address: {{ node[net['name']] }} }
@@ -70,7 +70,7 @@ services:
         image: {{ project['name'] }}-novnc
         hostname: novnc-{{ node['node_name'] }}
         networks:
-            - hostnet
+            - {{ project['net_name'] }}
         environment:
              VNC_RUN_PARAMS: "--vnc {{ node['node_name'] }}:{{ node['vnc_port'] }} --listen {{ node['novnc_port'] }}"
         ports:
@@ -88,7 +88,7 @@ services:
             - "80:80"
         tty: true
         networks:
-            - hostnet
+            - {{ project['net_name'] }}
     {%- endif %}
     
     {%- if project['required_logdb'] and not 'skip_compose' in project['logdb'] %}
@@ -116,7 +116,7 @@ services:
             - LOGDB_PORT={{ project['logdb']['port'] }}
             - LOGDB_EXTPARAMS=--logdb-httpserver-reply-addr {{ project['stand_hostname'] }}
         networks:
-            hostnet:
+            {{ project['net_name'] }}:
         {%- for net in project['sorted_networks'] %}
 	    {%- if project['logdb'][net['name']] %}
             {{net['name']}}: { ipv4_address: {{ project['logdb'][net['name']] }} }
@@ -133,7 +133,7 @@ services:
     {%- endif %}
         
 networks:
-    hostnet:
+    {{ project['net_name'] }}:
         driver: bridge
         driver_opts:
             com.docker.network.enable_ipv6: "false"
