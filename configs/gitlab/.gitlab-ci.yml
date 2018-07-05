@@ -1,0 +1,329 @@
+variables:
+  # CI_DEBUG_TRACE: "true"
+  LOC_REGISTRY: "my-local-registry:5000"
+  CFGFILE: ".daas.yml"
+  ARTIFACTS_PATH: "artifacts"
+  APPDIR: "artifacts/compose"
+  APPDATADIR: "artifacts/compose/data"
+  RPM_PUB_DIR: "artifacts/compose/data/rpm/pub"
+  RPMS_DIR: "RPMS.${CI_PROJECT_NAME}"
+  BUILDER_IMAGE: "${LOC_REGISTRY}/${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}"
+  WEBLOG_BUILDER_IMAGE: "${LOC_REGISTRY}/${CI_PROJECT_NAME}-weblog"
+  WEBLOG_PROJECT_PATH: theatre/theatre-weblog.git
+  DBDIR: /srv/persistent_data/theatre-weblog/db
+  TSDBDIR: /srv/persistent_data/theatre/tsdb
+  TESTS_LOG_DIR: /tmp/logs
+  # какие тесты "запускать"
+  TESTS_PLAY_TAGS: "#basic"
+
+stages:
+  - configure
+  - prepare
+  - build
+  - test
+  - approval
+  - cleanup
+
+prepare common data for containers:
+  stage: configure
+  script:
+    - mkdir -p ${APPDIR} ${APPDATADIR}
+    - echo "Make docker-compose config.."
+    - echo ${PROJECT_PUB_KEY} > .daas/addons/theatre_vstand.pub
+    - daas compose gen --confile ${CFGFILE} --image-postfix "-${CI_COMMIT_REF_NAME}"
+    - cp -r ${CI_PROJECT_NAME}-compose/* ${APPDIR}/
+  tags:
+    - theatre-builder
+  only:
+    - /^ci-.*/
+    - master
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/${ARTIFACTS_PATH}/*
+    when: on_success
+    expire_in: 5d
+
+make builder:
+  stage: prepare
+  script:
+
+    # Pack source for use in containers..
+    - mkdir -p -m 'a=rwx' ${APPDATADIR}/source
+    - git archive --format=tar ${CI_COMMIT_SHA} | tar xf - -C ${APPDATADIR}/source
+    - IMAGE_NAME=$(daas compose image-name builder --confile ${CFGFILE} --image-postfix "-${CI_COMMIT_REF_NAME}")
+
+    # Make builder
+    - echo "make builder image --> ${IMAGE_NAME}"
+    - cd ${APPDIR}/builder
+    - docker build -t ${IMAGE_NAME} --rm -f Dockerfile .
+    - docker image tag ${IMAGE_NAME} ${BUILDER_IMAGE}
+    - docker push ${BUILDER_IMAGE}
+  tags:
+    - theatre-builder
+  only:
+    - /^ci-.*/
+    - master
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/${ARTIFACTS_PATH}/*
+    when: on_success
+    expire_in: 5d
+
+make weblog-builder:
+  stage: prepare
+  script:
+    # Make weblog builder
+    - WEBLOG_IMAGE_NAME=$(daas compose image-name weblog-builder --confile ${CFGFILE} --image-postfix "-${CI_COMMIT_REF_NAME}")
+    - echo "make weblog-builder image --> ${WEBLOG_IMAGE_NAME}"
+    - cd ${CI_PROJECT_DIR}/${APPDIR}/weblog-builder
+    - docker build -t ${WEBLOG_IMAGE_NAME} --rm -f Dockerfile .
+    - docker image tag ${WEBLOG_IMAGE_NAME} ${WEBLOG_BUILDER_IMAGE}
+    - docker push ${WEBLOG_BUILDER_IMAGE}
+  tags:
+    - theatre-builder
+  only:
+    - /^ci-.*/
+    - master
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/${ARTIFACTS_PATH}/*
+    when: on_success
+    expire_in: 5d
+
+build packages:
+  stage: build
+  image: ${BUILDER_IMAGE}
+  before_script:
+    - mkdir -p ${CI_PROJECT_DIR}/ccache
+    - export CCACHE_DIR="${CI_PROJECT_DIR}/ccache"
+    - mkdir -p ${ARTIFACTS_PATH}/logs
+  script:
+    - cd ${CI_PROJECT_DIR}
+    # build
+    - rpmbb --enable=vstand || ( cp -R $HOME/RPM/BUILD/* ${ARTIFACTS_PATH}/logs/; exit 1; )
+    # pack rpms
+    - mkdir -p ${ARTIFACTS_PATH}/${CI_PROJECT_NAME}.rpm
+    - cp -f $HOME/RPM/RPMS/x86_64/*.rpm ${ARTIFACTS_PATH}/${CI_PROJECT_NAME}.rpm
+  cache:
+    key: "${CI_PROJECT_NAME}"
+    untracked: true
+    paths:
+      - ${CI_PROJECT_DIR}/ccache
+  after_script:
+    - cp $HOME/RPM/log/*.log ${ARTIFACTS_PATH}/logs/
+
+  tags:
+    - theatre-docker-builder
+  only:
+    - /^ci-.*/
+    - master
+
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/${ARTIFACTS_PATH}/*
+    when: always
+    expire_in: 5d
+
+build weblog packages:
+  stage: build
+  image: ${WEBLOG_BUILDER_IMAGE}
+  before_script:
+    - mkdir -p ${ARTIFACTS_PATH}/logs
+  script:
+    - BASE_URL=$(echo $CI_REPOSITORY_URL | sed "s|\/*${CI_PROJECT_PATH}.*||")
+    - REPO_URL="${BASE_URL}/${WEBLOG_PROJECT_PATH}"
+    - git clone $REPO_URL theatre-weblog
+    - cd theatre-weblog
+    # build
+    - export DOCKER_BUILD=1
+    - rpmbb || ( cp -R $HOME/RPM/BUILD/* ${CI_PROJECT_DIR}/${ARTIFACTS_PATH}/logs/; exit 1; )
+    # pack rpms
+    - mkdir -p ${CI_PROJECT_DIR}/${ARTIFACTS_PATH}/weblog.rpm
+    - cp -f $HOME/RPM/RPMS/noarch/*.rpm ${CI_PROJECT_DIR}/${ARTIFACTS_PATH}/weblog.rpm/
+  after_script:
+    - cp $HOME/RPM/log/*.log ${CI_PROJECT_DIR}/${ARTIFACTS_PATH}/logs/
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/${ARTIFACTS_PATH}/*
+    when: always
+    expire_in: 5d
+  tags:
+    - theatre-docker-builder
+  only:
+    - /^ci-.*/
+    - master
+
+testing:
+  stage: test
+  before_script:
+    # init ssh-agent
+    - eval $(ssh-agent -s)
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_AGENT_PID" > ~/.ssh/${CI_COMMIT_SHA}.ssh_agent.pid
+    - echo "$PROJECT_PRIV_KEY" | tr -d '\r' | ssh-add - > /dev/null
+
+    # clean old logs
+    - mkdir -p ${TESTS_LOG_DIR}
+    - sudo rm -f ${TESTS_LOG_DIR}/* || echo "skip clean old logs"
+
+    # prepare data directory
+    - echo "${APPDATADIR}"
+    - mkdir -p -m 'a=rwx' ${APPDATADIR}
+
+    # prepare RPMS
+    - cd ${CI_PROJECT_DIR}
+    - mkdir -p ${RPM_PUB_DIR}/${RPMS_DIR}
+    - cp -f ${ARTIFACTS_PATH}/${CI_PROJECT_NAME}.rpm/*.rpm ${RPM_PUB_DIR}/${RPMS_DIR}
+    - cp -f ${ARTIFACTS_PATH}/weblog.rpm/*.rpm ${RPM_PUB_DIR}/${RPMS_DIR}
+    - mkdir -p ${RPM_PUB_DIR}/base
+    - genbasedir --progress --topdir=${CI_PROJECT_DIR}/${RPM_PUB_DIR} ./
+
+    # prepare db
+    - mkdir -p $DBDIR
+    - mkdir -p $TSDBDIR
+
+  script:
+    - cd ${CI_PROJECT_DIR}/${APPDIR}
+    # Stop containers if they are running
+    - docker-compose down || echo "skip down.."
+    # build containers
+    - docker-compose build --force-rm
+    # run containers
+    - docker-compose up -d
+    # run tests
+    - docker-compose exec -T tester sh /source/testsuite/start-tests.sh
+  after_script:
+    - SSH_AGENT_PID=$( cat ~/.ssh/${CI_COMMIT_SHA}.ssh_agent.pid ) || echo "skip get ssh-agent pid"
+    - kill $SSH_AGENT_PID || echo "kill ssh-agent skipped.."
+    - test -f ~/.ssh/${CI_COMMIT_SHA}.ssh_agent.pid && rm -f ~/.ssh/${CI_COMMIT_SHA}.ssh_agent.pid
+    - cd ${CI_PROJECT_DIR}
+    - export TEST_TIMESTAMP=$(date +'%Y-%m-%d-%H-%M')
+    - mkdir -p ${ARTIFACTS_PATH}/logs/tests
+    - echo "$CI_COMMIT_SHA" > ${ARTIFACTS_PATH}/logs/tests/commit
+    - echo "$TEST_TIMESTAMP" > ${ARTIFACTS_PATH}/logs/tests/timestamp
+    - cp -r ${TESTS_LOG_DIR}/* ${ARTIFACTS_PATH}/logs/tests/ || echo "skip copy logs"
+    - gzip ${ARTIFACTS_PATH}/logs/tests/*.* || echo "ignore gzip errors"
+    # удаляем логи
+    - sudo rm -rf ${TESTS_LOG_DIR}/* || echo "skip clean logs"
+    - sudo du -hs $DBDIR
+    - sudo du -hs $TSDBDIR
+  tags:
+    - theatre-builder
+  only:
+    - /^ci-.*/
+    - master
+
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/${ARTIFACTS_PATH}/*
+    when: always
+    expire_in: 5d
+
+Approval:
+  stage: approval
+  script:
+    - echo "codereview and approve"
+  when: manual
+  tags:
+    - theatre-builder
+  only:
+    - /^ci-.*/
+    - master
+
+manual stand up:
+  stage: test
+  when: manual
+  before_script:
+    # prepare environment
+    - echo "${APPDATADIR}"
+    - mkdir -p -m 'a=rwx' ${APPDATADIR}
+
+    # prepare db
+    - mkdir -p $DBDIR
+    - mkdir -p $TSDBDIR
+
+    # prepare RPMS
+    - cd ${CI_PROJECT_DIR}
+    - mkdir -p ${RPM_PUB_DIR}/${RPMS_DIR}
+    - cp -f ${ARTIFACTS_PATH}/${CI_PROJECT_NAME}.rpm/*.rpm ${RPM_PUB_DIR}/${RPMS_DIR}
+    - cp -f ${ARTIFACTS_PATH}/weblog.rpm/*.rpm ${RPM_PUB_DIR}/${RPMS_DIR}
+    - mkdir -p ${RPM_PUB_DIR}/base
+    - genbasedir --progress --topdir=${CI_PROJECT_DIR}/${RPM_PUB_DIR} ./
+
+  script:
+    - echo "Manual start containers"
+    - daas compose gen --confile ${CFGFILE} --image-postfix "-${CI_COMMIT_REF_NAME}"
+    - cd ${CI_PROJECT_DIR}/${APPDIR}
+    - export SSH_AUTH_SOCK=/dev/null TESTS_LOG_DIR=/tmp/logs
+    - docker-compose up -d
+  tags:
+    - theatre-builder
+
+
+auto cleanup:
+  stage: cleanup
+  when: always
+  script:
+    - echo "Stop & remove containers"
+    - cd ${CI_PROJECT_DIR}/${APPDIR}
+    - docker-compose down
+    - sudo rm -f ${CI_PROJECT_DIR}/${TESTS_LOG_DIR}/* || echo "skip clean old logs"
+    - docker image prune -f
+    - docker container prune -f
+    - docker volume prune -f
+    # - docker network prune -f
+  tags:
+    - theatre-builder
+  only:
+    - /^ci-.*/
+    - master
+
+manual cleanup:
+  stage: cleanup
+  when: manual
+  script:
+    - echo "Stop & remove containers"
+    - cd ${CI_PROJECT_DIR}/${APPDIR}
+    - docker-compose down
+    - sudo rm -rf ${CI_PROJECT_DIR}/${TESTS_LOG_DIR}/* || echo "skip clean old logs"
+    - docker image prune -f
+    - docker container prune -f
+    - docker volume prune -f
+    # - docker network prune -f
+  tags:
+    - theatre-builder
+  only:
+    - /^ci-.*/
+    - master
+
+cleanup PostgreSQL:
+  stage: cleanup
+  when: manual
+  script:
+    - echo "Remove persistent database for weblog"
+    - cd ${CI_PROJECT_DIR}/${APPDIR}
+    - docker-compose down
+    - echo "remove $DBDIR"
+    - sudo rm -rf $DBDIR || echo "skip remove database"
+  tags:
+    - theatre-builder
+  only:
+    - /^ci-.*/
+    - master
+
+cleanup TSDB:
+  stage: cleanup
+  when: manual
+  script:
+    - echo "Remove persistent TSDB database for weblog"
+    - cd ${CI_PROJECT_DIR}/${APPDIR}
+    - docker-compose down
+    - echo "remove $TSDBDIR"
+    - sudo rm -rf $TSDBDIR || echo "skip remove TSDB"
+  tags:
+    - theatre-builder
+  only:
+    - /^ci-.*/
+    - master
+

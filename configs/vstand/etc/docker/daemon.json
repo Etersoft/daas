@@ -1,0 +1,12 @@
+{
+	"insecure-registries":["local-docker-registry:5000"],
+	"storage-driver": "overlay2",
+	"init-path": "/usr/bin/tini",
+	"userland-proxy-path": "/usr/bin/docker-proxy",
+	"default-runtime": "docker-runc",
+	"runtimes": {
+		"docker-runc": {
+			"path": "/usr/bin/runc"
+		}
+	}
+}
