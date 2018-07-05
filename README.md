@@ -72,3 +72,4 @@ devops-api-server
 * [Унифицированный доступ к узлам через web-интерфейс (nginx)](docs/nginx.md)
 * [Доступ к графическому интерфейсу через браузер (novnc)](docs/novnc.md)
 * [Доступ к логам процессов на узлах](docs/logdb.md)
+* [Работа с gitlab](docs/gitlab.md)
