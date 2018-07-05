@@ -608,7 +608,7 @@ if __name__ == "__main__":
 
     # check require 'nginx'
     project['required_nginx'] = False
-    if 'any' in project['nginx'] and len(project['nginx']['any']) > 0:
+    if 'nginx' in project and 'any' in project['nginx'] and len(project['nginx']['any']) > 0:
         project['required_nginx'] = True
 
     for node in project['nodes']:
