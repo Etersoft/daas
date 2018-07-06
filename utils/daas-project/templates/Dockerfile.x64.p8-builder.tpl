@@ -45,6 +45,8 @@ RUN  {{ v }}
 # start default services
 RUN service consolesaver start
 
+COPY daas-build-helper.sh /usr/local/bin/
+
 # prepare build user
 ARG USER=builder
 ARG HOME=/home/$USER
@@ -53,6 +55,8 @@ ARG TMPDIR=$HOME/tmp
 RUN useradd builder
 RUN control su public
 COPY .rpmmacros $HOME/
+
+
 RUN mkdir -p $TMPDIR
 
 RUN chown $USER:$USER $HOME/.rpmmacros $TMPDIR
@@ -60,9 +64,11 @@ ENV USER="$USER" TMP="$TMPDIR" TMPDIR="$TMPDIR" GCC_USE_CCACHE=1 CCACHE_DIR="$HO
 
 USER "$USER"
 
-{%- if 'start_command' in node %}
+{%- if 'start_command' in node and node['start_command'] != None %}
+# node start command
 COPY {{ node['start_command'] }} /usr/bin/
 CMD ["{{ node['start_command'] }}"]
 {% else %}
-CMD ["/bin/bash"]
+COPY daas-builder-start.sh /usr/bin/
+CMD ["/usr/bin/daas-builder-start.sh"]
 {%- endif %}

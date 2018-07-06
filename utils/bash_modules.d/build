@@ -1,0 +1,148 @@
+#!/bin/sh
+
+[ -n "$DAAS_DEBUG" ] && set -x
+
+BUILDER=
+
+[ -z "$DAAS_OUTDIR" ] && DAAS_OUTDIR='daas-build'
+DAAS_BUILD_USER='builder'
+DATADIR='/data'
+
+module_usage()
+{
+    echo " "
+    echo "Usage: build builder_name [build_command | clean] [params...]"
+    echo "  "
+    echo "builder_name  - name of builder container (in daas.yml)"
+    echo "build_command - command for build in container."
+    echo "clean         - remove build directory"
+}
+
+module_help()
+{
+   module_usage
+}
+
+module_error()
+{
+    echo "$1"
+    exit 1
+}
+
+prepare_sources()
+{
+    COMMIT=$1
+    OUTDIR=$2
+    #git archive --format=tar $COMMIT | tar xf - -C $OUTDIR
+    #rm -rf $OUTDIR/*
+    #git archive --format=tar --output $OUTDIR/source.tar.gz $COMMIT
+    
+    mkdir -p $OUTDIR/git-$COMMIT
+
+    # для rpmbb нужно, чтобы каталог git тоже копировался (т.к. идёт сборка из git)
+    git clone $(git rev-parse --show-toplevel) $OUTDIR/git-$COMMIT
+    tar -cf $OUTDIR/source.tar -C $OUTDIR/git-$COMMIT .
+    rm -rf $OUTDIR/git-$COMMIT
+}
+
+prepare_environment()
+{
+#    PROJECT_NAME=$( daas-project name )
+#    export DAAS_OUTDIR="build-${PROJECT_NAME}"
+    export DAAS_OUTDIR
+    WORKDIR=$( pwd )
+
+    daas-project gen
+    if ! test -d $DAAS_OUTDIR/$BUILDER; then
+       module_error "Not found builder '$BUILDER'"
+    fi
+    
+    BUILDER_DIR=$WORKDIR/$DAAS_OUTDIR/${BUILDER}
+    SOURCEDIR="$WORKDIR/$DAAS_OUTDIR/${BUILDER}/${DATADIR}"
+    RPMDIR="$WORKDIR/$DAAS_OUTDIR/$BUILDER/RPM"
+}
+
+run_build()
+{
+    BUILD_CMD="$@"
+    echo "in container '$BUILDER' run build command '$BUILD_CMD'"
+    prepare_environment
+
+    mkdir -p $SOURCEDIR
+    mkdir -p ${RPMDIR}
+    # чтобы пользователь под которым происходит сборка мог писать в этим каталоги
+    # т.к по умолчанию они монтируются под root
+    chmod a+rw ${RPMDIR}
+    chmod a+rw ${SOURCEDIR}
+
+    COMMIT=$(git log -1 --pretty=format:"%h")
+    GIT_ROOT=$(git rev-parse --show-toplevel)
+    cd $GIT_ROOT
+    prepare_sources "$COMMIT" "$SOURCEDIR"
+    cd -
+    
+    BUILD_ENV="-e DAAS_BUILD_USER=$DAAS_BUILD_USER -e DATADIR=$DATADIR -e SOURCE=$DATADIR/source.tar -e DAAS_DEBUG=$DAAS_DEBUG"
+
+    cd $DAAS_OUTDIR/$BUILDER
+       docker-compose build --force-rm || return 1
+       docker-compose run $BUILD_ENV -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER daas-build-helper.sh prepare || return 1
+       docker-compose run --rm $BUILD_ENV -v ${SOURCEDIR}:$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
+       # cleanup
+       docker-compose run --rm -v ${SOURCEDIR}:/$DATADIR -w $DATADIR -u root $BUILDER rm -rf $DATADIR/src
+       rm -rf $SOURCEDIR
+       docker-compose down
+    cd -
+    
+    cd $WORKDIR
+}
+
+cleanup_build()
+{
+   prepare_environment
+   cd $BUILDER_DIR
+   docker-compose run --rm -v ${SOURCEDIR}:/$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR -u root -T $BUILDER rm -rf /home/$DAAS_BUILD_USER/RPM/ - 2>/dev/null
+   docker-compose down
+   cd -
+   [ -n "$DAAS_OUTDIR" ] && rm -rf $DAAS_OUTDIR
+}
+
+
+[ -z "$1" ] && module_help && exit 1
+
+case $1 in
+    -h|--help|help)
+        module_help
+        exit 0
+        ;;
+    --usage|usage)
+        module_usage
+        exit 0
+        ;;
+     *)
+	break;
+        ;;
+esac       
+
+BUILDER="$1"; shift
+[ -z "$BUILDER" ] && module_help && exit 1
+
+case $1 in
+    rpmbb)
+        run_build $@
+        exit $?
+        ;;
+    clean)
+        shift
+        cleanup_build $@
+        exit $?
+        ;;
+       *)
+        # [ -z "$@" ] && run_build rpmbb || run_build $@
+        run_build $@
+        exit $?
+        ;;
+esac       
+
+
+
+

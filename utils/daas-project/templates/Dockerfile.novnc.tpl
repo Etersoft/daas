@@ -13,4 +13,3 @@ COPY run-vnc.sh /usr/local/bin/
 
 ENV WEB=/usr/share/novnc
 ENTRYPOINT ["/usr/local/bin/run-vnc.sh"]
-
