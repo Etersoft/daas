@@ -532,11 +532,19 @@ def usage():
     print "image-name nodename        - Print image name for nodename"
     print "docker-add-host            - Print extra hosts for docker (--add-host format)"
     print "ssh-port [user@]nodename   - Print ssh-port for nodename"
+    print "name                       - Print project name"
+
     print
     print "Options:"
     print "---------"
     print "--image-registry name   - docker registry name to use in image name ([registry-name]/image-name)"
     print "--image-postfix name    - postfix for use in image name (image-name[postfix])"
+    print
+    print "Environment:"
+    print "------------"
+    print "DAAS_OUTDIR - output directory for generate files. Default: 'projectname-compose'"
+    print "   supported variables:"
+    print "      {PROJECT} - replace to project name. Example: DAAS_OUTDIR='{PROJECT}-my-postfix' --> 'projectname-my-postfix'"
 
 
 if __name__ == "__main__":
@@ -704,6 +712,10 @@ if __name__ == "__main__":
         print "(ssh): ERROR: Not found node '%s'" % nodename
         exit(1)
 
+    if cmd == 'name':
+        print project['name']
+        exit(0)
+
     # --------------- command: GEN ------------------
 
     if cmd != 'gen':
@@ -711,6 +723,11 @@ if __name__ == "__main__":
         exit(1)
 
     outdir = '%s-compose' % project['name']
+
+    if 'DAAS_OUTDIR' in os.environ:
+        outdir = os.environ['DAAS_OUTDIR']
+        if '{PROJECT}' in outdir:
+            outdir = outdir.replace('{PROJECT}', project['name'])
 
     if not os.path.exists(outdir):
         os.mkdir(outdir)
@@ -752,3 +769,10 @@ if __name__ == "__main__":
 
         # copy addons
         copy_addons(dirname)
+
+        # generate simple compose file
+        if 'skip_compose' in n:
+            dc_file = os.path.join(dirname, 'docker-compose.yml')
+            with open(dc_file, 'w') as wfile:
+                wfile.write(env.get_template('docker-compose-simple.yml.tpl').render(project=project, node=n))
+                wfile.write("\n")
