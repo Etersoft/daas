@@ -14,7 +14,7 @@ usage()
     echo ""
     echo "Available modules:"
     echo "------------------"
-    MODULES=$( find ${datadir}/bash_modules.d/ -type f )
+    MODULES=$( find ${datadir}/bash_modules.d/ -maxdepth 1 -type f )
     for m in $MODULES;
     do
 	echo $(basename "$m")

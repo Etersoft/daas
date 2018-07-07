@@ -1,0 +1,30 @@
+#!/bin/sh
+
+[ -n "$DAAS_DEBUG" ] && set -x
+[ -z "$DAAS_DATADIR" ] && DAAS_DATADIR='..'
+
+module_usage()
+{
+    echo "(daas): Up services.."
+    docker-compose up --help
+}
+
+module_help()
+{
+   module_usage
+}
+
+case $1 in
+    -h|--help|help)
+        module_help
+        exit 0
+        ;;
+    --usage|usage)
+        module_usage
+        exit 0
+        ;;
+     *)
+	$DAAS_DATADIR/bash_modules.d/dc up $@
+	exit $?
+        ;;
+esac       
