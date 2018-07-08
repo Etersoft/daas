@@ -15,7 +15,7 @@ DATADIR='/data'
 module_usage()
 {
     echo " "
-    echo "Usage: build container_name [-d pubdir] [build_command | clean] [params...]"
+    echo "Usage: rpmbuild container_name [-d pubdir] [build_command | clean] [params...]"
     echo "  "
     echo "builder_name  - name of builder container (in daas.yml)"
     echo "build_command - command for build in container."
@@ -123,7 +123,7 @@ run_build()
 
     cd $DAAS_OUTDIR/$BUILDER
        docker-compose build --force-rm || return 1
-       docker-compose run $BUILD_ENV -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER daas-build-helper.sh prepare || return 1
+       docker-compose run $BUILD_ENV ${DAAS_TOOLS_VOLUME} -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER ${DAAS_TOOLS_BINDIR}/daas-build-helper.sh prepare || return 1
        docker-compose run --rm $BUILD_ENV -v ${SOURCEDIR}:$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
        # cleanup sources from container
        docker-compose run --rm -v ${SOURCEDIR}:/$DATADIR -w $DATADIR -u root $BUILDER rm -rf $DATADIR/src

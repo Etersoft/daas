@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.3
-Release: alt1
+Release: alt2
 
 Group: System/Utilities
 License: MIT
@@ -48,6 +48,9 @@ cp -r daas-project/templates %buildroot%_datadir/%name
 mkdir -p -m755 %buildroot%_datadir/%name/bash_modules.d
 cp -r bash_modules.d %buildroot%_datadir/%name/
 
+mkdir -p -m755 %buildroot%_datadir/%name/tools
+cp -r tools %buildroot%_datadir/%name/
+
 
 %files
 %_bindir/daas*
@@ -57,6 +60,9 @@ cp -r bash_modules.d %buildroot%_datadir/%name/
 # %doc README.md
 
 %changelog
+* Mon Jul 09 2018 Pavel Vainerman <pv@altlinux.ru> 0.3-alt2
+- separated special tools
+
 * Sun Jul 08 2018 Pavel Vainerman <pv@altlinux.ru> 0.3-alt1
 - added modules build,rpmbuild,up,down
 

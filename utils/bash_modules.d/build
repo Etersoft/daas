@@ -117,7 +117,7 @@ do_build()
 
     cd $DAAS_OUTDIR/$BUILDER
        docker-compose build --force-rm || return 1
-       docker-compose run $BUILD_ENV $VOLUMES -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER daas-build-helper.sh prepare || return 1
+       docker-compose run $BUILD_ENV ${DAAS_TOOLS_VOLUME} $VOLUMES -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER ${DAAS_TOOLS_BINDIR}/daas-build-helper.sh prepare || return 1
        docker-compose run --rm $BUILD_ENV $VOLUMES -v ${SOURCEDIR}:$DATADIR -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
        # cleanup sources from container
        docker-compose run --rm -v ${SOURCEDIR}:/$DATADIR -w $DATADIR -u root $BUILDER rm -rf $DATADIR/src rm -rf $SOURCEDIR

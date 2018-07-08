@@ -20,6 +20,11 @@ case $1 in
         exit $?
     ;;
 
+    exec)
+	[ -z "$DAAS_EXEC" ] && echo "Unknown exec command. Use DAAS_EXEC=''" && exit 1
+	exec $DAAS_EXEC
+    ;;
+
     *)
         echo "Unknown command. Use [prepare]"
         exit 1

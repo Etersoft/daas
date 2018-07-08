@@ -1,8 +1,29 @@
 #!/bin/sh
 
+daas_tools_bindir()
+{
+    echo "/daas"
+}
+
+daas_tools_volume()
+{
+    local TOOLS_DIR=$( realpath "$DAAS_DATADIR/tools" )
+    
+    if test -d ./daas-tools; then
+	TOOLS_DIR=$( realpath ./daas-tools )
+    else
+        TOOLS_DIR=$( realpath "$DAAS_DATADIR/tools" )
+    fi
+
+    local DDIR=$( daas_tools_bindir )
+    echo "-v $TOOLS_DIR:$DDIR"
+}
+
 prepare_environment()
 {
    PROJECT_NAME=$( daas-project name )
+   DAAS_TOOLS_VOLUME=$( daas_tools_volume )
+   DAAS_TOOLS_BINDIR=$( daas_tools_bindir )
 
    [ -z "$DAAS_OUTDIR" ] && export DAAS_OUTDIR="daas-${PROJECT_NAME}" 
    

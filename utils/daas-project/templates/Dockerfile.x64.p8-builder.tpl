@@ -45,8 +45,6 @@ RUN  {{ v }}
 # start default services
 RUN service consolesaver start
 
-COPY daas-build-helper.sh /usr/local/bin/
-
 # prepare build user
 ARG USER=builder
 ARG HOME=/home/$USER
