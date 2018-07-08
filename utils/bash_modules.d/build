@@ -1,10 +1,12 @@
 #!/bin/sh
 
 [ -n "$DAAS_DEBUG" ] && set -x
+[ -z "$DAAS_DATADIR" ] && DAAS_DATADIR='..'
+
+. $DAAS_DATADIR/bash_modules.d/.daas-common
 
 BUILDER=
 
-[ -z "$DAAS_OUTDIR" ] && DAAS_OUTDIR='daas-build'
 DAAS_BUILD_USER='builder'
 DATADIR='/data'
 
@@ -45,14 +47,12 @@ prepare_sources()
     rm -rf $OUTDIR/git-$COMMIT
 }
 
-prepare_environment()
+prepare_build_environment()
 {
-#    PROJECT_NAME=$( daas-project name )
-#    export DAAS_OUTDIR="build-${PROJECT_NAME}"
-    export DAAS_OUTDIR
     WORKDIR=$( pwd )
 
-    daas-project gen
+    prepare_environment
+
     if ! test -d $DAAS_OUTDIR/$BUILDER; then
        module_error "Not found builder '$BUILDER'"
     fi
@@ -66,7 +66,7 @@ run_build()
 {
     BUILD_CMD="$@"
     echo "in container '$BUILDER' run build command '$BUILD_CMD'"
-    prepare_environment
+    prepare_build_environment
 
     mkdir -p $SOURCEDIR
     mkdir -p ${RPMDIR}

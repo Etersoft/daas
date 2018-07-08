@@ -1,0 +1,10 @@
+#!/bin/sh
+
+prepare_environment()
+{
+   PROJECT_NAME=$( daas-project name )
+
+   [ -z "$DAAS_OUTDIR" ] && export DAAS_OUTDIR="daas-${PROJECT_NAME}" 
+   
+   daas-project gen || return 1
+}

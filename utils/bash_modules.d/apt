@@ -1,0 +1,150 @@
+#!/bin/sh
+
+[ -n "$DAAS_DEBUG" ] && set -x
+[ -z "$DAAS_DATADIR" ] && DAAS_DATADIR='..'
+
+. $DAAS_DATADIR/bash_modules.d/.daas-common
+
+PROG="${0##*/}"
+
+module_usage()
+{
+    echo "daas apt command [options]"
+    echo "Commands:"
+    echo "prepare RPMS.dir PUB.dir                              - generate apt base for 'RPMS.directory'"
+    echo "install [-d RPMS.dir1 -d RPMS.dir2] nodename packages - add directory to apt source and install packages"
+}
+
+module_help()
+{
+   module_usage
+}
+
+module_error()
+{
+    echo "$1"
+    exit 1
+}
+
+do_prepare()
+{
+    echo "Prepare.."
+    [ -z "$1" ] && module_error "(${FUNCNAME[0]}): ERROR: RPMS directory not defined. Use: daas apt --help"
+    [ -z "$2" ] && module_error "(${FUNCNAME[0]}): ERROR: Public RPMS directory not defined. Use: daas apt --help"
+
+    PROJECT_NAME=$( daas-project name )
+    
+    RPMSDIR="$1"
+    PUBDIR="$2"
+    if ! test -d $RPMSDIR; then
+	module_error "(${FUNCNAME[0]}): ERROR: Not found directory '$RPMSDIR'"
+    fi
+
+    mkdir -p ${PUBDIR}/base || return 1
+    mkdir -p ${PUBDIR}/RPMS.${PROJECT_NAME} || return 1
+    cp -rf ${RPMSDIR}/* ${PUBDIR}/RPMS.${PROJECT_NAME}/ || return 1
+    genbasedir --progress --topdir=${PUBDIR} ./ || return 1
+}
+
+split_dirs_and_arguments()
+{
+    RPMDIRS=''
+    
+    TEMP=`getopt -n $PROG -o d: -l directory: -- "$@"` || return 1
+    eval set -- "$TEMP"
+
+    while :; do
+      case "$1" in
+	  -d|--directory)
+	    shift
+	    [ "$1" == '--' ] && break
+	    RPMDIRS="${RPMDIRS} $1"
+	    ;;
+	  --) shift; break
+	    ;;
+      esac
+      shift
+    done
+    
+    OTHER=$@
+}
+
+do_install()
+{
+    [ -z "$1" ] && module_error "(${FUNCNAME[0]}): ERROR: Unknown nodename. Use daas apt --help"
+    echo "install..."
+
+    WORKDIR=$( pwd )
+    prepare_environment || return 1
+    echo "generated configs to directory '$DAAS_OUTDIR'.."
+        
+    split_dirs_and_arguments $@
+
+    echo "DIRS: $RPMDIRS"
+    echo "ARGS: $OTHER"
+    
+    PUBDIR='/daas-apt'
+    LISTDIR="$DAAS_OUTDIR/${PUBDIR}"
+    VOLUMES=''
+    NUM=1
+    
+    mkdir -p ${LISTDIR}
+    rm -f $LISTDIR/daas.list
+    
+    for d in $RPMDIRS; do
+	rdirs=$( find $d -name 'RPMS.*' -type d )
+	ldir=$(realpath $d)
+	VOLUMES="$VOLUMES -v ${ldir}:${PUBDIR}/rpm${NUM}"
+	RPMS=''
+	for r in $rdirs; do
+	  RDIR=$( basename $r )
+	  REP=$( echo $RDIR | cut -d '.' -f 2 )
+	  RPMS="$RPMS ${REP}"
+	done
+	echo "rpm file:/${PUBDIR}/rpm${NUM} $RPMS" >> $LISTDIR/daas.list
+	NUM=$((NUM+1))
+    done
+    ldir=$(realpath $LISTDIR)
+    VOLUMES="-v ${ldir}:${PUBDIR} $VOLUMES"
+    
+    eval set -- "$OTHER"
+    [ -z "$1" ] && module_error "(${FUNCNAME[0]}): ERROR: Unknown nodename. Use: daas install --help"
+    
+    NODENAME="$1"; shift
+    
+    if ! test -d $DAAS_OUTDIR/$NODENAME; then
+	module_error "(${FUNCNAME[0]}): ERROR: Not found $NODENAME"
+    fi
+    
+    cd $DAAS_OUTDIR
+    docker-compose run $VOLUMES -u root $NODENAME cp -f $PUBDIR/daas.list /etc/apt/sources.list.d/daas.list; ls /etc/apt/sources.list.d || return 1
+    #docker-compose run $VOLUMES $NODENAME apt-get install $@
+    cd $WORKDIR
+}
+
+[ -z "$1" ] && module_help && exit 1
+
+case $1 in
+    -h|--help|help)
+        module_help
+        exit 0
+        ;;
+    --usage|usage)
+        module_usage
+        exit 0
+        ;;
+    --prepare|prepare)
+	shift
+        do_prepare $@
+        exit $?
+        ;;
+     install)
+        shift
+	do_install $@
+	exit $?
+        ;;
+     *)
+        module_usage
+        exit 1
+        ;;
+esac       
