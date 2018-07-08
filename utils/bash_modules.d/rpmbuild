@@ -9,6 +9,7 @@ BUILDER=''
 PUBDIR=''
 ENVOPTS=''
 VOLUMES=''
+BUILD_CCACHE_DIR=''
 
 [ -z "$DAAS_BUILD_USER" ] && DAAS_BUILD_USER='builder'
 DATADIR='/data'
@@ -24,6 +25,8 @@ module_usage()
     echo "Ext options:"
     echo "-d|--directory pubdir - use pubdir for RPM directory. Default 'container_name/RPM'"
     echo "-v|--volume dir       - bind mount a volume (can be used multiple times)"
+    echo "-c|--ccache dir       - Use 'dir' for ccache."
+    echo "--use-ccache          - Use env variable CCACHE_DIR for ccache"
 }
 
 module_help()
@@ -76,9 +79,10 @@ split_options()
     ENVOPTS=''
     VOLUMES=''
     OTHER=''
+    BUILD_CCACHE_DIR=''
     [ -z "$PROG" ] && PROG="${0##*/}"
     
-    TEMP=`getopt -n $PROG -o d:,e: -l directory:,environment: -- "$@"` || return 1
+    TEMP=`getopt -n $PROG -o d:,e:,c: -l directory:,environment:,ccache:,use-ccache -- "$@"` || return 1
     eval set -- "$TEMP"
 
     while :; do
@@ -97,6 +101,14 @@ split_options()
 	    shift
 	    [ "$1" == '--' ] && break
 	    ENVOPTS="${ENVOPTS} -e $1"
+	    ;;
+	  -c|--ccache)
+	    shift
+	    [ "$1" == '--' ] && break
+	    BUILD_CCACHE_DIR="$1"
+	    ;;
+	  --use-ccache)
+	    BUILD_CCACHE_DIR="${CCACHE_DIR}"
 	    ;;
 	  --) shift; break
 	    ;;
@@ -126,11 +138,31 @@ run_build()
     cd $GIT_ROOT
     prepare_sources "$COMMIT" "$SOURCEDIR"
     cd -
-    
+
     BUILD_ENV="-e DAAS_BUILD_USER=$DAAS_BUILD_USER -e DATADIR=$DATADIR -e SOURCE=$DATADIR/source.tar -e DAAS_DEBUG=$DAAS_DEBUG $ENVOPTS"
+
+    if [ -n "$BUILD_CCACHE_DIR" ]; then
+    
+	if ! test -d $BUILD_CCACHE_DIR; then
+	  mkdir -p $BUILD_CCACHE_DIR
+	  chmod a+rw $BUILD_CCACHE_DIR
+	fi
+	
+	BUILD_ENV="$BUILD_ENV -e CCACHE_DIR=/daas-ccache -e GCC_USE_CCACHE=1"
+	VOLUMES="$VOLUMES -v $( realpath $BUILD_CCACHE_DIR ):/daas-ccache"
+    fi
 
     cd $DAAS_OUTDIR/$BUILDER
        docker-compose build --force-rm || return 1
+       
+       # test ccache directory permissions
+       if [ -n "$BUILD_CCACHE_DIR" ]; then
+	  if ! docker-compose run --rm $BUILD_ENV ${VOLUMES} -T $BUILDER touch /daas-ccache/test 2>/dev/null; then
+	    echo "Can't write to ccache directory '$BUILD_CCACHE_DIR' from container. Use: 'chmod a+rw $BUILD_CCACHE_DIR'"
+	    return 1
+	  fi
+       fi
+       
        docker-compose run $BUILD_ENV ${VOLUMES} ${DAAS_TOOLS_VOLUME} -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER ${DAAS_TOOLS_BINDIR}/daas-build-helper.sh prepare || return 1
        docker-compose run --rm $BUILD_ENV ${VOLUMES} -v ${SOURCEDIR}:$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
        # cleanup sources from container
