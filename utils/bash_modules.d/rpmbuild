@@ -8,6 +8,7 @@
 BUILDER=''
 PUBDIR=''
 ENVOPTS=''
+VOLUMES=''
 
 [ -z "$DAAS_BUILD_USER" ] && DAAS_BUILD_USER='builder'
 DATADIR='/data'
@@ -15,13 +16,14 @@ DATADIR='/data'
 module_usage()
 {
     echo " "
-    echo "Usage: rpmbuild container_name [-d pubdir] [build_command | clean] [params...]"
+    echo "Usage: rpmbuild container_name [ext options] [build_command | clean] [params...]"
     echo "  "
     echo "builder_name  - name of builder container (in daas.yml)"
     echo "build_command - command for build in container."
     echo "clean         - remove build directory"
     echo "Ext options:"
     echo "-d|--directory pubdir - use pubdir for RPM directory. Default 'container_name/RPM'"
+    echo "-v|--volume dir       - bind mount a volume (can be used multiple times)"
 }
 
 module_help()
@@ -72,6 +74,7 @@ split_options()
 {
     PUBDIR=''
     ENVOPTS=''
+    VOLUMES=''
     OTHER=''
     [ -z "$PROG" ] && PROG="${0##*/}"
     
@@ -84,6 +87,11 @@ split_options()
 	    shift
 	    [ "$1" == '--' ] && break
 	    PUBDIR="$1"
+	    ;;
+	  -v|--volume)
+	    shift
+	    [ "$1" == '--' ] && break
+	    VOLUMES="${VOLUMES} -v $1"
 	    ;;
 	  -e|--environment)
 	    shift
@@ -123,8 +131,8 @@ run_build()
 
     cd $DAAS_OUTDIR/$BUILDER
        docker-compose build --force-rm || return 1
-       docker-compose run $BUILD_ENV ${DAAS_TOOLS_VOLUME} -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER ${DAAS_TOOLS_BINDIR}/daas-build-helper.sh prepare || return 1
-       docker-compose run --rm $BUILD_ENV -v ${SOURCEDIR}:$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
+       docker-compose run $BUILD_ENV ${VOLUMES} ${DAAS_TOOLS_VOLUME} -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER ${DAAS_TOOLS_BINDIR}/daas-build-helper.sh prepare || return 1
+       docker-compose run --rm $BUILD_ENV ${VOLUMES} -v ${SOURCEDIR}:$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
        # cleanup sources from container
        docker-compose run --rm -v ${SOURCEDIR}:/$DATADIR -w $DATADIR -u root $BUILDER rm -rf $DATADIR/src
        rm -rf $SOURCEDIR
@@ -140,7 +148,7 @@ cleanup_build()
 
    prepare_build_environment
    cd $BUILDER_DIR
-   docker-compose run --rm -v ${SOURCEDIR}:/$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR -u root -T $BUILDER rm -rf /home/$DAAS_BUILD_USER/RPM/ - 2>/dev/null
+   docker-compose run --rm ${VOLUMES} -v ${SOURCEDIR}:/$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR -u root -T $BUILDER rm -rf /home/$DAAS_BUILD_USER/RPM/ - 2>/dev/null
    docker-compose down
    cd -
    [ -n "$DAAS_OUTDIR" ] && rm -rf $DAAS_OUTDIR
