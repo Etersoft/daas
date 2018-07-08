@@ -48,7 +48,7 @@ case $1 in
         exit 0
         ;;
      *)
-	run_compose $@
-	exit $?
+		run_compose $@
+		exit $?
         ;;
 esac       

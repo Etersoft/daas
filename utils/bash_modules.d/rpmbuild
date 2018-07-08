@@ -7,19 +7,17 @@
 
 BUILDER=
 
-DAAS_BUILD_USER='builder'
+[ -z "$DAAS_BUILD_USER" ] && DAAS_BUILD_USER='builder'
 DATADIR='/data'
 
 module_usage()
 {
     echo " "
-    echo "Usage: build container_name [-v volume] [-e VAR=VAL] [build_command ..options..]"
+    echo "Usage: build builder_name [build_command | clean] [params...]"
     echo "  "
-    echo "container_name            - name of builder container (in daas.yml)"
-    echo "build_command [options]   - command and options for build in container"
-    echo "Ext options:"
-    echo "[-e var=val]              - Set an environment variable (can be used multiple times)"
-    echo "[-v volume]               - Bind mount a volume (can be used multiple times)"
+    echo "builder_name  - name of builder container (in daas.yml)"
+    echo "build_command - command for build in container."
+    echo "clean         - remove build directory"
 }
 
 module_help()
@@ -29,7 +27,7 @@ module_help()
 
 module_error()
 {
-    echo "$1"
+    echo "ERROR: $1"
     exit 1
 }
 
@@ -55,56 +53,26 @@ prepare_build_environment()
 
     prepare_environment
 
-    if ! test -d $DAAS_OUTDIR/$BUILDER; then
+    if ! test -d "$DAAS_OUTDIR/$BUILDER"; then
        module_error "(${FUNCNAME[0]}): Not found builder '$BUILDER'"
     fi
     
     BUILDER_DIR=$WORKDIR/$DAAS_OUTDIR/${BUILDER}
     SOURCEDIR="$WORKDIR/$DAAS_OUTDIR/${BUILDER}/${DATADIR}"
+    RPMDIR="$WORKDIR/$DAAS_OUTDIR/$BUILDER/RPM"
 }
 
-split_options()
+run_build()
 {
-    VOLUMES=''
-    ENVOPTS=''
-    OTHER=''
-    [ -z "$PROG" ] && PROG="${0##*/}"
-    
-    TEMP=`getopt -n $PROG -o v:,e: -l volume:,environment: -- "$@"` || return 1
-    eval set -- "$TEMP"
-
-    while :; do
-      case "$1" in
-	  -v|--volume)
-	    shift
-	    [ "$1" == '--' ] && break
-	    VOLUMES="${VOLUMES} -v $1"
-	    ;;
-	  -e|--environment)
-	    shift
-	    [ "$1" == '--' ] && break
-	    ENVOPTS="${ENVOPTS} -e $1"
-	    ;;
-	  --) shift; break
-	    ;;
-      esac
-      shift
-    done
-    
-    OTHER=$@
-}
-
-do_build()
-{
-    split_options $@
-
-    BUILD_CMD="$OTHER"
+    BUILD_CMD="$@"
     echo "in container '$BUILDER' run build command '$BUILD_CMD'"
     prepare_build_environment
 
     mkdir -p $SOURCEDIR
-    # чтобы пользователь под которым происходит сборка мог писать в этот каталог
+    mkdir -p ${RPMDIR}
+    # чтобы пользователь под которым происходит сборка мог писать в этим каталоги
     # т.к по умолчанию они монтируются под root
+    chmod a+rw ${RPMDIR}
     chmod a+rw ${SOURCEDIR}
 
     COMMIT=$(git log -1 --pretty=format:"%h")
@@ -113,19 +81,31 @@ do_build()
     prepare_sources "$COMMIT" "$SOURCEDIR"
     cd -
     
-    BUILD_ENV="-e DAAS_BUILD_USER=$DAAS_BUILD_USER -e DATADIR=$DATADIR -e SOURCE=$DATADIR/source.tar -e DAAS_DEBUG=$DAAS_DEBUG $ENVOPTS"
+    BUILD_ENV="-e DAAS_BUILD_USER=$DAAS_BUILD_USER -e DATADIR=$DATADIR -e SOURCE=$DATADIR/source.tar -e DAAS_DEBUG=$DAAS_DEBUG"
 
     cd $DAAS_OUTDIR/$BUILDER
        docker-compose build --force-rm || return 1
-       docker-compose run $BUILD_ENV $VOLUMES -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER daas-build-helper.sh prepare || return 1
-       docker-compose run --rm $BUILD_ENV $VOLUMES -v ${SOURCEDIR}:$DATADIR -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
+       docker-compose run $BUILD_ENV -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER daas-build-helper.sh prepare || return 1
+       docker-compose run --rm $BUILD_ENV -v ${SOURCEDIR}:$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
        # cleanup
-       docker-compose run --rm -v ${SOURCEDIR}:/$DATADIR -w $DATADIR -u root $BUILDER rm -rf $DATADIR/src rm -rf $SOURCEDIR
+       docker-compose run --rm -v ${SOURCEDIR}:/$DATADIR -w $DATADIR -u root $BUILDER rm -rf $DATADIR/src
+       rm -rf $SOURCEDIR
        docker-compose down
     cd -
     
     cd $WORKDIR
 }
+
+cleanup_build()
+{
+   prepare_build_environment
+   cd $BUILDER_DIR
+   docker-compose run --rm -v ${SOURCEDIR}:/$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR -u root -T $BUILDER rm -rf /home/$DAAS_BUILD_USER/RPM/ - 2>/dev/null
+   docker-compose down
+   cd -
+   [ -n "$DAAS_OUTDIR" ] && rm -rf $DAAS_OUTDIR
+}
+
 
 [ -z "$1" ] && module_help && exit 1
 
@@ -148,11 +128,21 @@ BUILDER="$1"; shift
 
 case $1 in
     rpmbb)
-        do_build $@
+        run_build $@
+        exit $?
+        ;;
+    clean)
+        shift
+        cleanup_build $@
         exit $?
         ;;
        *)
-        do_build $@
+        # [ -z "$@" ] && run_build rpmbb || run_build $@
+        run_build $@
         exit $?
         ;;
 esac       
+
+
+
+

@@ -24,7 +24,7 @@ case $1 in
         exit 0
         ;;
      *)
-	$DAAS_DATADIR/bash_modules.d/dc down $@
-	exit $?
+		$DAAS_DATADIR/bash_modules.d/dc down $@
+		exit $?
         ;;
 esac       
