@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
-Version: 0.2
-Release: alt5
+Version: 0.3
+Release: alt1
 
 Group: System/Utilities
 License: MIT
@@ -57,6 +57,9 @@ cp -r bash_modules.d %buildroot%_datadir/%name/
 # %doc README.md
 
 %changelog
+* Sun Jul 08 2018 Pavel Vainerman <pv@altlinux.ru> 0.3-alt1
+- added modules build,rpmbuild,up,down
+
 * Thu Jul 05 2018 Pavel Vainerman <pv@altlinux.ru> 0.2-alt5
 - added 'get gitlab artifacts'
 
