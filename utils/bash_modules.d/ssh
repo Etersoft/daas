@@ -2,14 +2,12 @@
 
 DEFAULT_SSH_OPTIONS="-o StrictHostKeychecking=no"
 
-module_usage()
-{
+module_usage() {
     echo "daas ssh - ssh module"
     echo "Usage: daas ssh [command] parameters"
 }
 
-module_help()
-{
+module_help() {
     echo "daas ssh [ -c|--confile project.yml ] [user@]nodename [hostname] [ssh parameters]"
     echo "Defaults:"
     echo "  hostname=localhost, user=root, confile='.daas.yml' ssh_parameters='$DEFAULT_SSH_OPTIONS'"
@@ -26,11 +24,11 @@ CMD="$1"
 [ -z "$CMD" ] && module_help && exit 1
 
 case $CMD in
-    -h|--help|help)
+    -h | --help | help)
         module_help
         exit 0
         ;;
-    --usage|usage)
+    --usage | usage)
         module_usage
         exit 0
         ;;
@@ -52,8 +50,8 @@ NODENAME=localhost
 
 # Если дальше идут параметры для ssh то они должны начинаться с '-'
 # иначе трактуем следующий аргумент как указание узла (hostname)
-NEXT=${1:0:1};
+NEXT=${1:0:1}
 [ -n "$NEXT" ] && [ "$NEXT" != "-" ] && NODENAME="$1" && shift
-  
+
 echo "Run: ssh -p $SSH_PORT ${DEFAULT_SSH_OPTIONS} $* ${USER}${NODENAME}"
 exec ssh -p $SSH_PORT ${DEFAULT_SSH_OPTIONS} $* ${USER}${NODENAME}

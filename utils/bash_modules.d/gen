@@ -3,27 +3,25 @@
 [ -n "$DAAS_DEBUG" ] && set -x
 [ -z "$DAAS_DATADIR" ] && DAAS_DATADIR='..'
 
-module_usage()
-{
+module_usage() {
     daas-project gen --help
 }
 
-module_help()
-{
-   module_usage
+module_help() {
+    module_usage
 }
 
 case $1 in
-    -h|--help|help)
+    -h | --help | help)
         module_help
         exit 0
         ;;
-    --usage|usage)
+    --usage | usage)
         module_usage
         exit 0
         ;;
-     *)
-	daas-project gen $@
-	exit $?
+    *)
+        daas-project gen $@
+        exit $?
         ;;
-esac       
+esac

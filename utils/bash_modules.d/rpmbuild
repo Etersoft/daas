@@ -14,8 +14,7 @@ BUILD_CCACHE_DIR=''
 [ -z "$DAAS_BUILD_USER" ] && DAAS_BUILD_USER='builder'
 DATADIR='/data'
 
-module_usage()
-{
+module_usage() {
     echo " "
     echo "Usage: rpmbuild container_name [ext options] [build_command | clean] [params...]"
     echo "  "
@@ -29,25 +28,22 @@ module_usage()
     echo "--use-ccache          - Use env variable CCACHE_DIR for ccache"
 }
 
-module_help()
-{
-   module_usage
+module_help() {
+    module_usage
 }
 
-module_error()
-{
+module_error() {
     echo "ERROR: $1"
     exit 1
 }
 
-prepare_sources()
-{
+prepare_sources() {
     COMMIT=$1
     OUTDIR=$2
     #git archive --format=tar $COMMIT | tar xf - -C $OUTDIR
     #rm -rf $OUTDIR/*
     #git archive --format=tar --output $OUTDIR/source.tar.gz $COMMIT
-    
+
     mkdir -p $OUTDIR/git-$COMMIT
 
     # для rpmbb нужно, чтобы каталог git тоже копировался (т.к. идёт сборка из git)
@@ -56,76 +52,74 @@ prepare_sources()
     rm -rf $OUTDIR/git-$COMMIT
 }
 
-prepare_build_environment()
-{
-    WORKDIR=$( pwd )
+prepare_build_environment() {
+    WORKDIR=$(pwd)
 
     prepare_environment
 
     if ! test -d "$DAAS_OUTDIR/$BUILDER"; then
-       module_error "(${FUNCNAME[0]}): Not found builder '$BUILDER'"
+        module_error "(${FUNCNAME[0]}): Not found builder '$BUILDER'"
     fi
-    
+
     BUILDER_DIR=$WORKDIR/$DAAS_OUTDIR/${BUILDER}
     SOURCEDIR="$WORKDIR/$DAAS_OUTDIR/${BUILDER}/${DATADIR}"
     RPMDIR="$WORKDIR/$DAAS_OUTDIR/$BUILDER/RPM"
-    [ -n "$PUBDIR" ] && RPMDIR=$( realpath $PUBDIR )
+    [ -n "$PUBDIR" ] && RPMDIR=$(realpath $PUBDIR)
 }
 
-
-split_options()
-{
+split_options() {
     PUBDIR=''
     ENVOPTS=''
     VOLUMES=''
     OTHER=''
     BUILD_CCACHE_DIR=''
     [ -z "$PROG" ] && PROG="${0##*/}"
-    
-    TEMP=`getopt -n $PROG -o d:,e:,c: -l directory:,environment:,ccache:,use-ccache -- "$@"` || return 1
+
+    TEMP=$(getopt -n $PROG -o d:,e:,c: -l directory:,environment:,ccache:,use-ccache -- "$@") || return 1
     eval set -- "$TEMP"
 
     while :; do
-      case "$1" in
-	  -d|--directory)
-	    shift
-	    [ "$1" == '--' ] && break
-	    PUBDIR="$1"
-	    ;;
-	  -v|--volume)
-	    shift
-	    [ "$1" == '--' ] && break
-	    VOLUMES="${VOLUMES} -v $1"
-	    ;;
-	  -e|--environment)
-	    shift
-	    [ "$1" == '--' ] && break
-	    ENVOPTS="${ENVOPTS} -e $1"
-	    ;;
-	  -c|--ccache)
-	    shift
-	    [ "$1" == '--' ] && break
-	    BUILD_CCACHE_DIR="$1"
-	    ;;
-	  --use-ccache)
-	    BUILD_CCACHE_DIR="${CCACHE_DIR}"
-	    ;;
-	  --) shift; break
-	    ;;
-      esac
-      shift
+        case "$1" in
+            -d | --directory)
+                shift
+                [ "$1" == '--' ] && break
+                PUBDIR="$1"
+                ;;
+            -v | --volume)
+                shift
+                [ "$1" == '--' ] && break
+                VOLUMES="${VOLUMES} -v $1"
+                ;;
+            -e | --environment)
+                shift
+                [ "$1" == '--' ] && break
+                ENVOPTS="${ENVOPTS} -e $1"
+                ;;
+            -c | --ccache)
+                shift
+                [ "$1" == '--' ] && break
+                BUILD_CCACHE_DIR="$1"
+                ;;
+            --use-ccache)
+                BUILD_CCACHE_DIR="${CCACHE_DIR}"
+                ;;
+            --)
+                shift
+                break
+                ;;
+        esac
+        shift
     done
-    
+
     OTHER=$@
 }
 
-run_build()
-{
+run_build() {
     BUILD_CMD="$@"
     echo "in container '$BUILDER' run build command '$BUILD_CMD'"
 
     prepare_build_environment
-    
+
     mkdir -p ${SOURCEDIR}
     mkdir -p ${RPMDIR}
     # чтобы пользователь под которым происходит сборка мог писать в этим каталоги
@@ -142,67 +136,67 @@ run_build()
     BUILD_ENV="-e DAAS_BUILD_USER=$DAAS_BUILD_USER -e DATADIR=$DATADIR -e SOURCE=$DATADIR/source.tar -e DAAS_DEBUG=$DAAS_DEBUG $ENVOPTS"
 
     if [ -n "$BUILD_CCACHE_DIR" ]; then
-    
-	if ! test -d $BUILD_CCACHE_DIR; then
-	  mkdir -p $BUILD_CCACHE_DIR
-	  chmod a+rw $BUILD_CCACHE_DIR
-	fi
-	
-	BUILD_ENV="$BUILD_ENV -e CCACHE_DIR=/daas-ccache -e GCC_USE_CCACHE=1"
-	VOLUMES="$VOLUMES -v $( realpath $BUILD_CCACHE_DIR ):/daas-ccache"
+
+        if ! test -d $BUILD_CCACHE_DIR; then
+            mkdir -p $BUILD_CCACHE_DIR
+            chmod a+rw $BUILD_CCACHE_DIR
+        fi
+
+        BUILD_ENV="$BUILD_ENV -e CCACHE_DIR=/daas-ccache -e GCC_USE_CCACHE=1"
+        VOLUMES="$VOLUMES -v $(realpath $BUILD_CCACHE_DIR):/daas-ccache"
     fi
 
     cd $DAAS_OUTDIR/$BUILDER
-       docker-compose build --force-rm || return 1
-       
-       # test ccache directory permissions
-       if [ -n "$BUILD_CCACHE_DIR" ]; then
-	  if ! docker-compose run --rm $BUILD_ENV ${VOLUMES} -T $BUILDER touch /daas-ccache/test 2>/dev/null; then
-	    echo "Can't write to ccache directory '$BUILD_CCACHE_DIR' from container. Use: 'chmod a+rw $BUILD_CCACHE_DIR'"
-	    return 1
-	  fi
-       fi
-       
-       docker-compose run $BUILD_ENV ${VOLUMES} ${DAAS_TOOLS_VOLUME} -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER ${DAAS_TOOLS_BINDIR}/daas-build-helper.sh prepare || return 1
-       docker-compose run --rm $BUILD_ENV ${VOLUMES} -v ${SOURCEDIR}:$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
-       # cleanup sources from container
-       docker-compose run --rm -v ${SOURCEDIR}:/$DATADIR -w $DATADIR -u root $BUILDER rm -rf $DATADIR/src
-       rm -rf $SOURCEDIR
-       docker-compose down
+    docker-compose build --force-rm || return 1
+
+    # test ccache directory permissions
+    if [ -n "$BUILD_CCACHE_DIR" ]; then
+        if ! docker-compose run --rm $BUILD_ENV ${VOLUMES} -T $BUILDER touch /daas-ccache/test 2>/dev/null; then
+            echo "Can't write to ccache directory '$BUILD_CCACHE_DIR' from container. Use: 'chmod a+rw $BUILD_CCACHE_DIR'"
+            return 1
+        fi
+    fi
+
+    docker-compose run $BUILD_ENV ${VOLUMES} ${DAAS_TOOLS_VOLUME} -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER ${DAAS_TOOLS_BINDIR}/daas-build-helper.sh prepare || return 1
+    docker-compose run --rm $BUILD_ENV ${VOLUMES} -v ${SOURCEDIR}:$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
+    # cleanup sources from container
+    docker-compose run --rm -v ${SOURCEDIR}:/$DATADIR -w $DATADIR -u root $BUILDER rm -rf $DATADIR/src
+    rm -rf $SOURCEDIR
+    docker-compose down
     cd -
-    
+
     cd $WORKDIR
 }
 
-cleanup_build()
-{
-   echo "Clean..."
+cleanup_build() {
+    echo "Clean..."
 
-   prepare_build_environment
-   cd $BUILDER_DIR
-   docker-compose run --rm ${VOLUMES} -v ${SOURCEDIR}:/$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR -u root -T $BUILDER rm -rf /home/$DAAS_BUILD_USER/RPM/ - 2>/dev/null
-   docker-compose down
-   cd -
-   [ -n "$DAAS_OUTDIR" ] && rm -rf $DAAS_OUTDIR
+    prepare_build_environment
+    cd $BUILDER_DIR
+    docker-compose run --rm ${VOLUMES} -v ${SOURCEDIR}:/$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR -u root -T $BUILDER rm -rf /home/$DAAS_BUILD_USER/RPM/ - 2>/dev/null
+    docker-compose down
+    cd -
+    [ -n "$DAAS_OUTDIR" ] && rm -rf $DAAS_OUTDIR
 }
 
 [ -z "$1" ] && module_help && exit 1
 
 case $1 in
-    -h|--help|help)
+    -h | --help | help)
         module_help
         exit 0
         ;;
-    --usage|usage)
+    --usage | usage)
         module_usage
         exit 0
         ;;
-     *)
-	break;
+    *)
+        break
         ;;
-esac       
+esac
 
-BUILDER="$1"; shift
+BUILDER="$1"
+shift
 [ -z "$BUILDER" ] && module_help && exit 1
 
 split_options $@
@@ -218,13 +212,9 @@ case $1 in
         cleanup_build $@
         exit $?
         ;;
-       *)
+    *)
         # [ -z "$@" ] && run_build rpmbb || run_build $@
         run_build $@
         exit $?
         ;;
-esac       
-
-
-
-
+esac

@@ -3,28 +3,26 @@
 [ -n "$DAAS_DEBUG" ] && set -x
 [ -z "$DAAS_DATADIR" ] && DAAS_DATADIR='..'
 
-module_usage()
-{
+module_usage() {
     echo "(daas): down services.."
     docker-compose down --help
 }
 
-module_help()
-{
-   module_usage
+module_help() {
+    module_usage
 }
 
 case $1 in
-    -h|--help|help)
+    -h | --help | help)
         module_help
         exit 0
         ;;
-    --usage|usage)
+    --usage | usage)
         module_usage
         exit 0
         ;;
-     *)
-		$DAAS_DATADIR/bash_modules.d/dc down $@
-		exit $?
+    *)
+        $DAAS_DATADIR/bash_modules.d/dc down $@
+        exit $?
         ;;
-esac       
+esac

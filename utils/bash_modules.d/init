@@ -1,26 +1,24 @@
 #!/bin/sh
 
-module_usage()
-{
-	echo "init NOT YET!"
+module_usage() {
+    echo "init NOT YET!"
 }
 
-module_help()
-{
-	echo "init NOT YET!"
+module_help() {
+    echo "init NOT YET!"
 }
 
 [ -z "$1" ] && module_help && exit 1
 
 case $1 in
-    -h|--help|help)
+    -h | --help | help)
         module_help
         exit 0
         ;;
-    --usage|usage)
+    --usage | usage)
         module_usage
         exit 0
         ;;
-esac       
+esac
 
 echo "Run init $@"

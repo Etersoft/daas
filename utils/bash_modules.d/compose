@@ -1,12 +1,10 @@
 #!/bin/sh
 
-module_help()
-{
+module_help() {
     daas-project -h
 }
 
-module_usage()
-{
+module_usage() {
     echo "daas compose - module for generate docker compose files"
     echo "Usage: daas compose [command] parameters"
 }
@@ -14,14 +12,14 @@ module_usage()
 [ -z "$1" ] && module_help && exit 1
 
 case $1 in
-    -h|--help|help)
+    -h | --help | help)
         module_help
         exit 0
         ;;
-    --usage|usage)
+    --usage | usage)
         module_usage
         exit 0
         ;;
-esac       
+esac
 
 exec daas-project $@

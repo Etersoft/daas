@@ -7,90 +7,84 @@ DEFAULT_GITLAB_API_VERSION='v4'
 # Документация по формату: https://python-gitlab.readthedocs.io/en/stable/cli.html
 DEFAULT_CFG_FILE="$HOME/.python-gitlab.cfg"
 
-module_usage()
-{
-	echo "gitlab NOT YET!"
+module_usage() {
+    echo "gitlab NOT YET!"
 }
 
-module_help()
-{
-	echo "gitlab [command] [params]"
-	echo "Command: "
-	echo "get BUILD_NUM [CFG_SECTION] [CFG_FILE] - load artifacts from build #BUILD_NUM"
-	echo "                                         CFG_SECTION - section in cfg-file. By default used [global] default = .."
-	echo "                                         About the config file format, read "
-	echo "                                         https://python-gitlab.readthedocs.io/en/stable/cli.html"
+module_help() {
+    echo "gitlab [command] [params]"
+    echo "Command: "
+    echo "get BUILD_NUM [CFG_SECTION] [CFG_FILE] - load artifacts from build #BUILD_NUM"
+    echo "                                         CFG_SECTION - section in cfg-file. By default used [global] default = .."
+    echo "                                         About the config file format, read "
+    echo "                                         https://python-gitlab.readthedocs.io/en/stable/cli.html"
 }
 
-module_error()
-{
-	echo "$1"
-	exit 1
+module_error() {
+    echo "$1"
+    exit 1
 }
 
-url_encode()
-{
-	python -c "import sys, urllib as ul; print ul.quote_plus(sys.argv[1])" $1
+url_encode() {
+    python -c "import sys, urllib as ul; print ul.quote_plus(sys.argv[1])" $1
 }
 
-get_config()
-{
-	[ -n "$1" ] && echo "$1" && return 
+get_config() {
+    [ -n "$1" ] && echo "$1" && return
 
-	echo "$DEFAULT_CFG_FILE"
+    echo "$DEFAULT_CFG_FILE"
 }
 
-get_cfg_param()
-{
-	SECTION="$1"
-	PARAM="$2"
-	CFG_FILE=$( get_config "$3" )
-	
-	# Simple parses for ini files.
-	# http://qaru.site/questions/104166/how-do-i-grab-an-ini-value-within-a-shell-script
-	sed -nr "/^\[$SECTION\]/ { :l /^$PARAM[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" $CFG_FILE
+get_cfg_param() {
+    SECTION="$1"
+    PARAM="$2"
+    CFG_FILE=$(get_config "$3")
+
+    # Simple parses for ini files.
+    # http://qaru.site/questions/104166/how-do-i-grab-an-ini-value-within-a-shell-script
+    sed -nr "/^\[$SECTION\]/ { :l /^$PARAM[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" $CFG_FILE
 }
 
-function get_artifacts()
-{
-	[ -z "$1" ] && module_error "Unknown BUILD_NUM"
-	BUILD_NUM="$1"
-	
-	[ -z "$2" ] && CFG_SECTION=$( get_cfg_param global default ) || CFG_SECTION="$2"
-	[ -z "$CFG_SECTION" ] && module_error "Unknown CFG_SECTION"
-	
-	CFG_FILE=$( get_config "$3" )
-	
-	GITLAB_URL=$( get_cfg_param $CFG_SECTION url $CFG_FILE )
-	[ -z "$GITLAB_URL" ] && module_error "Can't read 'url' from config '$CFG_FILE'"
+function get_artifacts() {
+    [ -z "$1" ] && module_error "Unknown BUILD_NUM"
+    BUILD_NUM="$1"
 
-	GITLAB_TOKEN=$( get_cfg_param $CFG_SECTION private_token $CFG_FILE )
-	[ -z "$GITLAB_TOKEN" ] && module_error "Can't read 'private_token' from config '$CFG_FILE'"
+    [ -z "$2" ] && CFG_SECTION=$(get_cfg_param global default) || CFG_SECTION="$2"
+    [ -z "$CFG_SECTION" ] && module_error "Unknown CFG_SECTION"
 
-	PROJECT_ID=$( get_cfg_param $CFG_SECTION project_namespace $CFG_FILE )
-	[ -z "$PROJECT_ID" ] && module_error "Can't read 'project_namespace' from config '$CFG_FILE'"
-	PROJECT_ID=$( url_encode $PROJECT_ID )
+    CFG_FILE=$(get_config "$3")
 
-	GITLAB_API_VERSION=$( get_cfg_param $CFG_SECTION api_version $CFG_FILE )
-	[ -z "$GITLAB_API_VERSION" ] || GITLAB_API_VERSION="$DEFAULT_GITLAB_API_VERSION"
-	
+    GITLAB_URL=$(get_cfg_param $CFG_SECTION url $CFG_FILE)
+    [ -z "$GITLAB_URL" ] && module_error "Can't read 'url' from config '$CFG_FILE'"
+
+    GITLAB_TOKEN=$(get_cfg_param $CFG_SECTION private_token $CFG_FILE)
+    [ -z "$GITLAB_TOKEN" ] && module_error "Can't read 'private_token' from config '$CFG_FILE'"
+
+    PROJECT_ID=$(get_cfg_param $CFG_SECTION project_namespace $CFG_FILE)
+    [ -z "$PROJECT_ID" ] && module_error "Can't read 'project_namespace' from config '$CFG_FILE'"
+    PROJECT_ID=$(url_encode $PROJECT_ID)
+
+    GITLAB_API_VERSION=$(get_cfg_param $CFG_SECTION api_version $CFG_FILE)
+    [ -z "$GITLAB_API_VERSION" ] || GITLAB_API_VERSION="$DEFAULT_GITLAB_API_VERSION"
+
     curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "${GITLAB_URL}/api/${GITLAB_API_VERSION}/projects/${PROJECT_ID}/jobs/${BUILD_NUM}/artifacts" --output ${BUILD_NUM}_artifacts.zip
 }
 
 [ -z "$1" ] && module_help && exit 1
 
 case $1 in
-    -h|--help|help)
+    -h | --help | help)
         module_help
         exit 0
         ;;
-    --usage|usage)
+    --usage | usage)
         module_usage
         exit 0
         ;;
-    
-    --get|get)
-    	shift
-    	get_artifacts "$@"
-    	exit $?
-esac            
+
+    --get | get)
+        shift
+        get_artifacts "$@"
+        exit $?
+        ;;
+esac

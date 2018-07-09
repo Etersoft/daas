@@ -7,36 +7,32 @@
 
 PROG="${0##*/}"
 
-module_usage()
-{
+module_usage() {
     echo "daas apt command [options]"
     echo "Commands:"
     echo "prepare RPMS.dir PUB.dir  - copy rpms from RPMS.dir to PUB.dir and generate apt base for 'RPMS.project_name'"
 }
 
-module_help()
-{
-   module_usage
+module_help() {
+    module_usage
 }
 
-module_error()
-{
+module_error() {
     echo "$1"
     exit 1
 }
 
-do_prepare()
-{
+do_prepare() {
     echo "Prepare.."
     [ -z "$1" ] && module_error "(${FUNCNAME[0]}): ERROR: RPMS directory not defined. Use: daas apt --help"
     [ -z "$2" ] && module_error "(${FUNCNAME[0]}): ERROR: Public RPMS directory not defined. Use: daas apt --help"
 
-    PROJECT_NAME=$( daas-project name )
-    
+    PROJECT_NAME=$(daas-project name)
+
     RPMSDIR="$1"
     PUBDIR="$2"
     if ! test -d $RPMSDIR; then
-	module_error "(${FUNCNAME[0]}): ERROR: Not found directory '$RPMSDIR'"
+        module_error "(${FUNCNAME[0]}): ERROR: Not found directory '$RPMSDIR'"
     fi
 
     mkdir -p ${PUBDIR}/base || return 1
@@ -48,21 +44,21 @@ do_prepare()
 [ -z "$1" ] && module_help && exit 1
 
 case $1 in
-    -h|--help|help)
+    -h | --help | help)
         module_help
         exit 0
         ;;
-    --usage|usage)
+    --usage | usage)
         module_usage
         exit 0
         ;;
-    --prepare|prepare)
-	shift
+    --prepare | prepare)
+        shift
         do_prepare $@
         exit $?
         ;;
-     *)
+    *)
         module_usage
         exit 1
         ;;
-esac       
+esac
