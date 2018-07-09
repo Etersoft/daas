@@ -9,6 +9,7 @@ import sys
 import os
 import socket
 import shutil
+import errno
 
 daas_user_dirs = ['./', '.daas']
 daas_system_dirs = ['/usr/share/daas']
@@ -47,6 +48,14 @@ def get_arg_param(param, defval=""):
                 break
 
     return defval
+
+
+def mkdir_p(dpath):
+    try:
+        os.makedirs(dpath)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
 
 
 def check_static_network(project):
@@ -352,7 +361,7 @@ def get_image_template(iname):
 
 def make_dockerfile(dirname, node, project):
     if not os.path.exists(dirname):
-        os.mkdir(dirname)
+        mkdir_p(dirname)
 
     dockerfile = os.path.join(dirname, 'Dockerfile')
     with open(dockerfile, 'w') as wfile:
@@ -364,7 +373,7 @@ def make_novnc_dockerfile(dirname, node, project):
         return
 
     if not os.path.exists(dirname):
-        os.mkdir(dirname)
+        mkdir_p(dirname)
 
     dockerfile = os.path.join(dirname, 'Dockerfile.novnc')
     with open(dockerfile, 'w') as wfile:
@@ -386,7 +395,7 @@ def create_apt_configs(node):
 
 def make_nginx_node(dirname, project):
     if not os.path.exists(dirname):
-        os.mkdir(dirname)
+        mkdir_p(dirname)
 
     if 'nginx' not in project:
         return
@@ -413,7 +422,7 @@ def make_nginx_node(dirname, project):
     # make logdb configs
     logdbconfdir = os.path.join(dirname, 'logdb.d')
     if not os.path.exists(logdbconfdir):
-        os.mkdir(logdbconfdir)
+        mkdir_p(logdbconfdir)
 
     if project['required_logdb']:
         logdb_upstream = os.path.join(logdbconfdir, '%s-logdb-upstream.conf' % project['name'])
@@ -435,7 +444,7 @@ def make_logdb_node(dirname, project):
     logdb = project['logdb']
 
     if not os.path.exists(dirname):
-        os.mkdir(dirname)
+        mkdir_p(dirname)
 
     create_apt_configs(logdb)
 
@@ -469,7 +478,7 @@ def make_logdb_node(dirname, project):
     # create logdb directory
     dbdir = os.path.join(dirname, 'logdb')
     if not os.path.exists(dbdir):
-        os.mkdir(dbdir)
+        mkdir_p(dbdir)
 
 
 def make_config_for_nginx(basedirname, node, project):
@@ -479,7 +488,7 @@ def make_config_for_nginx(basedirname, node, project):
     confdir = os.path.join(basedirname, 'vnc.d')
 
     if not os.path.exists(confdir):
-        os.mkdir(confdir)
+        mkdir_p(confdir)
 
     loc_confname = '%s-location.conf' % node['node_name']
 
@@ -537,14 +546,24 @@ def usage():
     print
     print "Options:"
     print "---------"
+    print "--output outdir         - generate configs to 'outdir'. Default: 'daas-projectname'"
     print "--image-registry name   - docker registry name to use in image name ([registry-name]/image-name)"
     print "--image-postfix name    - postfix for use in image name (image-name[postfix])"
+    print "See 'Environment'.."
+    print ""
+    print "-q|--quite              - silent mode"
+
     print
     print "Environment:"
     print "------------"
     print "DAAS_OUTDIR - output directory for generate files. Default: 'projectname-compose'"
     print "   supported variables:"
     print "      {PROJECT} - replace to project name. Example: DAAS_OUTDIR='{PROJECT}-my-postfix' --> 'projectname-my-postfix'"
+    print ""
+    print "DAAS_IMAGE_REGISTRY   - see --image-registry"
+    print "DAAS_IMAGE_POSTFIX    - see --image-postfix"
+    print "DAAS_VSTAND_HOSTNAME  - set stand hostname. Default: use hostinfo"
+    print "DAAS_OUTDIR           - output directory for generate configs 'gen'. Default: daas-projectname"
 
 
 if __name__ == "__main__":
@@ -599,8 +618,18 @@ if __name__ == "__main__":
 
     project = conf
 
-    project['image-registry'] = get_arg_param(['--image-registry'], '')
-    project['image-postfix'] = get_arg_param(['--image-postfix'], '')
+    quite = check_arg_param(['--quite', '-q'])
+
+    project['image-registry'] = ''
+    if 'DAAS_IMAGE_REGISTRY' in os.environ:
+        project['image-registry'] = os.environ['DAAS_IMAGE_REGISTRY']
+
+    project['image-registry'] = get_arg_param(['--image-registry'], project['image-registry'])
+
+    project['image-postfix'] = ''
+    if 'DAAS_IMAGE_POSTFIX' in os.environ:
+        project['image-postfix'] = os.environ['DAAS_IMAGE_POSTFIX']
+    project['image-postfix'] = get_arg_param(['--image-postfix'], project['image-postfix'])
 
     project['sorted_networks'] = sorted_networks(project)
     project['extra_hosts'] = make_hosts(project)
@@ -609,8 +638,8 @@ if __name__ == "__main__":
     if 'net_name' not in project:
         project['net_name'] = '%s_net' % project['name']
 
-    if 'VSTAND_HOSTNAME' in os.environ:
-        project['stand_hostname'] = os.environ['VSTAND_HOSTNAME']
+    if 'DAAS_VSTAND_HOSTNAME' in os.environ:
+        project['stand_hostname'] = os.environ['DAAS_VSTAND_HOSTNAME']
     else:
         project['stand_hostname'] = socket.gethostbyaddr(socket.gethostname())[0]
 
@@ -722,15 +751,17 @@ if __name__ == "__main__":
         print "Unknown command. Use -h for help"
         exit(1)
 
-    outdir = '%s-compose' % project['name']
+    outdir = 'daas-%s' % project['name']
 
     if 'DAAS_OUTDIR' in os.environ:
         outdir = os.environ['DAAS_OUTDIR']
         if '{PROJECT}' in outdir:
             outdir = outdir.replace('{PROJECT}', project['name'])
 
+    outdir = get_arg_param(['--output'], outdir)
+
     if not os.path.exists(outdir):
-        os.mkdir(outdir)
+        mkdir_p(outdir)
 
     # make logdb container
     if project['required_logdb']:
@@ -751,7 +782,7 @@ if __name__ == "__main__":
     for n in project['nodes']:
         dirname = os.path.join(outdir, n['node_name'])
         if not os.path.exists(dirname):
-            os.mkdir(dirname)
+            mkdir_p(dirname)
 
         # make conf for nginx
         make_config_for_nginx(nginxdir, n, project)
@@ -776,3 +807,6 @@ if __name__ == "__main__":
             with open(dc_file, 'w') as wfile:
                 wfile.write(env.get_template('docker-compose-simple.yml.tpl').render(project=project, node=n))
                 wfile.write("\n")
+
+    if not quite:
+        print outdir
