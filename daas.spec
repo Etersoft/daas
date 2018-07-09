@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.3
-Release: alt2
+Release: alt3
 
 Group: System/Utilities
 License: MIT
@@ -60,6 +60,9 @@ cp -r tools %buildroot%_datadir/%name/
 # %doc README.md
 
 %changelog
+* Mon Jul 09 2018 Pavel Vainerman <pv@altlinux.ru> 0.3-alt3
+- added use ccache for rpmbuild module
+
 * Mon Jul 09 2018 Pavel Vainerman <pv@altlinux.ru> 0.3-alt2
 - separated special tools
 
