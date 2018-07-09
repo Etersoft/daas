@@ -1,6 +1,9 @@
 #!/bin/sh
 
 [ -n "$DAAS_DEBUG" ] && set -x
+[ -z "$DAAS_DATADIR" ] && DAAS_DATADIR='..'
+
+. $DAAS_DATADIR/bash_modules.d/.daas-common
 
 module_usage() {
     echo "Run docker-compose for this project. Run 'docker-compose --help' for help"
@@ -15,20 +18,14 @@ module_error() {
     exit 1
 }
 
-prepare_environment() {
-    if ! test -f docker-compose.yml; then
-        PROJECT_NAME=$(daas-project name)
-        export DAAS_OUTDIR="daas-run-${PROJECT_NAME}"
-        daas-project gen || return 1
-        cd $DAAS_OUTDIR
-    fi
-}
-
 run_compose() {
     WORKDIR=$(pwd)
     prepare_environment || return 1
+    cd $DAAS_OUTDIR
     docker-compose $@
+    RET=$?
     cd $WORKDIR
+    return $RET
 }
 
 [ -z "$1" ] && module_help && exit 1
