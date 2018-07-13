@@ -1,0 +1,144 @@
+- hosts: new-vstand
+  become: yes
+  gather_facts: no 
+  vars_files:
+     - "{{ daas_vars_files }}"
+
+  vars:
+    ansible_ssh_user: "{{vstand.ssh.user}}"
+    ansible_ssh_password: "{{vstand.ssh.pass}}"
+    # ansible_sudo_user: "{{vstand.sudo.user}}"
+    # ansible_sudo_password: "{{vstand.sudo.pass}}"
+
+  pre_tasks:
+     - name: 'set password for ssh user'
+       set_fact: ansible_ssh_pass="{{ vstand.ssh.pass }}"
+
+     - name: 'install python'
+       raw: "rpm -qa | grep -q 'python-module-simplejson' || apt-get -y install python-module-simplejson python-module-distutils-extra"
+     
+     - name: Setup apt sources
+       template: 
+          src: "{{ daas_ansible_dir }}/templates/sources.list.tpl"
+          dest: "/etc/apt/sources.list.d/daas.list"
+          owner: root 
+          group: wheel 
+          mode: 0640
+          backup: yes
+       when: "vstand.apt.sources is defined and vstand.apt.sources|length > 0" 
+
+
+  tasks:
+     - name: use config files for stand
+       debug: msg="{{ daas_vars_files }}"
+       
+     - name: install virtualbox packages
+       apt_rpm: "package={{item}} state=present update_cache=yes"
+       with_items:
+          - virtualbox 
+          - kernel-modules-virtualbox-std-def
+          
+     - name: virtualbox enable service
+       shell: 'chkconfig virtualbox on'
+       when: docker is undefined
+
+     - name: Start the virtualbox service
+       service: name=virtualbox state=started enabled=yes
+       when: docker is undefined
+     
+     - name: install admin utils
+       apt_rpm: "package={{item}} state=present"
+       with_items:
+          - mc
+          - wget 
+          - htop
+          - iotop
+          - tmux
+          - tcpdump
+          - openntpd
+          - rsync 
+          - iproute2 
+          - patch
+          - eepm
+          - apt-repo
+
+     - name: install user defined packages
+       apt_rpm: "package={{item}} state=present"
+       with_items: "{{ vstand.apt.packages }}"
+       when: "vstand.apt.packages is defined and vstand.apt.packages|length > 0" 
+
+     - name: Check vagrant
+       shell: rpm -qa | grep -q 'vagrant' && echo 'ok' || echo 'fail'
+       register: vagrant_exist
+       ignore_errors: True
+    
+     - name: Copy vagrant package to stand
+       copy:
+          dest: /tmp/vagrant.rpm
+          src: "{{ vstand.vagrant.rpm_url }}"
+          force: yes
+       when: "'fail' in vagrant_exist.stdout"
+          
+     - name: install vagrant
+       shell: "apt-get install -y /tmp/vagrant.rpm"
+       when: "'fail' in vagrant_exist.stdout"
+
+     - name: remove vagrant package
+       shell: 'test -f /tmp/vagrant.rpm && rm -rf /tmp/vagrant.rpm'
+       when: "'fail' in vagrant_exist.stdout"
+
+     - name: apply patch for vagrant (disable ipv6 check)
+       patch:
+         src: "{{ vstand.vagrant.patch }}"
+         basedir: /
+       when: "'{{ vstand.vagrant.patch }}' is defined and 'fail' in vagrant_exist.stdout"
+       
+     - name: "add user {{vstand.vadmin.user}}"
+       user: 
+         name: "{{vstand.vadmin.user}}" 
+         groups: "vboxusers"
+         shell: "/bin/bash"
+         password: "{{ vstand.vadmin.pass }} | password_hash('sha512')"
+         state: present
+
+     - name: "make user {{vstand.vadmin.user}} aliases"
+       shell: "if ! grep -q 'alias vg' /home/{{vstand.vadmin.user}}/.bashrc; then echo 'alias vg=\"vagrant\"' >>  /home/{{vstand.vadmin.user}}/.bashrc; fi"
+   
+     - name: add vagrant to KillExcludeUsers (systemd) 
+       replace:
+         dest: /etc/systemd/logind.conf
+         regexp: '^(.*)KillExcludeUsers=(.*)$'
+         replace: 'KillExcludeUsers={{vstand.vadmin.user}}'
+
+     - name: make VM directory
+       file: path="/srv/vbox/.vagrant.VM" state=directory owner="{{vstand.vadmin.user}}" group=vboxusers
+
+     - name: make link for VM directory
+       file: src=/srv/vbox/.vagrant.VM dest="/home/{{vstand.vadmin.user}}/VirtualBox VMs" state=link
+
+     - name: make vagrant directory
+       file: path="/srv/vbox/.vagrant.d" state=directory owner="{{vstand.vadmin.user}}" group=vboxusers
+
+     - name: make link for vagrant directory
+       file: src=/srv/vbox/.vagrant.d dest="/home/{{vstand.vadmin.user}}/.vagrant.d" state=link
+
+     - name: make boxes directory
+       file: path="/srv/vbox/boxes" state=directory owner="{{vstand.vadmin.user}}" group=vboxusers
+
+     - name: Setup NTP daemon
+       template: 
+          src: "{{ daas_ansible_dir }}/templates/ntpd.conf.tpl"
+          dest: "/etc/ntpd.conf"
+          owner: root 
+          group: wheel 
+          mode: 0640
+          backup: yes
+       when: "vstand.ntpd.servers is defined and vstand.ntpd.servers|length > 0"
+     
+     - name: NTP daemon enable service
+       shell: 'chkconfig ntpd on'
+       when: "vstand.ntpd.servers is defined and vstand.ntpd.servers|length > 0"
+       
+     - name: Start the ntp service
+       service: name=ntpd state=started enabled=yes
+       when: "vstand.ntpd.servers is defined and vstand.ntpd.servers|length > 0"

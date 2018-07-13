@@ -19,6 +19,8 @@ BuildArch: noarch
 
 %py_requires yaml jinja2
 
+Requires: sshpass
+
 %description
 daas - 'Devops As A Service'. 
 Group of utilities for the organization of the devops

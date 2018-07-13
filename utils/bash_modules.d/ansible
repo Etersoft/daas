@@ -1,11 +1,96 @@
 #!/bin/sh
 
+[ -n "$DAAS_DEBUG" ] && set -x
+[ -z "$DAAS_DATADIR" ] && DAAS_DATADIR='..'
+
+. $DAAS_DATADIR/bash_modules.d/.daas-common
+
+[ -z "$DAAS_ANSIBLE_D" ] && DAAS_ANSIBLE_D="$DAAS_DATADIR/ansible.d"
+[ -z "$DAAS_ANSIBLE_PRIVATE" ] && DAAS_ANSIBLE_PRIVATE="$HOME/.daas/ansible_private"
+STAND_HOST=''
+SSH_USER=$USER
+DAAS_VSTAND_CONFIG='daas-vstand-config.yml'
+
+
 module_usage() {
-    echo "ansible NOT YET!"
+    echo " "
+    echo "Usage: ansible command [options]"
+    echo "  "
+    echo "Commands: "
+    echo "setup hostname [ext options] -- [ansible options] - setup host for vstand control"
+    echo "Ext options:"
+    echo "-c|--config vstand-config.yml - config (yaml) for vstand"
+    echo "-v|--variable var=val         - added variable for ansible (can be used multiple times)"
 }
 
 module_help() {
-    echo "ansible NOT YET!"
+    module_usage
+}
+
+module_error() {
+    echo "ERROR: $1"
+    exit 1
+}
+
+split_options() {
+    [ -z "$PROG" ] && PROG="${0##*/}"
+
+    DAAS_ANSIBLE_USER_VARS=''
+
+    TEMP=$(getopt -n $PROG -o c:,u:,v: -l config:,user:,variable: -- "$@") || return 1
+    eval set -- "$TEMP"
+
+    while :; do
+        case "$1" in
+            -u | --user)
+                shift
+                [ "$1" == '--' ] && break
+                SSH_USER="$1"
+                ;;
+            -c | --config)
+                shift
+                [ "$1" == '--' ] && break
+                DAAS_VSTAND_CONFIG="$1"
+                ;;
+            -v | --variable)
+                shift
+                [ "$1" == '--' ] && break
+                DAAS_ANSIBLE_USER_VARS="${DAAS_ANSIBLE_USER_VARS} -e $1"
+                ;;
+            --)
+                shift
+                break
+                ;;
+        esac
+        shift
+    done
+
+    OTHER=$@
+}
+
+prepare_ansible_environment() {
+
+  DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS"
+
+  local ANSIBLE_ENV="-e daas_vars_files=$( realpath $DAAS_VSTAND_CONFIG ) -e daas_data_dir=$( realpath $DAAS_DATADIR ) -e daas_ansible_dir=$( realpath $DAAS_ANSIBLE_D )"
+
+  DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS $ANSIBLE_ENV"
+}
+
+
+do_setup_stand() {
+    echo "Setup $STAND_HOST.."
+    local INVFILE=$(mktemp)
+    echo "[vstands]" >$INVFILE
+    echo "new-vstand ansible_host=$STAND_HOST" >>$INVFILE
+
+    prepare_ansible_environment
+
+    ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l new-vstand $@ ${DAAS_ANSIBLE_D}/playbooks/vstand-setup.yml
+
+    RET=$?
+    rm -rf $INVFILE
+    return $RET
 }
 
 [ -z "$1" ] && module_help && exit 1
@@ -18,6 +103,20 @@ case $1 in
     --usage | usage)
         module_usage
         exit 0
+        ;;
+    --setup | setup)
+        shift
+        split_options $@
+        eval set -- "$OTHER"
+
+        [ -z "$1" ] && module_error "Unknown hostname. Use: daas anible --help for help"
+        STAND_HOST="$1"
+        shift
+        do_setup_stand $@
+        exit $?
+        ;;
+    *)
+        module_usage && exit 1
         ;;
 esac
 
