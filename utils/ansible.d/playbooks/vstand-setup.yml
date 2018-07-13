@@ -29,7 +29,7 @@
 
 
   tasks:
-     - name: use config files for stand
+     - name: use config file for stand
        debug: msg="{{ daas_vars_files }}"
        
      - name: install virtualbox packages
@@ -124,6 +124,13 @@
 
      - name: make boxes directory
        file: path="/srv/vbox/boxes" state=directory owner="{{vstand.vadmin.user}}" group=vboxusers
+
+     - name: set hostname
+       shell: "{{ item }}"
+       with_items:
+          - "ps ax | grep -q 'systemd' && hostnamectl set-hostname {{vstand.hostname}} || echo 'systemd skipped'"
+          - "subst 's|HOSTNAME=.*$|HOSTNAME={{vstand.hostname}}|g' /etc/sysconfig/network"
+       when: "vstand.hostname is defined"
 
      - name: Setup NTP daemon
        template: 

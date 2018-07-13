@@ -1,0 +1,23 @@
+- hosts: vstand
+  become: yes
+  gather_facts: no 
+  vars_files:
+     - "{{ daas_vars_files }}"
+     - "{{ daas_project_file }}"
+
+  vars:
+    ansible_ssh_user: "{{vstand.ssh.user}}"
+    ansible_ssh_password: "{{vstand.ssh.pass}}"
+    # ansible_sudo_user: "{{vstand.sudo.user}}"
+    # ansible_sudo_password: "{{vstand.sudo.pass}}"
+
+  pre_tasks:
+     - name: 'set password for ssh user'
+       set_fact: ansible_ssh_pass="{{ vstand.ssh.pass }}"
+
+  tasks:
+     - name: use config file for stand
+       debug: msg="{{ daas_vars_files }}"
+
+     - name: use project file
+       debug: msg="{{ daas_project_file }}"
