@@ -89,7 +89,7 @@ do_setup_stand() {
 
     prepare_ansible_environment
 
-    ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l new-vstand $@ ${DAAS_ANSIBLE_D}/playbooks/vstand-setup.yml
+    ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l new-vstand $@ ${DAAS_ANSIBLE_D}/playbooks/host-setup.yml
 
     RET=$?
     rm -rf $INVFILE
@@ -105,9 +105,11 @@ do_create_stand() {
 
     prepare_ansible_environment
 
+    [ -n "$DAAS_DEBUG" ] && ANSIBLE_DEBUG="-vvv" || ANSIBLE_DEBUG=''
+
     DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_project_file=$(realpath $DAAS_PROJECT_CONFIG)"
 
-    ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l vstand $@ ${DAAS_ANSIBLE_D}/playbooks/vstand-create.yml
+    ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l vstand $ANSIBLE_DEBUG $@ ${DAAS_ANSIBLE_D}/playbooks/vstand-create.yml
 
     RET=$?
     rm -rf $INVFILE

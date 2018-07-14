@@ -1,0 +1,11 @@
+# Настройка vbox-машины под конкретный проект
+# --------------------------------------------------------------------
+- name: use config file for stand
+  debug: msg="{{ daas_vars_files }}"
+
+- name: use project file
+  debug: msg="{{ daas_project_file }}"
+
+- name: use project name
+  debug: msg="{{ project.name }}"
+   

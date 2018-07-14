@@ -1,128 +1,129 @@
-version: 0.2
+version: 0.3
 
-name: "myproject"
+project:
+  name: "myproject"
 
-networks:
-  net1:
-  net2:
+  networks:
+    net1:
+    net2:
 
-# Глобальные настройки logdb-сервера.
-logdb: 
-  ip: 250
-  # skip_compose: yes
-  port: 6000
-  # db_disable: yes
-  debug: none
-  apt:
-    sources:
-      - "rpm file://updates/xxx"
- 
-nginx:
-  any:
-    - my-location.conf
-    - my-upstream.conf
-  
-# global volumes
-volumes:
-  - /var/run/docker.sock:/var/run/docker.sock
-  
-# global devices
-devices:
-  - /rmp/dev1:/tmp/dev1
-
-# global apt parameters
-apt:
-  packages:
-    - mc
-    - libuniset2
-  
-# global start command for container
-start_command: "start-project.sh"
-
-# global 'copy' list
-copy:
-  - '[a+r]testfile.copy:/tmp/testfile'
-  - '[a+rw]testfile2.copy:/tmp/'
-  
-# global 'command' list
-before_command:
-  - apt-get install rpm
-  - my_project_script
-  - service xxx start
-  
-groups:
-  
-  simple: # specific group
-    nodes:
-      builder:
-        skip_compose: yes
-        #image: x64.p8-builder
-        ip: 100
-        volumes:
-          - /cache
-       
-      tester:
-        image: x64.p8-tester
-        ip: 101
-        start_command: "start-tester.sh"
-        env_file:
-          - ./data/tester.env 
-        volumes:
-          - /cache
-          - ./source:/source
-        apt:
-          sources:
-            - "rpm file://xxx"
-            - "rpm file://xxx"
-          packages:
-            - mc
-            - libuniset2
-    
-  controllers: # specific group
-    image: x64.p8-controller
-    # apt parameters for type 'controller'
+  # Глобальные настройки logdb-сервера.
+  logdb: 
+    ip: 250
+    # skip_compose: yes
+    port: 6000
+    # db_disable: yes
+    debug: none
     apt:
       sources:
-        - "rpm file://controller/xxx"
-      packages:
-        - openssh
+        - "rpm file://updates/xxx"
+ 
+  nginx:
+    any:
+      - my-location.conf
+      - my-upstream.conf
+  
+  # global volumes
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  
+  # global devices
+  devices:
+    - /rmp/dev1:/tmp/dev1
+
+  # global apt parameters
+  apt:
+    packages:
+      - mc
+      - libuniset2
+
+  # global start command for container
+  start_command: "start-project.sh"
+
+  # global 'copy' list
+  copy:
+    - '[a+r]testfile.copy:/tmp/testfile'
+    - '[a+rw]testfile2.copy:/tmp/'
+  
+  # global 'command' list
+  before_command:
+    - apt-get install rpm
+    - my_project_script
+    - service xxx start
+  
+  groups:
+  
+    simple: # specific group
+      nodes:
+        builder:
+          skip_compose: yes
+          #image: x64.p8-builder
+          ip: 100
+          volumes:
+            - /cache
+       
+        tester:
+          image: x64.p8-tester
+          ip: 101
+          start_command: "start-tester.sh"
+          env_file:
+            - ./data/tester.env 
+          volumes:
+            - /cache
+            - ./source:/source
+          apt:
+            sources:
+              - "rpm file://xxx"
+              - "rpm file://xxx"
+            packages:
+              - mc
+              - libuniset2
+    
+    controllers: # specific group
+      image: x64.p8-controller
+      # apt parameters for type 'controller'
+      apt:
+        sources:
+          - "rpm file://controller/xxx"
+        packages:
+          - openssh
         
-    nodes:
-      tnode1: 
-        ip: 3
-        # apt parameters only for 'tnode1'
-        apt:
-          packages:
-            - openssh-server
-        # devices only for 'tnode1'
-        devices:
-          - /mydir/dev2:/tmp/dev2
+      nodes:
+        tnode1: 
+          ip: 3
+          # apt parameters only for 'tnode1'
+          apt:
+            packages:
+              - openssh-server
+          # devices only for 'tnode1'
+          devices:
+            - /mydir/dev2:/tmp/dev2
 
-        # volumes only for 'tnode1'
-        volumes:
-          - /mydir/tnode1:/tmp/tnode1
+          # volumes only for 'tnode1'
+          volumes:
+            - /mydir/tnode1:/tmp/tnode1
         
-        # logservers for logdb
-        logservers:
-          - { name: "logserver1", port: 3333, cmd: "-s level1", description: 'Процесс управления N1' }
-          - { name: "logserver2", port: 4444, cmd: "-s level2", description: 'Процесс управления N2' }
+          # logservers for logdb
+          logservers:
+            - { name: "logserver1", port: 3333, cmd: "-s level1", description: 'Процесс управления N1' }
+            - { name: "logserver2", port: 4444, cmd: "-s level2", description: 'Процесс управления N2' }
 
-      tnode2: { ip: 4 }
-      tnode3: { ip: 5 }
-      tnode4: { ip: 6 }
-      station1: 
-         ip: 1
-         vnc_port: 5901
-         novnc_port: 6901 
-         ssh_port: 33
-         logservers:
-            - { name: "logserver5", port: 4444, cmd: "-s level2", description: 'Процесс управления N2' }
+        tnode2: { ip: 4 }
+        tnode3: { ip: 5 }
+        tnode4: { ip: 6 }
+        station1: 
+           ip: 1
+           vnc_port: 5901
+           novnc_port: 6901 
+           ssh_port: 33
+           logservers:
+              - { name: "logserver5", port: 4444, cmd: "-s level2", description: 'Процесс управления N2' }
 
-  gui: # specific group
-    image: x64.p8-gui
-    before_command:
-      - groupadd myproject
-      - useradd -G myproject guest
-    nodes:
-      gui1: { ip: 1, vnc_host: gui1, vnc_port: 5901, novnc_port: 6081 }
-      gui2: { ip: 2, vnc_host: gui2, vnc_port: 5902, novnc_port: 6082 }
+    gui: # specific group
+      image: x64.p8-gui
+      before_command:
+        - groupadd myproject
+        - useradd -G myproject guest
+      nodes:
+        gui1: { ip: 1, vnc_host: gui1, vnc_port: 5901, novnc_port: 6081 }
+        gui2: { ip: 2, vnc_host: gui2, vnc_port: 5902, novnc_port: 6082 }

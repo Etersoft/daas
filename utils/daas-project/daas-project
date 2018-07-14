@@ -14,7 +14,7 @@ import errno
 daas_user_dirs = ['./', '.daas']
 daas_system_dirs = ['/usr/share/daas']
 
-FORMAT_VERSION = '0.2'
+FORMAT_VERSION = '0.3'
 
 DEFAULT_LOGDB_SERVICE_IP = 250
 
@@ -616,7 +616,7 @@ if __name__ == "__main__":
         print "ERROR: Unsupported file format '%s'. Must be '%s'" % (conf['version'], FORMAT_VERSION)
         exit(1)
 
-    project = conf
+    project = conf['project']
 
     quite = check_arg_param(['--quite', '-q'])
 

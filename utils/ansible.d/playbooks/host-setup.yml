@@ -1,3 +1,5 @@
+# Подготовка host-машины для разворачивания на ней виртуальных стендов
+# --------------------------------------------------------------------
 - hosts: new-vstand
   become: yes
   gather_facts: no 
@@ -5,14 +7,12 @@
      - "{{ daas_vars_files }}"
 
   vars:
-    ansible_ssh_user: "{{vstand.ssh.user}}"
-    ansible_ssh_password: "{{vstand.ssh.pass}}"
-    # ansible_sudo_user: "{{vstand.sudo.user}}"
-    # ansible_sudo_password: "{{vstand.sudo.pass}}"
+    ansible_ssh_user: "{{vstand.host.user}}"
+    ansible_ssh_password: "{{vstand.host.pass}}"
 
   pre_tasks:
      - name: 'set password for ssh user'
-       set_fact: ansible_ssh_pass="{{ vstand.ssh.pass }}"
+       set_fact: ansible_ssh_pass="{{ vstand.host.pass }}"
 
      - name: 'install python'
        raw: "rpm -qa | grep -q 'python-module-simplejson' || apt-get -y install python-module-simplejson python-module-distutils-extra"
@@ -27,25 +27,10 @@
           backup: yes
        when: "vstand.apt.sources is defined and vstand.apt.sources|length > 0" 
 
-
   tasks:
      - name: use config file for stand
        debug: msg="{{ daas_vars_files }}"
        
-     - name: install virtualbox packages
-       apt_rpm: "package={{item}} state=present update_cache=yes"
-       with_items:
-          - virtualbox 
-          - kernel-modules-virtualbox-std-def
-          
-     - name: virtualbox enable service
-       shell: 'chkconfig virtualbox on'
-       when: docker is undefined
-
-     - name: Start the virtualbox service
-       service: name=virtualbox state=started enabled=yes
-       when: docker is undefined
-     
      - name: install admin utils
        apt_rpm: "package={{item}} state=present"
        with_items:
@@ -67,7 +52,21 @@
        with_items: "{{ vstand.apt.packages }}"
        when: "vstand.apt.packages is defined and vstand.apt.packages|length > 0" 
 
-     - name: Check vagrant
+     - name: install virtualbox packages
+       apt_rpm: "package={{item}} state=present update_cache=true"
+       with_items:
+          - virtualbox 
+          - kernel-modules-virtualbox-std-def
+          
+     - name: virtualbox enable service
+       shell: 'chkconfig virtualbox on'
+       when: docker is undefined
+
+     - name: Start the virtualbox service
+       service: name=virtualbox state=started enabled=yes
+       when: docker is undefined
+
+     - name: Check vagrant installation
        shell: rpm -qa | grep -q 'vagrant' && echo 'ok' || echo 'fail'
        register: vagrant_exist
        ignore_errors: True
@@ -93,44 +92,50 @@
          basedir: /
        when: "'{{ vstand.vagrant.patch }}' is defined and 'fail' in vagrant_exist.stdout"
        
-     - name: "add user {{vstand.vadmin.user}}"
-       user: 
-         name: "{{vstand.vadmin.user}}" 
-         groups: "vboxusers"
-         shell: "/bin/bash"
-         password: "{{ vstand.vadmin.pass }} | password_hash('sha512')"
-         state: present
+     - name: setup sudoers for '{{vstand.host.user}}'
+       template: "src={{daas_ansible_dir}}/templates/sudoers.tpl dest=/etc/sudoers.d/{{item}} owner=root"
+       with_items:
+        - "{{vstand.host.user}}"
 
-     - name: "make user {{vstand.vadmin.user}} aliases"
-       shell: "if ! grep -q 'alias vg' /home/{{vstand.vadmin.user}}/.bashrc; then echo 'alias vg=\"vagrant\"' >>  /home/{{vstand.vadmin.user}}/.bashrc; fi"
+     - name: "make user {{vstand.host.user}} aliases"
+       shell: |
+          if ! grep -q 'alias vg' /home/{{vstand.host.user}}/.bashrc; then 
+              echo 'alias vg=\"vagrant\"' >>  /home/{{vstand.host.user}}/.bashrc; 
+          fi
    
+     - name: "add {{vstand.host.user}} to group 'vboxusers'"
+       user:
+         name: "{{vstand.host.user}}"
+         groups: vboxusers
+         append: yes
+
      - name: add vagrant to KillExcludeUsers (systemd) 
        replace:
          dest: /etc/systemd/logind.conf
          regexp: '^(.*)KillExcludeUsers=(.*)$'
-         replace: 'KillExcludeUsers={{vstand.vadmin.user}}'
+         replace: 'KillExcludeUsers={{vstand.host.user}}'
 
      - name: make VM directory
-       file: path="/srv/vbox/.vagrant.VM" state=directory owner="{{vstand.vadmin.user}}" group=vboxusers
+       file: path="/srv/vbox/.vagrant.VM" state=directory owner="{{vstand.host.user}}" group=vboxusers
 
      - name: make link for VM directory
-       file: src=/srv/vbox/.vagrant.VM dest="/home/{{vstand.vadmin.user}}/VirtualBox VMs" state=link
+       file: src=/srv/vbox/.vagrant.VM dest="/home/{{vstand.host.user}}/VirtualBox VMs" state=link
 
      - name: make vagrant directory
-       file: path="/srv/vbox/.vagrant.d" state=directory owner="{{vstand.vadmin.user}}" group=vboxusers
+       file: path="/srv/vbox/.vagrant.d" state=directory owner="{{vstand.host.user}}" group=vboxusers
 
      - name: make link for vagrant directory
-       file: src=/srv/vbox/.vagrant.d dest="/home/{{vstand.vadmin.user}}/.vagrant.d" state=link
+       file: src=/srv/vbox/.vagrant.d dest="/home/{{vstand.host.user}}/.vagrant.d" state=link
 
      - name: make boxes directory
-       file: path="/srv/vbox/boxes" state=directory owner="{{vstand.vadmin.user}}" group=vboxusers
+       file: path="/srv/vbox/boxes" state=directory owner="{{vstand.host.user}}" group=vboxusers
 
      - name: set hostname
        shell: "{{ item }}"
        with_items:
-          - "ps ax | grep -q 'systemd' && hostnamectl set-hostname {{vstand.hostname}} || echo 'systemd skipped'"
-          - "subst 's|HOSTNAME=.*$|HOSTNAME={{vstand.hostname}}|g' /etc/sysconfig/network"
-       when: "vstand.hostname is defined"
+          - "ps ax | grep -q 'systemd' && hostnamectl set-hostname {{vstand.host.name}} || echo 'systemd skipped'"
+          - "subst 's|HOSTNAME=.*$|HOSTNAME={{vstand.host.name}}|g' /etc/sysconfig/network"
+       when: "vstand.host.name is defined"
 
      - name: Setup NTP daemon
        template: 

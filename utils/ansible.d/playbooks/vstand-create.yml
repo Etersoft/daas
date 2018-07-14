@@ -1,23 +1,74 @@
-- hosts: vstand
-  become: yes
+# Создание виртуального стенда (vbox машины)
+# --------------------------------------------------------------------
+- hosts: all
+  become: no
   gather_facts: no 
   vars_files:
      - "{{ daas_vars_files }}"
      - "{{ daas_project_file }}"
 
   vars:
-    ansible_ssh_user: "{{vstand.ssh.user}}"
-    ansible_ssh_password: "{{vstand.ssh.pass}}"
-    # ansible_sudo_user: "{{vstand.sudo.user}}"
-    # ansible_sudo_password: "{{vstand.sudo.pass}}"
+    ansible_ssh_user: "{{vstand.host.user}}"
+    ansible_ssh_password: "{{vstand.host.pass}}"
+    tmp_boxdir: /srv/vbox
+    vagrant_boxes_dir: /srv/vbox/boxes
+    project_dir: "vstands/vs-{{project.name}}"
 
   pre_tasks:
      - name: 'set password for ssh user'
-       set_fact: ansible_ssh_pass="{{ vstand.ssh.pass }}"
+       set_fact: ansible_ssh_pass="{{ vstand.host.pass }}"
+       tags: tt
 
   tasks:
-     - name: use config file for stand
-       debug: msg="{{ daas_vars_files }}"
+    - name: use config file for stand
+      debug: msg="{{ daas_vars_files }}"
 
-     - name: use project file
-       debug: msg="{{ daas_project_file }}"
+    - name: use project file
+      debug: msg="{{ daas_project_file }}"
+
+    - name: use project name
+      debug: msg="{{ project.name }}"
+
+    - name: use project dir
+      debug: msg="{{ project_dir }}"
+
+    - name: Create project directory
+      file: "path={{project_dir}} state=directory mode=0777"
+
+    - name: Generate vagrant file
+      template: "src={{daas_ansible_dir}}/templates/Vagrantfile.tpl dest={{project_dir}}/Vagrantfile"
+      tags: tt
+
+    - name: Generate bootstrap file
+      template: "src={{daas_ansible_dir}}/templates/bootstrap.sh.tpl dest={{project_dir}}/bootstrap.sh mode='a+x'"
+      tags: tt
+    
+    - name: Copy vagrant box
+      copy:
+        dest: "{{ vagrant_boxes_dir }}/{{vstand.vagrant.box.name}}.box"
+        src: "{{vstand.vagrant.box.url}}"
+
+    - name: Create vagrant boxes (Very very long task)
+      shell: |
+          if ! vagrant box list | grep -q '{{vstand.vagrant.box.name}}'; then
+             vagrant box add {%- if vstand.vagrant.box.add_args is defined %}{{vstand.vagrant.box.add_args}}{%- endif %} {{vstand.vagrant.box.name}} {{ vagrant_boxes_dir }}/{{vstand.vagrant.box.name}}.box 1>/dev/null
+             exit $?
+          fi
+          exit 0
+
+    - name: get ip from new stand
+      shell: |
+          vagrant up && IP=$( vagrant ssh -c 'ip addr list eth1 | grep "  inet " | head -n 1 | cut -d " " -f 6 | cut -d / -f 1' )
+          echo "IP: $IP"
+      args:
+          chdir: "{{project_dir}}/"
+      register: newstand
+
+    - name: 'set variable ip'
+      set_fact: 
+        newstand_ip: "{{ newstand.stdout | regex_replace('\n','') | regex_replace(regexp,'\\2')  }}"
+      vars:
+        regexp: '(.*)IP: (.*)$'
+
+    - name: 'set ip'
+      debug: msg="{{ newstand_ip }}"
