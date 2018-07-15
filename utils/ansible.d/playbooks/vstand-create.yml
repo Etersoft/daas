@@ -41,7 +41,6 @@
 
     - name: Generate bootstrap file
       template: "src={{daas_ansible_dir}}/templates/bootstrap.sh.tpl dest={{project_dir}}/bootstrap.sh mode='a+x'"
-      tags: tt
     
     - name: Copy vagrant box
       copy:
@@ -56,19 +55,46 @@
           fi
           exit 0
 
+    - name: run new vstand
+      shell: vagrant up
+      args:
+          chdir: "{{project_dir}}/"
+      tags: tt
+
     - name: get ip from new stand
       shell: |
-          vagrant up && IP=$( vagrant ssh -c 'ip addr list eth1 | grep "  inet " | head -n 1 | cut -d " " -f 6 | cut -d / -f 1' )
+          IP=$( vagrant ssh -c 'ip addr list eth1 | grep "  inet " | head -n 1 | cut -d " " -f 6 | cut -d / -f 1' )
           echo "IP: $IP"
       args:
           chdir: "{{project_dir}}/"
       register: newstand
+      tags: tt
 
     - name: 'set variable ip'
       set_fact: 
         newstand_ip: "{{ newstand.stdout | regex_replace('\n','') | regex_replace(regexp,'\\2')  }}"
       vars:
         regexp: '(.*)IP: (.*)$'
+      tags: tt
 
     - name: 'set ip'
       debug: msg="{{ newstand_ip }}"
+      tags: tt
+
+    - name: 'setup admin for new stand'
+      shell: vagrant ssh -c "sudo useradd {{project.vstand.user}}; echo '{{project.vstand.user}}:{{project.vstand.pass}}' | sudo chpasswd"
+      args:
+        chdir: "{{project_dir}}/"      
+      tags: tt
+
+    - name: "add admin to group 'wheel'"
+      shell: vagrant ssh -c "sudo usermod -a -G wheel {{project.vstand.user}}"
+      args:
+        chdir: "{{project_dir}}/"      
+      tags: tt
+
+    - name: save ip file information
+      local_action: copy content="{{ item }}" dest="{{ daas_newstand_ip_file }}" 
+      with_items: 
+        - "{{newstand_ip}}"
+      tags: tt

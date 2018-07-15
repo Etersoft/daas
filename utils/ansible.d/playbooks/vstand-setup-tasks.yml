@@ -2,10 +2,44 @@
 # --------------------------------------------------------------------
 - name: use config file for stand
   debug: msg="{{ daas_vars_files }}"
+  tags: tt
 
 - name: use project file
   debug: msg="{{ daas_project_file }}"
+  tags: tt
 
 - name: use project name
   debug: msg="{{ project.name }}"
-   
+  tags: tt
+
+- name: install programs
+  apt_rpm: "package={{item}} state=present"
+  with_items:
+    - mc
+    - wget 
+    - htop
+    - curl
+    - eepm
+    - apt-repo
+    - docker-ce
+    - python-module-docker
+    - python-module-pip
+    - python-module-jinja2
+    - cgroup 
+    - iptables
+    - git-core
+    - etersoft-build-utils
+    - etcgit
+    - su
+
+- name: control su
+  shell: control su public
+
+- name: install docker-compose
+  pip: name=docker-compose
+
+- name: "add {{ project.vstand.user }} to group 'docker'"
+  user:
+    name: "{{ project.vstand.user }}"
+    groups: docker
+    append: yes

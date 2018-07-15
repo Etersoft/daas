@@ -21,6 +21,8 @@ module_usage() {
     echo "setup hostname [ext options] -- [ansible options]                    - setup host for vstand control"
     echo "create hostname [ project.yml ] [ext options] -- [ansible options]   - create vstand for project"
     echo "                                                                       Default project file '.daas.yml'"
+    echo "prepare hostname [ project.yml ] [ext options] -- [ansible options]  - prepare vstand for project"
+    echo "                                                                       Default project file '.daas.yml'"
     echo "Ext options:"
     echo "-c|--config vstand-config.yml - config (yaml) for vstand"
     echo "-v|--variable var=val         - added variable for ansible (can be used multiple times)"
@@ -109,10 +111,39 @@ do_create_stand() {
 
     DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_project_file=$(realpath $DAAS_PROJECT_CONFIG)"
 
+    local DAAS_NEWSTAND_IP=$(mktemp)
+    DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_newstand_ip_file=$DAAS_NEWSTAND_IP"
+
     ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l vstand $ANSIBLE_DEBUG $@ ${DAAS_ANSIBLE_D}/playbooks/vstand-create.yml
 
     RET=$?
     rm -rf $INVFILE
+    echo "NEW STAND IP: $( cat $DAAS_NEWSTAND_IP)"
+    rm -rf $DAAS_NEWSTAND_IP
+
+    return $RET
+}
+
+do_prepare_stand() {
+    PROJECT_NAME=$( daas-project name -c $DAAS_PROJECT_CONFIG )
+    echo "Prepare stand for '$PROJECT_NAME' on '$STAND_HOST'.."
+    local INVFILE=$(mktemp)
+    echo "[vstands]" >$INVFILE
+    echo "vstand ansible_host=$STAND_HOST" >>$INVFILE
+
+    prepare_ansible_environment
+
+    [ -n "$DAAS_DEBUG" ] && ANSIBLE_DEBUG="-vvv" || ANSIBLE_DEBUG=''
+
+    DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_project_file=$(realpath $DAAS_PROJECT_CONFIG)"
+
+    DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS}"
+
+    ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l vstand $ANSIBLE_DEBUG $@ ${DAAS_ANSIBLE_D}/playbooks/vstand-setup.yml
+
+    RET=$?
+    rm -rf $INVFILE
+
     return $RET
 }
 
@@ -149,6 +180,19 @@ case $1 in
         [ -n "$1" ] && DAAS_PROJECT_CONFIG="$1" && shift
 
         do_create_stand $@
+        exit $?
+        ;;
+    --prepare | prepare)
+        shift
+        split_options $@
+        eval set -- "$OTHER"
+
+        [ -z "$1" ] && module_error "Unknown hostname. Use: daas anible --help for help"
+        STAND_HOST="$1"
+        shift
+        [ -n "$1" ] && DAAS_PROJECT_CONFIG="$1" && shift
+
+        do_prepare_stand $@
         exit $?
         ;;
     *)

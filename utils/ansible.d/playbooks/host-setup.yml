@@ -15,7 +15,7 @@
        set_fact: ansible_ssh_pass="{{ vstand.host.pass }}"
 
      - name: 'install python'
-       raw: "rpm -qa | grep -q 'python-module-simplejson' || apt-get -y install python-module-simplejson python-module-distutils-extra"
+       raw: "rpm -qa | grep -q 'python-module-simplejson' || { sudo apt-get update && sudo apt-get -y install python-module-simplejson python-module-distutils-extra }"
      
      - name: Setup apt sources
        template: 
