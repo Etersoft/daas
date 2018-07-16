@@ -43,3 +43,102 @@
     name: "{{ project.vstand.user }}"
     groups: docker
     append: yes
+
+- name: install daas from package
+  apt_rpm: "package={{item}} state=present"
+  when: vstand.daas_url is undefined
+  tags: 
+    - daas
+
+- name: copy daas from local file
+  copy:
+    src: "{{vstand.daas_url}}"
+    dest: "/tmp/"
+  when: vstand.daas_url is defined and 'http' not in vstand.daas_url
+  tags: 
+    - daas
+
+- name: load daas from url
+  get_url:
+    url: "{{vstand.daas_url}}"
+    dest: /tmp/
+  when: vstand.daas_url is defined and 'http' in vstand.daas_url
+  tags: 
+    - daas
+
+- name: "install daas from local package"
+  shell: "rpm -qa | grep -q daas || sudo epmi --auto /tmp/daas*.rpm"
+  when: vstand.daas_url is defined
+  tags: 
+    - daas
+
+- name: "remove daas local package"
+  shell: rm -rf /tmp/daas*.rpm
+  when: vstand.daas_url is defined
+  tags: 
+    - daas
+
+- name: load gitlab-runner from internet
+  get_url:
+    url: https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
+    dest: /usr/local/bin/gitlab-runner
+    mode: 'a+x'
+  when: vstand.gitlab.runner.url is undefined or vstand.gitlab.runner.url|length == 0
+  tags: 
+    - gitlab
+
+- name: copy gitlab-runner from local file
+  copy:
+    dest: /usr/local/bin/gitlab-runner
+    src: "{{vstand.gitlab.runner.url}}"
+    mode: 'a+x'
+  when: vstand.gitlab.runner.url is defined and 'http' not in vstand.gitlab.runner.url
+  tags: 
+    - gitlab
+
+- name: load gitlab-runner from url
+  get_url:
+    url: https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
+    dest: /usr/local/bin/gitlab-runner
+    mode: 'a+x'
+  when: vstand.gitlab.runner.url is defined and 'http' in vstand.gitlab.runner.url 
+  tags: 
+    - gitlab
+
+- name: create gitlab-runner service file
+  template: "src={{daas_ansible_dir}}/templates/gitlab-runner.service.tpl dest=/etc/systemd/system/gitlab-runner.service owner=root"
+  tags: 
+    - gitlab
+
+- name: List configured runners
+  become: no
+  command: gitlab-runner list --config '/home/{{project.vstand.user}}/.gitlab-runner/config.toml'
+  register: configured_runners
+  changed_when: False
+  tags: 
+    - gitlab
+
+- name: Register runner to GitLab (executor 'shell')
+  become: no
+  command: gitlab-runner register >
+    --config '/home/{{project.vstand.user}}/.gitlab-runner/config.toml'
+    --non-interactive
+    --url '{{ vstand.gitlab.url }}'
+    --registration-token '{{ gitlab_runner_registration_token }}'
+    --description '{{ vstand.gitlab.runner.description }}'
+    --tag-list '{{ vstand.gitlab.runner.tags}}'
+    --executor '{{ vstand.gitlab.runner.executor }}'
+    --docker-image '{{ vstand.gitlab.runner.docker_image }}'
+    --env 'TERM=xterm'
+  when: "vstand.gitlab.runner.description is defined and configured_runners.stderr.find('\n{{ vstand.gitlab.runner.description }}') == -1"
+  tags: 
+    - gitlab
+
+- name: Start gitlab-runner service
+  service: name=gitlab-runner state=started enabled=yes
+  tags: 
+    - gitlab
+
+- name: create rpmmacros
+  become: no
+  template: "src={{daas_ansible_dir}}/templates/rpmmacros.tpl dest=/home/{{project.vstand.user}}/.rpmmacros"

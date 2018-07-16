@@ -140,3 +140,9 @@ The following steps assume that the files are named domain.crt and domain.key.
 - перерегистрировать gitlab-runner-ов в gitlab
 - исправить /etc/hosts  на предмет доступа по hostname gitlab-server
 - переименовать машину (hostname) под проект (/etc/sysconfig/network и hostnamectl set-hostname <HOSTNAME>)
+
+
+Подобные проекты
+=================
+https://docs.debops.org/en/master/
+https://github.com/flant/dapp

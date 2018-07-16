@@ -11,6 +11,7 @@ STAND_HOST=''
 SSH_USER=$USER
 DAAS_VSTAND_CONFIG='daas-vstand-config.yml'
 DAAS_PROJECT_CONFIG='.daas.yml'
+[ -z "$GITLAB_RUNNER_REGISTRATION_TOKEN" ] && GITLAB_RUNNER_REGISTRATION_TOKEN=''
 
 
 module_usage() {
@@ -26,6 +27,7 @@ module_usage() {
     echo "Ext options:"
     echo "-c|--config vstand-config.yml - config (yaml) for vstand"
     echo "-v|--variable var=val         - added variable for ansible (can be used multiple times)"
+    echo "--gitlab-token token          - gitlab-runner registration token for gitlab. Default use from vstand config file"
 }
 
 module_help() {
@@ -42,7 +44,7 @@ split_options() {
 
     DAAS_ANSIBLE_USER_VARS=''
 
-    TEMP=$(getopt -n $PROG -o c:,u:,v: -l config:,user:,variable: -- "$@") || return 1
+    TEMP=$(getopt -n $PROG -o c:,u:,v: -l config:,user:,variable:,gitlab-token: -- "$@") || return 1
     eval set -- "$TEMP"
 
     while :; do
@@ -61,6 +63,11 @@ split_options() {
                 shift
                 [ "$1" == '--' ] && break
                 DAAS_ANSIBLE_USER_VARS="${DAAS_ANSIBLE_USER_VARS} -e $1"
+                ;;
+            --gitlab-token)
+                shift
+                [ "$1" == '--' ] && break
+                GITLAB_RUNNER_REGISTRATION_TOKEN="$1"
                 ;;
             --)
                 shift
@@ -81,7 +88,6 @@ prepare_ansible_environment() {
 
   DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS $ANSIBLE_ENV"
 }
-
 
 do_setup_stand() {
     echo "Setup stand '$STAND_HOST'.."
@@ -127,6 +133,12 @@ do_create_stand() {
 do_prepare_stand() {
     PROJECT_NAME=$( daas-project name -c $DAAS_PROJECT_CONFIG )
     echo "Prepare stand for '$PROJECT_NAME' on '$STAND_HOST'.."
+
+    if ! ping -c 1 -w 1 $STAND_HOST 1>/dev/null 2>/dev/null; then
+        echo "ERROR: '$STAND_HOST' does not respond"
+        return 1
+    fi
+
     local INVFILE=$(mktemp)
     echo "[vstands]" >$INVFILE
     echo "vstand ansible_host=$STAND_HOST" >>$INVFILE
@@ -137,7 +149,7 @@ do_prepare_stand() {
 
     DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_project_file=$(realpath $DAAS_PROJECT_CONFIG)"
 
-    DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS}"
+    [ -n "$GITLAB_RUNNER_REGISTRATION_TOKEN" ] && DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e gitlab_runner_registration_token=$GITLAB_RUNNER_REGISTRATION_TOKEN"
 
     ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l vstand $ANSIBLE_DEBUG $@ ${DAAS_ANSIBLE_D}/playbooks/vstand-setup.yml
 

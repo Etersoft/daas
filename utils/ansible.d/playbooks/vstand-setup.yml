@@ -10,15 +10,21 @@
   vars:
     ansible_ssh_user: "{{project.vstand.user}}"
     ansible_ssh_password: "{{project.vstand.pass}}"
+    gitlab_runner_registration_token: "{{ vstand.gitlab.runner.registration_token }}"
 
   pre_tasks:
      - name: 'set password for ssh user'
        set_fact: ansible_ssh_pass="{{ project.vstand.pass }}"
-       tags: tt
+       tags: 
+         - gitlab
+         - daas
 
      - name: 'install python'
-       raw: "rpm -qa | grep -q 'python-module-simplejson' || apt-get -y install python-module-simplejson python-module-distutils-extra"
+       raw: "if ! rpm -qa | grep -q 'python-module-simplejson'; then sudo apt-get update && sudo apt-get -y install python-module-simplejson python-module-distutils-extra; fi"
+       tags: 
+         - gitlab
+         - daas
 
   tasks:
-     - name: prepare..
+     - name: configure vstand for "{{ project.name }}"
        include: "{{daas_ansible_dir}}/playbooks/vstand-setup-tasks.yml"
