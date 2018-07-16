@@ -13,10 +13,9 @@ DAAS_VSTAND_CONFIG='daas-vstand-config.yml'
 DAAS_PROJECT_CONFIG='.daas.yml'
 [ -z "$GITLAB_RUNNER_REGISTRATION_TOKEN" ] && GITLAB_RUNNER_REGISTRATION_TOKEN=''
 
-
 module_usage() {
     echo " "
-    echo "Usage: ansible command [options]"
+    echo "Usage: vstand command [options]"
     echo "  "
     echo "Commands: "
     echo "setup hostname [ext options] -- [ansible options]                    - setup host for vstand control"
@@ -82,11 +81,11 @@ split_options() {
 
 prepare_ansible_environment() {
 
-  DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS"
+    DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS"
 
-  local ANSIBLE_ENV="-e daas_vars_files=$( realpath $DAAS_VSTAND_CONFIG ) -e daas_data_dir=$( realpath $DAAS_DATADIR ) -e daas_ansible_dir=$( realpath $DAAS_ANSIBLE_D )"
+    local ANSIBLE_ENV="-e daas_vars_files=$(realpath $DAAS_VSTAND_CONFIG) -e daas_data_dir=$(realpath $DAAS_DATADIR) -e daas_ansible_dir=$(realpath $DAAS_ANSIBLE_D)"
 
-  DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS $ANSIBLE_ENV"
+    DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS $ANSIBLE_ENV"
 }
 
 do_setup_stand() {
@@ -105,7 +104,7 @@ do_setup_stand() {
 }
 
 do_create_stand() {
-    PROJECT_NAME=$( daas-project name -c $DAAS_PROJECT_CONFIG )
+    PROJECT_NAME=$(daas-project name -c $DAAS_PROJECT_CONFIG)
     echo "Create stand for '$PROJECT_NAME' on '$STAND_HOST'.."
     local INVFILE=$(mktemp)
     echo "[vstands]" >$INVFILE
@@ -124,14 +123,14 @@ do_create_stand() {
 
     RET=$?
     rm -rf $INVFILE
-    echo "NEW STAND IP: $( cat $DAAS_NEWSTAND_IP)"
+    echo "NEW STAND IP: $(cat $DAAS_NEWSTAND_IP)"
     rm -rf $DAAS_NEWSTAND_IP
 
     return $RET
 }
 
 do_prepare_stand() {
-    PROJECT_NAME=$( daas-project name -c $DAAS_PROJECT_CONFIG )
+    PROJECT_NAME=$(daas-project name -c $DAAS_PROJECT_CONFIG)
     echo "Prepare stand for '$PROJECT_NAME' on '$STAND_HOST'.."
 
     if ! ping -c 1 -w 1 $STAND_HOST 1>/dev/null 2>/dev/null; then
