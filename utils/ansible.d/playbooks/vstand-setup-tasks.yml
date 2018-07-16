@@ -78,30 +78,30 @@
   tags: 
     - daas
 
-- name: load gitlab-runner from internet
+- name: download gitlab-runner from internet
   get_url:
     url: https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
     dest: /usr/local/bin/gitlab-runner
     mode: 'a+x'
-  when: vstand.gitlab.runner.url is undefined or vstand.gitlab.runner.url|length == 0
+  when: vstand.gitlab.runner_download_url is undefined or vstand.gitlab.runner_download_url|length == 0
   tags: 
     - gitlab
 
 - name: copy gitlab-runner from local file
   copy:
     dest: /usr/local/bin/gitlab-runner
-    src: "{{vstand.gitlab.runner.url}}"
+    src: "{{vstand.gitlab.runner_download_url}}"
     mode: 'a+x'
-  when: vstand.gitlab.runner.url is defined and 'http' not in vstand.gitlab.runner.url
+  when: vstand.gitlab.runner_download_url is defined and 'http' not in vstand.gitlab.runner_download_url
   tags: 
     - gitlab
 
-- name: load gitlab-runner from url
+- name: download gitlab-runner from url
   get_url:
-    url: https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
+    url: "{{vstand.gitlab.runner_download_url}}"
     dest: /usr/local/bin/gitlab-runner
     mode: 'a+x'
-  when: vstand.gitlab.runner.url is defined and 'http' in vstand.gitlab.runner.url 
+  when: vstand.gitlab.runner_download_url is defined and 'http' in vstand.gitlab.runner_download_url 
   tags: 
     - gitlab
 
@@ -118,19 +118,21 @@
   tags: 
     - gitlab
 
-- name: Register runner to GitLab (executor 'shell')
+- name: Register runners to GitLab
   become: no
   command: gitlab-runner register >
     --config '/home/{{project.vstand.user}}/.gitlab-runner/config.toml'
     --non-interactive
     --url '{{ vstand.gitlab.url }}'
     --registration-token '{{ gitlab_runner_registration_token }}'
-    --description '{{ vstand.gitlab.runner.description }}'
-    --tag-list '{{ vstand.gitlab.runner.tags}}'
-    --executor '{{ vstand.gitlab.runner.executor }}'
-    --docker-image '{{ vstand.gitlab.runner.docker_image }}'
+    --description '{{ item.runner.description }}'
+    --tag-list '{{ item.runner.tags if item.runner.tags is defined else '' }}'
+    --executor '{{ item.runner.executor }}'
+    --docker-image '{{ item.runner.docker_image if item.runner.docker_image is defined else '' }}'
     --env 'TERM=xterm'
-  when: "vstand.gitlab.runner.description is defined and configured_runners.stderr.find('\n{{ vstand.gitlab.runner.description }}') == -1"
+    {{ item.runner.extra_options if item.runner.extra_options is defined else '' }}
+  when: "item.runner.description is defined and configured_runners.stderr.find('\n{{ item.runner.description }}') == -1" 
+  with_items: "{{vstand.gitlab.runners}}"
   tags: 
     - gitlab
 

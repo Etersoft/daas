@@ -10,7 +10,7 @@
   vars:
     ansible_ssh_user: "{{project.vstand.user}}"
     ansible_ssh_password: "{{project.vstand.pass}}"
-    gitlab_runner_registration_token: "{{ vstand.gitlab.runner.registration_token }}"
+    gitlab_runner_registration_token: "{{ vstand.gitlab.runner_registration_token }}"
 
   pre_tasks:
      - name: 'set password for ssh user'
