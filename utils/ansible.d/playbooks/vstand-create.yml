@@ -15,7 +15,7 @@
     ansible_ssh_password: "{{daas_vstand.hostmachine.pass}}"
     tmp_boxdir: /srv/vbox
     vagrant_boxes_dir: /srv/vbox/boxes
-    project_dir: "vstands/vs-{{project.name}}"
+    vagrant_project_dir: "vstands/vs-{{project.name}}-{{daas_vstand.hostname}}"
 
   pre_tasks:
      - name: 'setup password for ssh user'
@@ -32,16 +32,16 @@
       debug: msg="{{ project.name }}"
 
     - name: use project dir
-      debug: msg="{{ project_dir }}"
+      debug: msg="{{ vagrant_project_dir }}"
 
     - name: Create project directory
-      file: "path={{project_dir}} state=directory mode=0777"
+      file: "path={{vagrant_project_dir}} state=directory mode=0777"
 
     - name: Generate vagrant file
-      template: "src={{daas_ansible_dir}}/templates/Vagrantfile.tpl dest={{project_dir}}/Vagrantfile"
+      template: "src={{daas_ansible_dir}}/templates/Vagrantfile.tpl dest={{vagrant_project_dir}}/Vagrantfile"
 
     - name: Generate bootstrap file
-      template: "src={{daas_ansible_dir}}/templates/bootstrap.sh.tpl dest={{project_dir}}/bootstrap.sh mode='a+x'"
+      template: "src={{daas_ansible_dir}}/templates/bootstrap.sh.tpl dest={{vagrant_project_dir}}/bootstrap.sh mode='a+x'"
     
     - local_action: stat path="{{daas_vstand.vagrant.box.url}}"
       register: vagrant_box
@@ -67,14 +67,14 @@
     - name: run new vstand
       shell: vagrant up
       args:
-          chdir: "{{project_dir}}/"
+          chdir: "{{vagrant_project_dir}}/"
 
     - name: get ip from new stand
       shell: |
           IP=$( vagrant ssh -c 'ip addr list eth1 | grep "  inet " | head -n 1 | cut -d " " -f 6 | cut -d / -f 1' )
           echo "IP: $IP"
       args:
-          chdir: "{{project_dir}}/"
+          chdir: "{{vagrant_project_dir}}/"
       register: newstand
 
     - name: 'set variable ip'
@@ -89,12 +89,12 @@
     - name: 'setup admin for new stand'
       shell: vagrant ssh -c "sudo useradd {{daas_vstand.user}}; echo '{{daas_vstand.user}}:{{daas_vstand.pass}}' | sudo chpasswd"
       args:
-        chdir: "{{project_dir}}/"      
+        chdir: "{{vagrant_project_dir}}/"      
 
     - name: "add admin to group 'wheel'"
       shell: vagrant ssh -c "sudo usermod -a -G wheel {{daas_vstand.user}}"
       args:
-        chdir: "{{project_dir}}/"      
+        chdir: "{{vagrant_project_dir}}/"      
 
     - name: save ip file information
       local_action: copy content="{{ item }}" dest="{{ daas_newstand_ip_file }}" 
