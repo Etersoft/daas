@@ -33,9 +33,10 @@ module_usage() {
     echo "                                                                       configs - show merged parameters"
     echo "Ext options:"
     echo "------------"
-    echo "-c|--config vstand-config.yml    - config (yaml) for vstand"
-    echo "-v|--variable var=val            - added variable for ansible (can be used multiple times)"
-    echo "--gitlab-token token             - gitlab-runner registration token for gitlab. Default use from vstand config file"
+    echo "-s|--stand-config vstand-config.yml  - config (yaml) for vstand"
+    echo "-c|--config daas.yml                 - config (yaml) for project"
+    echo "-v|--variable var=val                - added variable for ansible (can be used multiple times)"
+    echo "--gitlab-token token                 - gitlab-runner registration token for gitlab. Default use from vstand config file"
     echo " "
 }
 
@@ -53,7 +54,7 @@ split_options() {
 
     DAAS_ANSIBLE_USER_VARS=''
 
-    TEMP=$(getopt -n $PROG -o c:,u:,v: -l config:,user:,variable:,gitlab-token: -- "$@") || return 1
+    TEMP=$(getopt -n $PROG -o c:,s:,u:,v: -l config:,stand-config:,user:,variable:,gitlab-token: -- "$@") || return 1
     eval set -- "$TEMP"
 
     while :; do
@@ -63,10 +64,15 @@ split_options() {
                 [ "$1" == '--' ] && break
                 SSH_USER="$1"
                 ;;
-            -c | --config)
+            -s | --stand-config)
                 shift
                 [ "$1" == '--' ] && break
                 DAAS_VSTAND_CONFIG="$1"
+                ;;
+            -c | --config)
+                shift
+                [ "$1" == '--' ] && break
+                DAAS_PROJECT_CONFIG="$1"
                 ;;
             -v | --variable)
                 shift

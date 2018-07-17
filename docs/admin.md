@@ -12,7 +12,7 @@
 Для этого предназначена команда:
 
 ```bash
-daas vstand prepare [-c vstand-config.yml] hostname
+daas vstand prepare [-s vstand-config.yml] hostname
 ```
 
 Но предварительно требуется обеспечить доступ к машине по ssh. Для этого достаточно
@@ -65,15 +65,16 @@ vstand:
 Полное описание параметров можно почитать [тут](docs/vstand-config.md)
 
 По умолчанию файл ищется в текущем каталоге (где запускается команда ```daas vstand ...```)
-под именем **.daas-vstand-config.yml**.  Но можно указать другой файл при помощи аргумента *-c|--config my-vstand-config.yml*
+под именем **.daas-vstand-config.yml**. Но можно указать другой файл при помощи аргумента *-s|--stand-config my-vstand-config.yml*
+А в качестве файла проекта по умолчанию используется **.daas.yml**. Но можно указать другой при помощи аргумента *-c|--config project.yml*
 ```
-daas vstand setup -c my-vstand-config.yml hostname
+daas vstand setup -s my-vstand-config.yml hostname
 ```
 
 Итоговые настройки для стенда складываются из умолчательных настроек и настроек указанных в конфигурационном файле проекта.
 Их можно посмотреть (в формате вывода ansible) командой
 ```bash
-daas vstand [-c my-vstand-config.yml] show config
+daas vstand [-s my-vstand-config.yml] show config
 ```
 
 Умолчательные настройки можно посмотреть командой
