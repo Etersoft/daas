@@ -22,7 +22,7 @@ case $1 in
         exit 0
         ;;
     *)
-        $DAAS_DATADIR/bash_modules.d/dc up $@
+        $DAAS_DATADIR/modules.d/dc up $@
         exit $?
         ;;
 esac

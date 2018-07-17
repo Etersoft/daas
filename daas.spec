@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.3
-Release: alt3
+Release: alt4
 
 Group: System/Utilities
 License: MIT
@@ -25,11 +25,17 @@ Requires: sshpass
 daas - 'Devops As A Service'. 
 Group of utilities for the organization of the devops
 
+%package admin
+Summary: Utilities for stands administation
+Group: System/Utilities
+Requires: %name = %EVR
+%description admin
+Utilities for stands administation
+
 %prep
 %setup
 
 %build
-
 
 %install
 mkdir -p -m755 %buildroot%_datadir/%name
@@ -47,21 +53,34 @@ mkdir -p -m755 %buildroot%_datadir/%name/templates
 cp -r daas-project/addons %buildroot%_datadir/%name/
 cp -r daas-project/templates %buildroot%_datadir/%name
 
-mkdir -p -m755 %buildroot%_datadir/%name/bash_modules.d
-cp -r bash_modules.d %buildroot%_datadir/%name/
+mkdir -p -m755 %buildroot%_datadir/%name/modules.d
+cp -r modules.d %buildroot%_datadir/%name/
+
+mkdir -p -m755 %buildroot%_datadir/%name/ansible.d
+cp -r ansible.d %buildroot%_datadir/%name/
 
 mkdir -p -m755 %buildroot%_datadir/%name/tools
 cp -r tools %buildroot%_datadir/%name/
-
 
 %files
 %_bindir/daas*
 %dir %_datadir/%name/
 %_datadir/%name/*
-
+%exclude %_datadir/%name/modules.d/vstand
+%exclude %_datadir/%name/ansible.d
 # %doc README.md
 
+%files admin
+%_datadir/%name/modules.d/vstand
+
+%dir %_datadir/%name/ansible.d
+%_datadir/%name/ansible.d/*
+
+
 %changelog
+* Tue Jul 17 2018 Pavel Vainerman <pv@altlinux.ru> 0.3-alt4
+- structure refactring (added 'admin' package) 
+
 * Mon Jul 09 2018 Pavel Vainerman <pv@altlinux.ru> 0.3-alt3
 - added use ccache for rpmbuild module
 

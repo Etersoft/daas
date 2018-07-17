@@ -3,7 +3,7 @@
 [ -n "$DAAS_DEBUG" ] && set -x
 [ -z "$DAAS_DATADIR" ] && DAAS_DATADIR='..'
 
-. $DAAS_DATADIR/bash_modules.d/.daas-common
+. $DAAS_DATADIR/modules.d/.daas-common
 
 BUILDER=
 

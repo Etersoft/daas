@@ -3,7 +3,7 @@
 [ -n "$DAAS_DEBUG" ] && set -x
 [ -z "$DAAS_DATADIR" ] && DAAS_DATADIR='..'
 
-. $DAAS_DATADIR/bash_modules.d/.daas-common
+. $DAAS_DATADIR/modules.d/.daas-common
 
 [ -z "$DAAS_ANSIBLE_D" ] && DAAS_ANSIBLE_D="$DAAS_DATADIR/ansible.d"
 [ -z "$DAAS_ANSIBLE_CONFIG" ] && DAAS_ANSIBLE_CONFIG="$DAAS_ANSIBLE_D/ansible.cfg"
@@ -182,14 +182,14 @@ do_show_configs() {
     case $SHOW_COMMAND in
         config)
             ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l vstand $ANSIBLE_DEBUG $@ ${DAAS_ANSIBLE_D}/playbooks/vstand-show-config.yml
-        ;;
+            ;;
         defaults)
             ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l vstand $ANSIBLE_DEBUG $@ ${DAAS_ANSIBLE_D}/playbooks/vstand-show-defaults.yml
-        ;;
+            ;;
         *)
             echo "Unknown command '$SHOW_COMMAND' for show. Use: daas vstand --help for help "
             RET=1
-        ;;
+            ;;
     esac
 
     [ -z "$RET" ] && RET=$?
@@ -247,7 +247,7 @@ case $1 in
         ;;
     --show | show)
         shift
-        
+
         [ -z "$1" ] && module_error "Unknown show command (defaults|config). Use: daas vstand --help for help"
         SHOW_COMMAND="$1"
         shift

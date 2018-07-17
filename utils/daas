@@ -14,7 +14,7 @@ usage()
     echo ""
     echo "Available modules:"
     echo "------------------"
-    MODULES=$( find ${datadir}/bash_modules.d/ -maxdepth 1 -type f -and -not -name '.*' )
+    MODULES=$( find ${datadir}/modules.d/ -maxdepth 1 -type f -and -not -name '.*' )
     for m in $MODULES;
     do
 	echo $(basename "$m")
@@ -29,10 +29,10 @@ case $CMD in
         ;;
 esac
 
-if ! test -f "${DAAS_DATADIR}/bash_modules.d/$CMD"; then
+if ! test -f "${DAAS_DATADIR}/modules.d/$CMD"; then
     echo "Unknown command '$CMD'. Use -h|--help for help"
     exit 1
 fi
 
 shift
-exec $DAAS_DATADIR/bash_modules.d/$CMD $@
+exec $DAAS_DATADIR/modules.d/$CMD $@
