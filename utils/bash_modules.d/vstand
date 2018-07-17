@@ -6,6 +6,7 @@
 . $DAAS_DATADIR/bash_modules.d/.daas-common
 
 [ -z "$DAAS_ANSIBLE_D" ] && DAAS_ANSIBLE_D="$DAAS_DATADIR/ansible.d"
+[ -z "$DAAS_ANSIBLE_CONFIG" ] && DAAS_ANSIBLE_CONFIG="$DAAS_ANSIBLE_D/ansible.cfg"
 [ -z "$DAAS_ANSIBLE_PRIVATE" ] && DAAS_ANSIBLE_PRIVATE="$HOME/.daas/ansible_private"
 STAND_HOST=''
 SSH_USER=$USER
@@ -23,6 +24,9 @@ module_usage() {
     echo "                                                                       Default project file '.daas.yml'"
     echo "prepare hostname [ project.yml ] [ext options] -- [ansible options]  - prepare vstand for project"
     echo "                                                                       Default project file '.daas.yml'"
+    echo "show [defaults|config] [ project.yml ]                               - Show config parameters"
+    echo "                                                                       default - show default parameters"
+    echo "                                                                       configs - show merged parameters"
     echo "Ext options:"
     echo "-c|--config vstand-config.yml - config (yaml) for vstand"
     echo "-v|--variable var=val         - added variable for ansible (can be used multiple times)"
@@ -80,6 +84,8 @@ split_options() {
 }
 
 prepare_ansible_environment() {
+
+    export ANSIBLE_CONFIG=$DAAS_ANSIBLE_CONFIG
 
     DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS"
 
@@ -158,6 +164,39 @@ do_prepare_stand() {
     return $RET
 }
 
+do_show_configs() {
+    PROJECT_NAME=$(daas-project name -c $DAAS_PROJECT_CONFIG)
+
+    local INVFILE=$(mktemp)
+    echo "[vstands]" >$INVFILE
+    echo "vstand ansible_host=localhost" >>$INVFILE
+
+    prepare_ansible_environment
+
+    [ -n "$DAAS_DEBUG" ] && ANSIBLE_DEBUG="-vvv" || ANSIBLE_DEBUG=''
+
+    DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_project_file=$(realpath $DAAS_PROJECT_CONFIG)"
+
+    [ -n "$GITLAB_RUNNER_REGISTRATION_TOKEN" ] && DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e gitlab_runner_registration_token=$GITLAB_RUNNER_REGISTRATION_TOKEN"
+
+    case $SHOW_COMMAND in
+        config)
+            ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l vstand $ANSIBLE_DEBUG $@ ${DAAS_ANSIBLE_D}/playbooks/vstand-show-config.yml
+        ;;
+        defaults)
+            ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l vstand $ANSIBLE_DEBUG $@ ${DAAS_ANSIBLE_D}/playbooks/vstand-show-defaults.yml
+        ;;
+        *)
+            echo "Unknown command '$SHOW_COMMAND' for show. Use: daas vstand --help for help "
+            RET=1
+        ;;
+    esac
+
+    [ -z "$RET" ] && RET=$?
+    rm -rf $INVFILE
+    return $RET
+}
+
 [ -z "$1" ] && module_help && exit 1
 
 case $1 in
@@ -174,7 +213,7 @@ case $1 in
         split_options $@
         eval set -- "$OTHER"
 
-        [ -z "$1" ] && module_error "Unknown hostname. Use: daas anible --help for help"
+        [ -z "$1" ] && module_error "Unknown hostname. Use: daas vstand --help for help"
         STAND_HOST="$1"
         shift
         do_setup_stand $@
@@ -185,7 +224,7 @@ case $1 in
         split_options $@
         eval set -- "$OTHER"
 
-        [ -z "$1" ] && module_error "Unknown hostname. Use: daas anible --help for help"
+        [ -z "$1" ] && module_error "Unknown hostname. Use: daas vstand --help for help"
         STAND_HOST="$1"
         shift
         [ -n "$1" ] && DAAS_PROJECT_CONFIG="$1" && shift
@@ -198,12 +237,27 @@ case $1 in
         split_options $@
         eval set -- "$OTHER"
 
-        [ -z "$1" ] && module_error "Unknown hostname. Use: daas anible --help for help"
+        [ -z "$1" ] && module_error "Unknown hostname. Use: daas vstand --help for help"
         STAND_HOST="$1"
         shift
         [ -n "$1" ] && DAAS_PROJECT_CONFIG="$1" && shift
 
         do_prepare_stand $@
+        exit $?
+        ;;
+    --show | show)
+        shift
+        
+        [ -z "$1" ] && module_error "Unknown show command (defaults|config). Use: daas vstand --help for help"
+        SHOW_COMMAND="$1"
+        shift
+
+        split_options $@
+        eval set -- "$OTHER"
+
+        [ -n "$1" ] && DAAS_PROJECT_CONFIG="$1" && shift
+
+        do_show_configs $@
         exit $?
         ;;
     *)

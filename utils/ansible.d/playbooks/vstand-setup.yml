@@ -6,21 +6,23 @@
   vars_files:
      - "{{ daas_vars_files }}"
      - "{{ daas_project_file }}"
+     - "{{daas_ansible_dir}}/daas-defaults.yml"
+     # обязательно должен быть последним (т.к. переопределяет свойства проекта и умолчательные настройки)
+     - "{{daas_ansible_dir}}/daas-vstand-config.yml"
 
   vars:
-    ansible_ssh_user: "{{project.vstand.user}}"
-    ansible_ssh_password: "{{project.vstand.pass}}"
-    gitlab_runner_registration_token: "{{ vstand.gitlab.runner_registration_token }}"
+    ansible_ssh_user: "{{daas_vstand.user}}"
+    ansible_ssh_password: "{{daas_vstand.pass}}"
 
   pre_tasks:
      - name: 'set password for ssh user'
-       set_fact: ansible_ssh_pass="{{ project.vstand.pass }}"
+       set_fact: ansible_ssh_pass="{{ daas_vstand.pass }}"
        tags: 
          - gitlab
          - daas
 
      - name: 'install python'
-       raw: "if ! rpm -qa | grep -q 'python-module-simplejson'; then sudo apt-get update && sudo apt-get -y install python-module-simplejson python-module-distutils-extra; fi"
+       raw: "if ! rpm -qa | grep -q 'python-module-simplejson'; then apt-get update && apt-get -y install python-module-simplejson python-module-distutils-extra; fi"
        tags: 
          - gitlab
          - daas

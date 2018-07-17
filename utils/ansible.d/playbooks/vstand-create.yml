@@ -6,18 +6,20 @@
   vars_files:
      - "{{ daas_vars_files }}"
      - "{{ daas_project_file }}"
+     - "{{daas_ansible_dir}}/daas-defaults.yml"
+     # обязательно должен быть последним (т.к. переопределяет свойства проекта и умолчательные настройки)
+     - "{{daas_ansible_dir}}/daas-vstand-config.yml"
 
   vars:
-    ansible_ssh_user: "{{vstand.host.user}}"
-    ansible_ssh_password: "{{vstand.host.pass}}"
+    ansible_ssh_user: "{{daas_vstand.host.user}}"
+    ansible_ssh_password: "{{daas_vstand.host.pass}}"
     tmp_boxdir: /srv/vbox
     vagrant_boxes_dir: /srv/vbox/boxes
     project_dir: "vstands/vs-{{project.name}}"
 
   pre_tasks:
      - name: 'set password for ssh user'
-       set_fact: ansible_ssh_pass="{{ vstand.host.pass }}"
-       tags: tt
+       set_fact: ansible_ssh_pass="{{ daas_vstand.host.pass }}"
 
   tasks:
     - name: use config file for stand
@@ -37,20 +39,27 @@
 
     - name: Generate vagrant file
       template: "src={{daas_ansible_dir}}/templates/Vagrantfile.tpl dest={{project_dir}}/Vagrantfile"
-      tags: tt
 
     - name: Generate bootstrap file
       template: "src={{daas_ansible_dir}}/templates/bootstrap.sh.tpl dest={{project_dir}}/bootstrap.sh mode='a+x'"
     
+    - local_action: stat path="{{daas_vstand.vagrant.box.url}}"
+      register: vagrant_box
+    
     - name: Copy vagrant box
       copy:
-        dest: "{{ vagrant_boxes_dir }}/{{vstand.vagrant.box.name}}.box"
-        src: "{{vstand.vagrant.box.url}}"
+        dest: "{{ vagrant_boxes_dir }}/{{daas_vstand.vagrant.box.name}}.box"
+        src: "{{daas_vstand.vagrant.box.url}}"
+      when: vagrant_box.stat.exists == true
 
     - name: Create vagrant boxes (Very very long task)
       shell: |
-          if ! vagrant box list | grep -q '{{vstand.vagrant.box.name}}'; then
-             vagrant box add {%- if vstand.vagrant.box.add_args is defined %}{{vstand.vagrant.box.add_args}}{%- endif %} {{vstand.vagrant.box.name}} {{ vagrant_boxes_dir }}/{{vstand.vagrant.box.name}}.box 1>/dev/null
+          if ! vagrant box list | grep -q '{{daas_vstand.vagrant.box.name}}'; then
+             if test -n "{{ '1' if vagrant_box.stat.exists == true else '' }}"; then
+                 vagrant box add {%- if daas_vstand.vagrant.box.add_args is defined %}{{daas_vstand.vagrant.box.add_args}}{%- endif %} {{vstand.vagrant.box.name}} {{ vagrant_boxes_dir }}/{{daas_vstand.vagrant.box.name}}.box 1>/dev/null
+             else
+                 vagrant box add {%- if daas_vstand.vagrant.box.add_args is defined %}{{daas_vstand.vagrant.box.add_args}}{%- endif %} {{vstand.vagrant.box.name}} {{daas_vstand.vagrant.box.url}}
+             fi
              exit $?
           fi
           exit 0
@@ -59,7 +68,6 @@
       shell: vagrant up
       args:
           chdir: "{{project_dir}}/"
-      tags: tt
 
     - name: get ip from new stand
       shell: |
@@ -68,33 +76,27 @@
       args:
           chdir: "{{project_dir}}/"
       register: newstand
-      tags: tt
 
     - name: 'set variable ip'
       set_fact: 
         newstand_ip: "{{ newstand.stdout | regex_replace('\n','') | regex_replace(regexp,'\\2')  }}"
       vars:
         regexp: '(.*)IP: (.*)$'
-      tags: tt
 
     - name: 'set ip'
       debug: msg="{{ newstand_ip }}"
-      tags: tt
 
     - name: 'setup admin for new stand'
-      shell: vagrant ssh -c "sudo useradd {{project.vstand.user}}; echo '{{project.vstand.user}}:{{project.vstand.pass}}' | sudo chpasswd"
+      shell: vagrant ssh -c "sudo useradd {{daas_vstand.user}}; echo '{{daas_vstand.user}}:{{daas_vstand.pass}}' | sudo chpasswd"
       args:
         chdir: "{{project_dir}}/"      
-      tags: tt
 
     - name: "add admin to group 'wheel'"
-      shell: vagrant ssh -c "sudo usermod -a -G wheel {{project.vstand.user}}"
+      shell: vagrant ssh -c "sudo usermod -a -G wheel {{daas_vstand.user}}"
       args:
         chdir: "{{project_dir}}/"      
-      tags: tt
 
     - name: save ip file information
       local_action: copy content="{{ item }}" dest="{{ daas_newstand_ip_file }}" 
       with_items: 
         - "{{newstand_ip}}"
-      tags: tt

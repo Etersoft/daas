@@ -1,0 +1,19 @@
+version: 0.2
+
+vstand:
+  host:
+    hostname: "vstand1"
+    user: "vagrant"
+    pass: "123"
+
+  limits:
+    cpu: 2
+    
+  vagrant:
+     box: 
+       name: "vstand-p8"
+       url: "{{ daas_data_dir }}/vstand/vagrant/boxes/p8/vstand.box"
+
+  gitlab:
+    url: "http://192.168.1.76:30080/"
+    runner_registration_token: "xsmZtVJpEhbuxTp1JAys"

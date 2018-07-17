@@ -1,0 +1,13 @@
+# Вывод на экран итоговой конфигурации
+# --------------------------------------------------------------------
+- hosts: all
+  become: yes
+  gather_facts: no 
+  vars_files:
+     - "{{ daas_vars_files }}"
+     - "{{ daas_project_file }}"
+     - "{{daas_ansible_dir}}/daas-defaults.yml"
+
+  tasks:
+     - name: show default config (daas_defaults)
+       debug: msg="{{daas_defaults}}"

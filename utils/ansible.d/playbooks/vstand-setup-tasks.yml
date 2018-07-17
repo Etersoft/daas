@@ -1,16 +1,15 @@
+---
 # Настройка vbox-машины под конкретный проект
 # --------------------------------------------------------------------
 - name: use config file for stand
   debug: msg="{{ daas_vars_files }}"
-  tags: tt
 
 - name: use project file
   debug: msg="{{ daas_project_file }}"
-  tags: tt
 
 - name: use project name
   debug: msg="{{ project.name }}"
-  tags: tt
+
 
 - name: install programs
   apt_rpm: "package={{item}} state=present"
@@ -38,70 +37,72 @@
 - name: install docker-compose
   pip: name=docker-compose
 
-- name: "add {{ project.vstand.user }} to group 'docker'"
+- name: "add {{ daas_vstand.user }} to group 'docker'"
   user:
-    name: "{{ project.vstand.user }}"
+    name: "{{ daas_vstand.user }}"
     groups: docker
     append: yes
 
 - name: install daas from package
   apt_rpm: "package={{item}} state=present"
-  when: vstand.daas_url is undefined
+  when: daas_vstand.daas_url is undefined
   tags: 
     - daas
 
+- name: check local daas file
+  local_action: stat path="{{daas_vstand.daas_url}}"
+  register: daas_rpm
+  when: daas_vstand.daas_url is defined
+
 - name: copy daas from local file
   copy:
-    src: "{{vstand.daas_url}}"
+    src: "{{daas_vstand.daas_url}}"
     dest: "/tmp/"
-  when: vstand.daas_url is defined and 'http' not in vstand.daas_url
+  when: daas_vstand.daas_url is defined and daas_rpm.stat.exists == true
   tags: 
     - daas
 
 - name: load daas from url
   get_url:
-    url: "{{vstand.daas_url}}"
+    url: "{{daas_vstand.daas_url}}"
     dest: /tmp/
-  when: vstand.daas_url is defined and 'http' in vstand.daas_url
+  when: daas_vstand.daas_url is defined and daas_rpm.stat.exists == false
   tags: 
     - daas
 
-- name: "install daas from local package"
+- name: "install daas from local rpm"
   shell: "rpm -qa | grep -q daas || sudo epmi --auto /tmp/daas*.rpm"
-  when: vstand.daas_url is defined
+  when: daas_vstand.daas_url is defined
   tags: 
     - daas
 
-- name: "remove daas local package"
+- name: "remove daas local rpm"
   shell: rm -rf /tmp/daas*.rpm
-  when: vstand.daas_url is defined
+  when: daas_vstand.daas_url is defined
   tags: 
     - daas
 
-- name: download gitlab-runner from internet
-  get_url:
-    url: https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64
-    dest: /usr/local/bin/gitlab-runner
-    mode: 'a+x'
-  when: vstand.gitlab.runner_download_url is undefined or vstand.gitlab.runner_download_url|length == 0
-  tags: 
+- name: check local gitlab-runner file
+  local_action: stat path="{{daas_vstand.gitlab.runner_download_url}}"
+  register: grunner_file
+  tags:
     - gitlab
 
 - name: copy gitlab-runner from local file
   copy:
     dest: /usr/local/bin/gitlab-runner
-    src: "{{vstand.gitlab.runner_download_url}}"
+    src: "{{daas_vstand.gitlab.runner_download_url}}"
     mode: 'a+x'
-  when: vstand.gitlab.runner_download_url is defined and 'http' not in vstand.gitlab.runner_download_url
-  tags: 
+  when: daas_vstand.gitlab.runner_download_url is defined and grunner_file.stat.exists == true
+  tags:
     - gitlab
 
 - name: download gitlab-runner from url
   get_url:
-    url: "{{vstand.gitlab.runner_download_url}}"
+    url: "{{daas_vstand.gitlab.runner_download_url}}"
     dest: /usr/local/bin/gitlab-runner
     mode: 'a+x'
-  when: vstand.gitlab.runner_download_url is defined and 'http' in vstand.gitlab.runner_download_url 
+  when: daas_vstand.gitlab.runner_download_url is defined and grunner_file.stat.exists == false
   tags: 
     - gitlab
 
@@ -112,7 +113,7 @@
 
 - name: List configured runners
   become: no
-  command: gitlab-runner list --config '/home/{{project.vstand.user}}/.gitlab-runner/config.toml'
+  command: gitlab-runner list --config '/home/{{daas_vstand.user}}/.gitlab-runner/config.toml'
   register: configured_runners
   changed_when: False
   tags: 
@@ -121,10 +122,10 @@
 - name: Register runners to GitLab
   become: no
   command: gitlab-runner register >
-    --config '/home/{{project.vstand.user}}/.gitlab-runner/config.toml'
+    --config '/home/{{daas_vstand.user}}/.gitlab-runner/config.toml'
     --non-interactive
-    --url '{{ vstand.gitlab.url }}'
-    --registration-token '{{ gitlab_runner_registration_token }}'
+    --url '{{ daas_vstand.gitlab.url }}'
+    --registration-token '{{ daas_vstand.gitlab.runner_registration_token }}'
     --description '{{ item.runner.description }}'
     --tag-list '{{ item.runner.tags if item.runner.tags is defined else '' }}'
     --executor '{{ item.runner.executor }}'
@@ -132,7 +133,7 @@
     --env 'TERM=xterm'
     {{ item.runner.extra_options if item.runner.extra_options is defined else '' }}
   when: "item.runner.description is defined and configured_runners.stderr.find('\n{{ item.runner.description }}') == -1" 
-  with_items: "{{vstand.gitlab.runners}}"
+  with_items: "{{daas_vstand.gitlab.runners}}"
   tags: 
     - gitlab
 
@@ -143,4 +144,4 @@
 
 - name: create rpmmacros
   become: no
-  template: "src={{daas_ansible_dir}}/templates/rpmmacros.tpl dest=/home/{{project.vstand.user}}/.rpmmacros"
+  template: "src={{daas_ansible_dir}}/templates/rpmmacros.tpl dest=/home/{{daas_vstand.user}}/.rpmmacros"

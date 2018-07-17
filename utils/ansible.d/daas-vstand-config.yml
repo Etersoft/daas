@@ -1,0 +1,138 @@
+---
+# Final vstand config 
+# (merge project config and user vstand config and defaults)
+daas_vstand:
+
+  # Parameters for virtual stand (hostname,user,pass)
+  hostname: "{{ vstand.hostname 
+            if vstand is defined 
+            and vstand.hostname is defined 
+            else daas_defaults.vstand.hostname }}"
+  user: "{{ vstand.user 
+            if vstand is defined 
+            and vstand.user is defined 
+            else daas_defaults.vstand.user }}"
+
+  pass: "{{ vstand.pass 
+            if vstand is defined 
+            and vstand.pass is defined 
+            else daas_defaults.vstand.pass }}"
+
+  # Parameters for host machine for vstands (hostname,user,pass)
+  host:
+    hostname: "{{ vstand.host.hostname 
+              if vstand is defined 
+              and vstand.host is defined 
+              and vstand.host.hostname is defined 
+              else daas_defaults.vstand_host.hostname }}"
+    user: "{{ vstand.host.user 
+              if vstand is defined 
+              and vstand.host is defined 
+              and vstand.host.user is defined 
+              else daas_defaults.vstand_host.user }}"
+
+    pass: "{{ vstand.host.pass 
+              if vstand is defined 
+              and vstand.host is defined 
+              and vstand.host.pass is defined 
+              else daas_defaults.vstand_host.pass }}"
+              
+    pub_interface: "{{ vstand.host.pub_interface 
+              if vstand is defined 
+              and vstand.host is defined
+              and vstand.host.pub_interface is defined 
+              else daas_defaults.vstand_host.pub_interface }}"
+              
+  # limits for virtual stand for project
+  limits:
+    cpu: "{{ vstand.limits.cpu 
+            if vstand is defined 
+            and vstand.limits is defined 
+            and vstand.limits.cpu is defined 
+            else daas_defaults.vstand.limits.cpu }}"
+            
+    memory: "{{ vstand.limits.memory 
+            if vstand is defined 
+            and vstand.limits is defined 
+            and vstand.limits.memory is defined 
+            else daas_defaults.vstand.limits.memory }}"
+    
+  # Parameters for vagrant
+  vagrant:
+    rpm_url: "{{ vstand.vagrant.rpm_url 
+            if vstand is defined 
+            and vstand.vagrant is defined 
+            and vstand.vagrant.rpm_url is defined 
+            else daas_defaults.vagrant.rpm_url }}"
+    patch: "{{ vstand.vagrant.patch 
+            if vstand is defined 
+            and vstand.vagrant is defined 
+            and vstand.vagrant.patch is defined 
+            else daas_defaults.vagrant.patch }}"
+    box:  
+      name: "{{ vstand.vagrant.box.name 
+                if vstand is defined 
+                and vstand.vagrant is defined
+                and vstand.vagrant.box is defined 
+                and vstand.vagrant.box.name is defined 
+                else daas_defaults.vagrant.box.name }}"
+      url: "{{ vstand.vagrant.box.url 
+                if vstand is defined 
+                and vstand.vagrant is defined
+                and vstand.vagrant.box is defined 
+                and vstand.vagrant.box.url is defined 
+                else daas_defaults.vagrant.box.url }}"
+
+  # Parameters for gitlab
+  gitlab:
+    url: "{{ vstand.gitlab.url 
+             if vstand is defined 
+             and vstand.gitlab is defined
+             and vstand.gitlab.url is defined 
+             else daas_defaults.gitlab.url }}"
+    
+    runner_registration_token: "{{ vstand.gitlab.runner_registration_token 
+             if vstand is defined 
+             and vstand.gitlab is defined
+             and vstand.gitlab.runner_registration_token 
+             is defined else '' }}"
+             
+    runner_download_url: "{{ vstand.gitlab.runner_download_url 
+             if vstand is defined 
+             and vstand.gitlab is defined
+             and vstand.gitlab.runner_download_url is defined 
+             else daas_defaults.gitlab.runner_download_url }}"
+             
+    runners: "{{ vstand.runners 
+             if vstand is defined 
+             and vstand.runners is defined 
+             else daas_defaults.gitlab.runners }}"
+
+  daas_url: "{{ project.daas_url 
+               if project is defined 
+               and project.daas_url is defined 
+               else daas_defaults.daas_url }}"
+       
+  apt:
+    sources: "{{ daas_defaults.vstand.apt.sources if daas_defaults.vstand.apt.sources is defined else '' }}
+                + 
+              {{ vstand.apt.sources 
+                    if vstand is defined 
+                    and vstand.apt is defined 
+                    and vstand.apt.sources is defined
+                    else [] }}"
+
+    packages: "{{ daas_defaults.vstand.apt.packages if daas_defaults.vstand.apt.packages is defined else '' }}
+                +
+               {{ vstand.apt.packages 
+                    if vstand is defined 
+                    and vstand.apt is defined 
+                    and vstand.apt.packages is defined 
+                    else [] }}"
+
+  ntpd:
+    servers: "{{ vstand.ntpd.servers 
+                if vstand is defined 
+                and vstand.ntpd is defined
+                and vstand.ntpd.servers is defined 
+                else daas_defaults.ntpd.servers }}"

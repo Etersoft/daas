@@ -1,0 +1,57 @@
+---
+daas_defaults:
+
+  vstand_host:
+     hostname: "vstand"
+     user: "vagrant"
+     pass: "vagrant"
+     pub_interface: ''
+
+  vstand:
+     hostname: "vstand-{{project.name if project is defined else '1'}}"
+     user: "vadmin"
+     pass: "vadmin"
+
+     apt:
+       sources:
+         - "rpm http://ftp.etersoft.ru/pub ALTLinux/p8/branch/x86_64 classic"
+         - "rpm http://ftp.etersoft.ru/pub ALTLinux/p8/branch/noarch classic" 
+         - "rpm http://ftp.etersoft.ru/pub/Etersoft/LINUX@Etersoft/p8 branch/x86_64 addon"
+         - "rpm http://ftp.etersoft.ru/pub/Etersoft/LINUX@Etersoft/p8 branch/noarch addon"
+       packages:
+         - mc
+  
+     limits:
+       cpu: 3
+       memory: 2048
+
+  vagrant:
+     rpm_url: "{{ daas_data_dir }}/vstand/vagrant/distrib/p8/vagrant.rpm"
+     patch: "{{ daas_data_dir }}/vstand/vagrant/distrib/p8/network_fix_ipv6.rb.patch"
+     box: 
+       name: "vstand-p8"
+       url: "vpavel/vstand-altlinux-p8"
+
+  gitlab:
+     url: "http://gitlab.organization.ru"
+     runner_registration_token: 'Unknown gitlab runner registration token'
+     runner_download_url: "https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-linux-amd64"
+     runners:
+       - runner:
+             description: "shell runner for {{project.name if project is defined else 'unknown-project'}}"
+             tags: "build, {{ project.name if project is defined else 'unknown-project' }}-vstand-runner"
+             executor: "shell"
+             
+       - runner: 
+             description: "docker runner for {{project.name if project is defined else 'unknown-project'}}"
+             tags: "docker-build, {{project.name if project is defined else 'unknown-project'}}-vstand-docker-runner"
+             executor: "docker"
+             docker_image: 'fotengauer/altlinux-p8'
+             extra_options: '--docker-cap-add ALL --docker-volumes /var/run/docker.sock:/var/run/docker.sock --docker-privileged'
+
+  daas_url: "{{daas_ansible_dir}}/addons/daas-0.3-alt3.noarch.rpm"
+       
+  ntpd:
+     servers:
+       - "0.ru.pool.ntp.org"
+       - "1.ru.pool.ntp.org"

@@ -5,17 +5,20 @@
   gather_facts: no 
   vars_files:
      - "{{ daas_vars_files }}"
+     - "{{daas_ansible_dir}}/daas-defaults.yml"
+     # обязательно должен быть последним (т.к. переопределяет свойства проекта и умолчательные настройки)
+     - "{{daas_ansible_dir}}/daas-vstand-config.yml"
 
   vars:
-    ansible_ssh_user: "{{vstand.host.user}}"
-    ansible_ssh_password: "{{vstand.host.pass}}"
+    ansible_ssh_user: "{{daas_vstand.host.user}}"
+    ansible_ssh_password: "{{daas_vstand.host.pass}}"
 
   pre_tasks:
      - name: 'set password for ssh user'
-       set_fact: ansible_ssh_pass="{{ vstand.host.pass }}"
+       set_fact: ansible_ssh_pass="{{ daas_vstand.host.pass }}"
 
      - name: 'install python'
-       raw: "rpm -qa | grep -q 'python-module-simplejson' || { sudo apt-get update && sudo apt-get -y install python-module-simplejson python-module-distutils-extra }"
+       raw: "if ! rpm -qa | grep -q 'python-module-simplejson'; then apt-get update && apt-get -y install python-module-simplejson python-module-distutils-extra; fi"
      
      - name: Setup apt sources
        template: 
@@ -25,7 +28,7 @@
           group: wheel 
           mode: 0640
           backup: yes
-       when: "vstand.apt.sources is defined and vstand.apt.sources|length > 0" 
+       when: "daas_vstand.apt.sources is defined and daas_vstand.apt.sources|length > 0" 
 
   tasks:
      - name: use config file for stand
@@ -49,11 +52,11 @@
 
      - name: install user defined packages
        apt_rpm: "package={{item}} state=present"
-       with_items: "{{ vstand.apt.packages }}"
-       when: "vstand.apt.packages is defined and vstand.apt.packages|length > 0" 
+       with_items: "{{ daas_vstand.apt.packages }}"
+       when: "daas_vstand.apt.packages is defined and daas_vstand.apt.packages|length > 0" 
 
      - name: install virtualbox packages
-       apt_rpm: "package={{item}} state=present update_cache=true"
+       apt_rpm: "package={{item}} state=present"
        with_items:
           - virtualbox 
           - kernel-modules-virtualbox-std-def
@@ -74,7 +77,7 @@
      - name: Copy vagrant package to stand
        copy:
           dest: /tmp/vagrant.rpm
-          src: "{{ vstand.vagrant.rpm_url }}"
+          src: "{{ daas_vstand.vagrant.rpm_url }}"
           force: yes
        when: "'fail' in vagrant_exist.stdout"
           
@@ -88,24 +91,24 @@
 
      - name: apply patch for vagrant (disable ipv6 check)
        patch:
-         src: "{{ vstand.vagrant.patch }}"
+         src: "{{ daas_vstand.vagrant.patch }}"
          basedir: /
-       when: "'{{ vstand.vagrant.patch }}' is defined and 'fail' in vagrant_exist.stdout"
+       when: "'{{ daas_vstand.vagrant.patch }}' is defined and 'fail' in vagrant_exist.stdout"
        
      - name: setup sudoers for '{{vstand.host.user}}'
        template: "src={{daas_ansible_dir}}/templates/sudoers.tpl dest=/etc/sudoers.d/{{item}} owner=root"
        with_items:
-        - "{{vstand.host.user}}"
+        - "{{daas_vstand.host.user}}"
 
      - name: "make user {{vstand.host.user}} aliases"
        shell: |
-          if ! grep -q 'alias vg' /home/{{vstand.host.user}}/.bashrc; then 
-              echo 'alias vg=\"vagrant\"' >>  /home/{{vstand.host.user}}/.bashrc; 
+          if ! grep -q 'alias vg' /home/{{daas_vstand.host.user}}/.bashrc; then 
+              echo 'alias vg=\"vagrant\"' >>  /home/{{daas_vstand.host.user}}/.bashrc; 
           fi
    
      - name: "add {{vstand.host.user}} to group 'vboxusers'"
        user:
-         name: "{{vstand.host.user}}"
+         name: "{{daas_vstand.host.user}}"
          groups: vboxusers
          append: yes
 
@@ -113,29 +116,29 @@
        replace:
          dest: /etc/systemd/logind.conf
          regexp: '^(.*)KillExcludeUsers=(.*)$'
-         replace: 'KillExcludeUsers={{vstand.host.user}}'
+         replace: 'KillExcludeUsers={{daas_vstand.host.user}}'
 
      - name: make VM directory
-       file: path="/srv/vbox/.vagrant.VM" state=directory owner="{{vstand.host.user}}" group=vboxusers
+       file: path="/srv/vbox/.vagrant.VM" state=directory owner="{{daas_vstand.host.user}}" group=vboxusers
 
      - name: make link for VM directory
-       file: src=/srv/vbox/.vagrant.VM dest="/home/{{vstand.host.user}}/VirtualBox VMs" state=link
+       file: src=/srv/vbox/.vagrant.VM dest="/home/{{daas_vstand.host.user}}/VirtualBox VMs" state=link
 
      - name: make vagrant directory
-       file: path="/srv/vbox/.vagrant.d" state=directory owner="{{vstand.host.user}}" group=vboxusers
+       file: path="/srv/vbox/.vagrant.d" state=directory owner="{{daas_vstand.host.user}}" group=vboxusers
 
      - name: make link for vagrant directory
-       file: src=/srv/vbox/.vagrant.d dest="/home/{{vstand.host.user}}/.vagrant.d" state=link
+       file: src=/srv/vbox/.vagrant.d dest="/home/{{daas_vstand.host.user}}/.vagrant.d" state=link
 
      - name: make boxes directory
-       file: path="/srv/vbox/boxes" state=directory owner="{{vstand.host.user}}" group=vboxusers
+       file: path="/srv/vbox/boxes" state=directory owner="{{daas_vstand.host.user}}" group=vboxusers
 
      - name: set hostname
        shell: "{{ item }}"
        with_items:
-          - "ps ax | grep -q 'systemd' && hostnamectl set-hostname {{vstand.host.name}} || echo 'systemd skipped'"
-          - "subst 's|HOSTNAME=.*$|HOSTNAME={{vstand.host.name}}|g' /etc/sysconfig/network"
-       when: "vstand.host.name is defined"
+          - "ps ax | grep -q 'systemd' && hostnamectl set-hostname {{daas_vstand.host.hostname}} || echo 'systemd skipped'"
+          - "subst 's|HOSTNAME=.*$|HOSTNAME={{daas_vstand.host.hostname}}|g' /etc/sysconfig/network"
+       when: "daas_vstand.host.hostname is defined"
 
      - name: Setup NTP daemon
        template: 
@@ -145,12 +148,12 @@
           group: wheel 
           mode: 0640
           backup: yes
-       when: "vstand.ntpd.servers is defined and vstand.ntpd.servers|length > 0"
+       when: "daas_vstand.ntpd.servers is defined and daas_vstand.ntpd.servers|length > 0"
      
      - name: NTP daemon enable service
        shell: 'chkconfig ntpd on'
-       when: "vstand.ntpd.servers is defined and vstand.ntpd.servers|length > 0"
+       when: "daas_vstand.ntpd.servers is defined and daas_vstand.ntpd.servers|length > 0"
        
      - name: Start the ntp service
        service: name=ntpd state=started enabled=yes
-       when: "vstand.ntpd.servers is defined and vstand.ntpd.servers|length > 0"
+       when: "daas_vstand.ntpd.servers is defined and daas_vstand.ntpd.servers|length > 0"
