@@ -9,29 +9,33 @@
 ------------------------
 Файл проекта представляет из себя файл в формате yaml и имеет следующую структуру:
 ```yaml
-version: 0.2
+version: 0.3
+
+project:
 ..глобальные настройки..
 
-groups:
-  group1:
-    nodes:
-       builder:
-          ..параметры для узла сборки проекта..
+  groups:
+    group1:
+      nodes:
+         builder:
+            ..параметры для узла сборки проекта..
      
-       tester:
-          ..параметры для узла тестирования..
+         tester:
+            ..параметры для узла тестирования..
       
-  group2:
-    ..общие параметры для узлов типа "group2"..
+    group2:
+      ..общие параметры для узлов типа "group2"..
      
-    nodes:
-      node1:
-         ..параметры для узла node1
-      node2:
-         ..параметры для узла node2
-      nodeX:
+      nodes:
+        node1:
+           ..параметры для узла node1
+        node2:
+           ..параметры для узла node2
+        nodeX:
          ..
 ```
+В начале должна быть укаана версия (текущая поддерживаемая **"0.3"**) и сам проект описывается в разделе **project:**
+
 Полный пример файла проекта можно посмотреть здесь: [example-project.yml](utils/example-project.yml)
 
 
@@ -39,18 +43,20 @@ groups:
 ---------------------------------
 Структура имеет следующий вид
 ```yaml
-name: "myproject"
-networks:
-  net1: { subnet: "192.168.81", gateway: "100" }
-  net2: { subnet: "192.168.82", gateway: "100" }
-  ...
-  netX: { subnet: "192.168.83", gateway: "100" }
- 
-logdb:
-  ... logdb parameters.. см. logdb.md
 
-nginx:
-  ... nginx parameters.. см. nginx.md
+project:
+  name: "myproject"
+  networks:
+    net1: { subnet: "192.168.81", gateway: "100" }
+    net2: { subnet: "192.168.82", gateway: "100" }
+    ...
+    netX: { subnet: "192.168.83", gateway: "100" }
+ 
+  logdb:
+    ... logdb parameters.. см. logdb.md
+
+  nginx:
+    ... nginx parameters.. см. nginx.md
 ```
 
 * **name** - название проекта
@@ -68,8 +74,9 @@ nginx:
 * Глобальная (задействуется для всех узлов в проекте)
 
 ```yaml
-name: projectname
-...global paramaters..
+project:
+  name: projectname
+  ...global paramaters..
 ```
 
 * Параметры для всех узлов группы

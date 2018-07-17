@@ -9,9 +9,9 @@
 Пример настроечной секции
 
 ```yaml
-networks:
-  net1: { subnet: "192.168.81", gateway: "100" }
-  net2: { subnet: "192.168.82", gateway: "100" }
+  networks:
+    net1: { subnet: "192.168.81", gateway: "100" }
+    net2: { subnet: "192.168.82", gateway: "100" }
 ```
 
 При этом следует иметь ввиду, что в *subnet* задаётся именно подсеть (не конкретный ip).
@@ -20,17 +20,17 @@ networks:
 Пример:
 
 ```yaml
-groups:
+  groups:
 
-  simple: 
-    nodes:
-      builder:
-        ip: 100
-        ...
+    simple: 
+      nodes:
+        builder:
+          ip: 100
+          ...
 
-      tester:
-        ip: 101
-        ...
+        tester:
+          ip: 101
+          ...
 ```
 
 Итоговый адрес каждого узла будет складываться из **subnet.ip** для каждой подсети.
@@ -41,20 +41,22 @@ groups:
 Пример:
 
 ```yaml
-networks:
-  net1:
-  net2:
+  networks:
+    net1:
+    net2:
 ```
 
 В случае динамической сети, ввойство *ip* у узлов указывать не нужно.
 
 По умолчанию в docker-compose.yml название docker-сети генерируется на основе имени проекта и добавлени '_net'.
 Но можно задавать своё имя для сети, указав в свойствах проекта
-```
-name: "myproject"
+```yaml
 
-net_name: myproject_network
-networks:
-  net1:
-  net2:
+project:
+  name: "myproject"
+
+  net_name: myproject_network
+  networks:
+    net1:
+    net2:
 ```
