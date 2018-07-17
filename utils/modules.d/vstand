@@ -94,8 +94,24 @@ prepare_ansible_environment() {
     DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS $ANSIBLE_ENV"
 }
 
+check_config_files() {
+
+    local FUNC="$1"
+
+    if ! test -f "$DAAS_VSTAND_CONFIG"; then
+        module_error "($FUNC): Not found vstand config file '$DAAS_VSTAND_CONFIG'"
+    fi
+
+    if ! test -f "$DAAS_PROJECT_CONFIG"; then
+        module_error "($FUNC): Not found project config file '$DAAS_PROJECT_CONFIG'"
+    fi
+}
+
 do_setup_stand() {
     echo "Setup stand '$STAND_HOST'.."
+
+    check_config_files "setup"
+
     local INVFILE=$(mktemp)
     echo "[vstands]" >$INVFILE
     echo "new-vstand ansible_host=$STAND_HOST" >>$INVFILE
@@ -110,6 +126,9 @@ do_setup_stand() {
 }
 
 do_create_stand() {
+
+    check_config_files "create"
+
     PROJECT_NAME=$(daas-project name -c $DAAS_PROJECT_CONFIG)
     echo "Create stand for '$PROJECT_NAME' on '$STAND_HOST'.."
     local INVFILE=$(mktemp)
@@ -136,6 +155,9 @@ do_create_stand() {
 }
 
 do_prepare_stand() {
+
+    check_config_files "prepare"
+
     PROJECT_NAME=$(daas-project name -c $DAAS_PROJECT_CONFIG)
     echo "Prepare stand for '$PROJECT_NAME' on '$STAND_HOST'.."
 
@@ -165,6 +187,14 @@ do_prepare_stand() {
 }
 
 do_show_configs() {
+
+    if [ "$SHOW_COMMAND" == "defaults" ]; then
+        DAAS_VSTAND_CONFIG="$DAAS_ANSIBLE_D/daas-dummy-config.yml"
+        DAAS_PROJECT_CONFIG="$DAAS_VSTAND_CONFIG"
+    fi
+
+    check_config_files
+
     PROJECT_NAME=$(daas-project name -c $DAAS_PROJECT_CONFIG)
 
     local INVFILE=$(mktemp)

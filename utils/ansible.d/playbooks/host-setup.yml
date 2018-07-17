@@ -95,12 +95,12 @@
          basedir: /
        when: "'{{ daas_vstand.vagrant.patch }}' is defined and 'fail' in vagrant_exist.stdout"
        
-     - name: setup sudoers for '{{vstand.host.user}}'
+     - name: setup sudoers for '{{daas_vstand.host.user}}'
        template: "src={{daas_ansible_dir}}/templates/sudoers.tpl dest=/etc/sudoers.d/{{item}} owner=root"
        with_items:
         - "{{daas_vstand.host.user}}"
 
-     - name: "make user {{vstand.host.user}} aliases"
+     - name: "make user {{daas_vstand.host.user}} aliases"
        shell: |
           if ! grep -q 'alias vg' /home/{{daas_vstand.host.user}}/.bashrc; then 
               echo 'alias vg=\"vagrant\"' >>  /home/{{daas_vstand.host.user}}/.bashrc; 
