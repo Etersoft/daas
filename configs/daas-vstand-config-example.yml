@@ -2,7 +2,7 @@
 version: 0.1
 
 vstand:
-  host:
+  hostmachine:
     hostname: "vstand1"
     user: "vagrant"
     pass: "123"

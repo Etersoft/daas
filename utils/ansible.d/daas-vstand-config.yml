@@ -19,29 +19,29 @@ daas_vstand:
             else daas_defaults.vstand.pass }}"
 
   # Parameters for host machine for vstands (hostname,user,pass)
-  host:
-    hostname: "{{ vstand.host.hostname 
+  hostmachine:
+    hostname: "{{ vstand.hostmachine.hostname 
               if vstand is defined 
-              and vstand.host is defined 
-              and vstand.host.hostname is defined 
-              else daas_defaults.vstand_host.hostname }}"
-    user: "{{ vstand.host.user 
+              and vstand.hostmachine is defined 
+              and vstand.hostmachine.hostname is defined 
+              else daas_defaults.hostmachine.hostname }}"
+    user: "{{ vstand.hostmachine.user 
               if vstand is defined 
-              and vstand.host is defined 
-              and vstand.host.user is defined 
-              else daas_defaults.vstand_host.user }}"
+              and vstand.hostmachine is defined 
+              and vstand.hostmachine.user is defined 
+              else daas_defaults.hostmachine.user }}"
 
-    pass: "{{ vstand.host.pass 
+    pass: "{{ vstand.hostmachine.pass 
               if vstand is defined 
-              and vstand.host is defined 
-              and vstand.host.pass is defined 
-              else daas_defaults.vstand_host.pass }}"
+              and vstand.hostmachine is defined 
+              and vstand.hostmachine.pass is defined 
+              else daas_defaults.hostmachine.pass }}"
               
-    pub_interface: "{{ vstand.host.pub_interface 
+    pub_interface: "{{ vstand.hostmachine.pub_interface 
               if vstand is defined 
-              and vstand.host is defined
-              and vstand.host.pub_interface is defined 
-              else daas_defaults.vstand_host.pub_interface }}"
+              and vstand.hostmachine is defined
+              and vstand.hostmachine.pub_interface is defined 
+              else daas_defaults.hostmachine.pub_interface }}"
               
   # limits for virtual stand for project
   limits:
@@ -114,7 +114,7 @@ daas_vstand:
                else daas_defaults.daas_url }}"
        
   apt:
-    sources: "{{ daas_defaults.vstand.apt.sources if daas_defaults.vstand.apt.sources is defined else '' }}
+    sources: "{{ daas_defaults.vstand.apt.sources if daas_defaults.vstand.apt.sources is defined else [] }}
                 + 
               {{ vstand.apt.sources 
                     if vstand is defined 
@@ -122,7 +122,7 @@ daas_vstand:
                     and vstand.apt.sources is defined
                     else [] }}"
 
-    packages: "{{ daas_defaults.vstand.apt.packages if daas_defaults.vstand.apt.packages is defined else '' }}
+    packages: "{{ daas_defaults.vstand.apt.packages if daas_defaults.vstand.apt.packages is defined else [] }}
                 +
                {{ vstand.apt.packages 
                     if vstand is defined 

@@ -11,15 +11,15 @@
      - "{{daas_ansible_dir}}/daas-vstand-config.yml"
 
   vars:
-    ansible_ssh_user: "{{daas_vstand.host.user}}"
-    ansible_ssh_password: "{{daas_vstand.host.pass}}"
+    ansible_ssh_user: "{{daas_vstand.hostmachine.user}}"
+    ansible_ssh_password: "{{daas_vstand.hostmachine.pass}}"
     tmp_boxdir: /srv/vbox
     vagrant_boxes_dir: /srv/vbox/boxes
     project_dir: "vstands/vs-{{project.name}}"
 
   pre_tasks:
-     - name: 'set password for ssh user'
-       set_fact: ansible_ssh_pass="{{ daas_vstand.host.pass }}"
+     - name: 'setup password for ssh user'
+       set_fact: ansible_ssh_pass="{{ daas_vstand.hostmachine.pass }}"
 
   tasks:
     - name: use config file for stand

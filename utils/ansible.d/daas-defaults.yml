@@ -1,8 +1,8 @@
 ---
 daas_defaults:
 
-  vstand_host:
-     hostname: "vstand"
+  hostmachine:
+     hostname: ''
      user: "vagrant"
      pass: "vagrant"
      pub_interface: ''
@@ -18,8 +18,6 @@ daas_defaults:
          - "rpm http://ftp.etersoft.ru/pub ALTLinux/p8/branch/noarch classic" 
          - "rpm http://ftp.etersoft.ru/pub/Etersoft/LINUX@Etersoft/p8 branch/x86_64 addon"
          - "rpm http://ftp.etersoft.ru/pub/Etersoft/LINUX@Etersoft/p8 branch/noarch addon"
-       packages:
-         - mc
   
      limits:
        cpu: 3

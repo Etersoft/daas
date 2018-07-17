@@ -17,20 +17,26 @@ DAAS_PROJECT_CONFIG='.daas.yml'
 module_usage() {
     echo " "
     echo "Usage: vstand command [options]"
-    echo "  "
-    echo "Commands: "
-    echo "setup hostname [ext options] -- [ansible options]                    - setup host for vstand control"
+    echo " "
+    echo "Commads for host machine:"
+    echo "-------------------------"
+    echo "prepare hostname [ext options] -- [ansible options]                  - setup host for stands control"
+    echo " "
+    echo "Commands for virtual stand:"
+    echo "---------------------------"
     echo "create hostname [ project.yml ] [ext options] -- [ansible options]   - create vstand for project"
     echo "                                                                       Default project file '.daas.yml'"
-    echo "prepare hostname [ project.yml ] [ext options] -- [ansible options]  - prepare vstand for project"
+    echo "setup hostname [ project.yml ] [ext options] -- [ansible options]    - prepare vstand for project"
     echo "                                                                       Default project file '.daas.yml'"
     echo "show [defaults|config] [ project.yml ]                               - Show config parameters"
     echo "                                                                       default - show default parameters"
     echo "                                                                       configs - show merged parameters"
     echo "Ext options:"
-    echo "-c|--config vstand-config.yml - config (yaml) for vstand"
-    echo "-v|--variable var=val         - added variable for ansible (can be used multiple times)"
-    echo "--gitlab-token token          - gitlab-runner registration token for gitlab. Default use from vstand config file"
+    echo "------------"
+    echo "-c|--config vstand-config.yml    - config (yaml) for vstand"
+    echo "-v|--variable var=val            - added variable for ansible (can be used multiple times)"
+    echo "--gitlab-token token             - gitlab-runner registration token for gitlab. Default use from vstand config file"
+    echo " "
 }
 
 module_help() {
@@ -107,10 +113,10 @@ check_config_files() {
     fi
 }
 
-do_setup_stand() {
+do_prepare_host() {
     echo "Setup stand '$STAND_HOST'.."
 
-    check_config_files "setup"
+    check_config_files "prepare"
 
     local INVFILE=$(mktemp)
     echo "[vstands]" >$INVFILE
@@ -154,9 +160,9 @@ do_create_stand() {
     return $RET
 }
 
-do_prepare_stand() {
+do_setup_stand() {
 
-    check_config_files "prepare"
+    check_config_files "setup"
 
     PROJECT_NAME=$(daas-project name -c $DAAS_PROJECT_CONFIG)
     echo "Prepare stand for '$PROJECT_NAME' on '$STAND_HOST'.."
@@ -238,7 +244,7 @@ case $1 in
         module_usage
         exit 0
         ;;
-    --setup | setup)
+    --prepare | prepare)
         shift
         split_options $@
         eval set -- "$OTHER"
@@ -246,7 +252,7 @@ case $1 in
         [ -z "$1" ] && module_error "Unknown hostname. Use: daas vstand --help for help"
         STAND_HOST="$1"
         shift
-        do_setup_stand $@
+        do_prepare_host $@
         exit $?
         ;;
     --create | create)
@@ -262,7 +268,7 @@ case $1 in
         do_create_stand $@
         exit $?
         ;;
-    --prepare | prepare)
+    --setup | setup)
         shift
         split_options $@
         eval set -- "$OTHER"
@@ -272,12 +278,12 @@ case $1 in
         shift
         [ -n "$1" ] && DAAS_PROJECT_CONFIG="$1" && shift
 
-        do_prepare_stand $@
-        exit $?
-        ;;
-    --show | show)
-        shift
+        do_setup_stand $@
+        xit $?
 
+        ;;
+    --show|show)
+        shift
         [ -z "$1" ] && module_error "Unknown show command (defaults|config). Use: daas vstand --help for help"
         SHOW_COMMAND="$1"
         shift

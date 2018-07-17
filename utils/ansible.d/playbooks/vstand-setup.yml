@@ -15,7 +15,7 @@
     ansible_ssh_password: "{{daas_vstand.pass}}"
 
   pre_tasks:
-     - name: 'set password for ssh user'
+     - name: 'setup password for ssh user'
        set_fact: ansible_ssh_pass="{{ daas_vstand.pass }}"
        tags: 
          - gitlab
