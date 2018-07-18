@@ -132,3 +132,7 @@ daas-config project merge cfg1.yml cfg2.yml  - накладывает cfg2 на 
 41. При развёртывании стендов можно сделать сценарии запрашивающие параметры (ansible module 
 42. Расставить теги в сценариях, чтобы можно было вызывать частично
 
+43. В качестве работы с DNS
+https://docs.ansible.com/ansible/2.5/modules/nsupdate_module.html
+
+44. Посмотреть на использование Consul (он может выступать как DNS!)

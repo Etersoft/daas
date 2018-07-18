@@ -59,7 +59,7 @@ project:
       nodes:
         builder:
           skip_compose: yes
-          #image: x64.p8-builder
+          image: x64.p8-builder
           ip: 100
           volumes:
             - /cache
