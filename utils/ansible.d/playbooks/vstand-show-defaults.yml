@@ -4,8 +4,8 @@
   become: yes
   gather_facts: no 
   vars_files:
-     - "{{ daas_vars_files }}"
-     - "{{ daas_project_file }}"
+     - "{{ daas_vstand_config }}"
+     - "{{ daas_project_config }}"
      - "{{daas_ansible_dir}}/daas-defaults.yml"
 
   tasks:

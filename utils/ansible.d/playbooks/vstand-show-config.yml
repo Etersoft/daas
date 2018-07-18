@@ -4,12 +4,15 @@
   become: yes
   gather_facts: no 
   vars_files:
-     - "{{ daas_vars_files }}"
-     - "{{ daas_project_file }}"
+     - "{{ daas_vstand_config }}"
+     - "{{ daas_project_config }}"
      - "{{daas_ansible_dir}}/daas-defaults.yml"
      # обязательно должен быть последним (т.к. переопределяет свойства проекта и умолчательные настройки)
      - "{{daas_ansible_dir}}/daas-vstand-config.yml"
 
   tasks:
+     - name: use vstand-config
+       debug: msg="{{daas_vstand_config}}"
+
      - name: show result config for vstand
        debug: msg="{{daas_vstand}}"

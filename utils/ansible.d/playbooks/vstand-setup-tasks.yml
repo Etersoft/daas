@@ -2,14 +2,13 @@
 # Настройка vbox-машины под конкретный проект
 # --------------------------------------------------------------------
 - name: use config file for stand
-  debug: msg="{{ daas_vars_files }}"
+  debug: msg="{{ daas_vstand_config }}"
 
 - name: use project file
-  debug: msg="{{ daas_project_file }}"
+  debug: msg="{{ daas_project_config }}"
 
 - name: use project name
   debug: msg="{{ project.name }}"
-
 
 - name: install programs
   apt_rpm: "package={{item}} state=present"
@@ -30,29 +29,54 @@
     - etersoft-build-utils
     - etcgit
     - su
+  tags: 
+    - install
 
 - name: control su
   shell: control su public
 
 - name: install docker-compose
   pip: name=docker-compose
+  tags: 
+    - install
 
 - name: "add {{ daas_vstand.user }} to group 'docker'"
   user:
     name: "{{ daas_vstand.user }}"
     groups: docker
     append: yes
+  tags: 
+    - user-setup
+
+- name: "set TERM environment variable"
+  become: no
+  shell: |
+      if ! grep -q 'TERM=' /home/{{daas_vstand.user}}/.bashrc; then 
+          echo 'export TERM=xterm' >>  /home/{{daas_vstand.user}}/.bashrc;
+      fi
+  tags: 
+    - user-setup
+
+- name: "create rpmmacros for {{ daas_vstand.user }}"
+  become: no
+  template: "src={{daas_ansible_dir}}/templates/rpmmacros.tpl dest=/home/{{daas_vstand.user}}/.rpmmacros"
+  tags: 
+    - user-setup
 
 - name: install daas from package
   apt_rpm: "package={{item}} state=present"
   when: daas_vstand.daas_url is undefined
   tags: 
     - daas
+    - install
 
 - name: check local daas file
   local_action: stat path="{{daas_vstand.daas_url}}"
   register: daas_rpm
   when: daas_vstand.daas_url is defined
+  tags: 
+    - daas
+    - install
 
 - name: copy daas from local file
   copy:
@@ -61,6 +85,7 @@
   when: daas_vstand.daas_url is defined and daas_rpm.stat.exists == true
   tags: 
     - daas
+    - install
 
 - name: load daas from url
   get_url:
@@ -69,18 +94,21 @@
   when: daas_vstand.daas_url is defined and daas_rpm.stat.exists == false
   tags: 
     - daas
+    - install
 
 - name: "install daas from local rpm"
   shell: "rpm -qa | grep -q daas || sudo epmi --auto /tmp/daas*.rpm"
   when: daas_vstand.daas_url is defined
   tags: 
     - daas
+    - install
 
 - name: "remove daas local rpm"
   shell: rm -rf /tmp/daas*.rpm
   when: daas_vstand.daas_url is defined
   tags: 
     - daas
+    - install
 
 - name: check local gitlab-runner file
   local_action: stat path="{{daas_vstand.gitlab.runner_download_url}}"
@@ -141,7 +169,3 @@
   service: name=gitlab-runner state=started enabled=yes
   tags: 
     - gitlab
-
-- name: create rpmmacros
-  become: no
-  template: "src={{daas_ansible_dir}}/templates/rpmmacros.tpl dest=/home/{{daas_vstand.user}}/.rpmmacros"

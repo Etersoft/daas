@@ -101,7 +101,7 @@ prepare_ansible_environment() {
 
     DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS"
 
-    local ANSIBLE_ENV="-e daas_vars_files=$(realpath $DAAS_VSTAND_CONFIG) -e daas_data_dir=$(realpath $DAAS_DATADIR) -e daas_ansible_dir=$(realpath $DAAS_ANSIBLE_D)"
+    local ANSIBLE_ENV="-e daas_vstand_config=$(realpath $DAAS_VSTAND_CONFIG) -e daas_data_dir=$(realpath $DAAS_DATADIR) -e daas_ansible_dir=$(realpath $DAAS_ANSIBLE_D)"
 
     DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS $ANSIBLE_ENV"
 }
@@ -123,6 +123,11 @@ do_prepare_host() {
     echo "Setup stand '$STAND_HOST'.."
 
     check_config_files "prepare"
+
+    if ! ping -c 1 -w 1 $STAND_HOST 1>/dev/null 2>/dev/null; then
+        echo "ERROR: '$STAND_HOST' does not respond"
+        return 1
+    fi
 
     local INVFILE=$(mktemp)
     echo "[vstands]" >$INVFILE
@@ -151,7 +156,7 @@ do_create_stand() {
 
     [ -n "$DAAS_DEBUG" ] && ANSIBLE_DEBUG="-vvv" || ANSIBLE_DEBUG=''
 
-    DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_project_file=$(realpath $DAAS_PROJECT_CONFIG)"
+    DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_project_config=$(realpath $DAAS_PROJECT_CONFIG)"
 
     local DAAS_NEWSTAND_IP=$(mktemp)
     DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_newstand_ip_file=$DAAS_NEWSTAND_IP"
@@ -186,7 +191,7 @@ do_setup_stand() {
 
     [ -n "$DAAS_DEBUG" ] && ANSIBLE_DEBUG="-vvv" || ANSIBLE_DEBUG=''
 
-    DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_project_file=$(realpath $DAAS_PROJECT_CONFIG)"
+    DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_project_config=$(realpath $DAAS_PROJECT_CONFIG)"
 
     [ -n "$GITLAB_RUNNER_REGISTRATION_TOKEN" ] && DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e gitlab_runner_registration_token=$GITLAB_RUNNER_REGISTRATION_TOKEN"
 
@@ -217,7 +222,7 @@ do_show_configs() {
 
     [ -n "$DAAS_DEBUG" ] && ANSIBLE_DEBUG="-vvv" || ANSIBLE_DEBUG=''
 
-    DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_project_file=$(realpath $DAAS_PROJECT_CONFIG)"
+    DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_project_config=$(realpath $DAAS_PROJECT_CONFIG)"
 
     [ -n "$GITLAB_RUNNER_REGISTRATION_TOKEN" ] && DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e gitlab_runner_registration_token=$GITLAB_RUNNER_REGISTRATION_TOKEN"
 
@@ -258,6 +263,7 @@ case $1 in
         [ -z "$1" ] && module_error "Unknown hostname. Use: daas vstand --help for help"
         STAND_HOST="$1"
         shift
+
         do_prepare_host $@
         exit $?
         ;;
@@ -269,7 +275,6 @@ case $1 in
         [ -z "$1" ] && module_error "Unknown hostname. Use: daas vstand --help for help"
         STAND_HOST="$1"
         shift
-        [ -n "$1" ] && DAAS_PROJECT_CONFIG="$1" && shift
 
         do_create_stand $@
         exit $?
@@ -282,13 +287,11 @@ case $1 in
         [ -z "$1" ] && module_error "Unknown hostname. Use: daas vstand --help for help"
         STAND_HOST="$1"
         shift
-        [ -n "$1" ] && DAAS_PROJECT_CONFIG="$1" && shift
 
         do_setup_stand $@
-        xit $?
-
+        exit $?
         ;;
-    --show|show)
+    --show | show)
         shift
         [ -z "$1" ] && module_error "Unknown show command (defaults|config). Use: daas vstand --help for help"
         SHOW_COMMAND="$1"
@@ -296,8 +299,6 @@ case $1 in
 
         split_options $@
         eval set -- "$OTHER"
-
-        [ -n "$1" ] && DAAS_PROJECT_CONFIG="$1" && shift
 
         do_show_configs $@
         exit $?

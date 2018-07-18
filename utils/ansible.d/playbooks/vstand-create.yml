@@ -4,8 +4,8 @@
   become: no
   gather_facts: no 
   vars_files:
-     - "{{ daas_vars_files }}"
-     - "{{ daas_project_file }}"
+     - "{{ daas_vstand_config }}"
+     - "{{ daas_project_config }}"
      - "{{daas_ansible_dir}}/daas-defaults.yml"
      # обязательно должен быть последним (т.к. переопределяет свойства проекта и умолчательные настройки)
      - "{{daas_ansible_dir}}/daas-vstand-config.yml"
@@ -18,15 +18,11 @@
     vagrant_project_dir: "vstands/vs-{{project.name}}-{{daas_vstand.hostname}}"
 
   pre_tasks:
-     - name: 'setup password for ssh user'
-       set_fact: ansible_ssh_pass="{{ daas_vstand.hostmachine.pass }}"
-
-  tasks:
     - name: use config file for stand
-      debug: msg="{{ daas_vars_files }}"
+      debug: msg="{{ daas_vstand_config }}"
 
     - name: use project file
-      debug: msg="{{ daas_project_file }}"
+      debug: msg="{{ daas_project_config }}"
 
     - name: use project name
       debug: msg="{{ project.name }}"
@@ -34,6 +30,10 @@
     - name: use project dir
       debug: msg="{{ vagrant_project_dir }}"
 
+    - name: 'setup password for ssh user'
+      set_fact: ansible_ssh_pass="{{ daas_vstand.hostmachine.pass }}"
+
+  tasks:
     - name: Create project directory
       file: "path={{vagrant_project_dir}} state=directory mode=0777"
 

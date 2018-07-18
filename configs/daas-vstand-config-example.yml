@@ -7,8 +7,11 @@ vstand:
     user: "vagrant"
     pass: "123"
 
+  hostname: "{{project.name}}-vs1"
+
   limits:
-    cpu: 2
+    cpu: 3
+    memory: 1024 
     
   vagrant:
      box: 
@@ -18,3 +21,4 @@ vstand:
   gitlab:
     url: "http://192.168.1.76:30080/"
     runner_registration_token: "xsmZtVJpEhbuxTp1JAys"
+    runner_download_url: "{{ daas_ansible_dir}}/addons/gitlab-runner-linux-amd64"
