@@ -609,11 +609,11 @@ if __name__ == "__main__":
             exit(1)
 
     if 'version' not in conf:
-        print "ERROR: Unknown config file format. Supported by %s" % FORMAT_VERSION
+        print "ERROR: Unknown config file format for '%s'. Supported by %s" % (confile, FORMAT_VERSION)
         exit(1)
 
     if str(conf['version']) != str(FORMAT_VERSION):
-        print "ERROR: Unsupported file format '%s'. Must be '%s'" % (conf['version'], FORMAT_VERSION)
+        print "ERROR: Unsupported config file format '%s' ('%s'). Must be '%s'" % (conf['version'], confile, FORMAT_VERSION)
         exit(1)
 
     project = conf['project']
