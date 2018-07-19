@@ -20,37 +20,67 @@
   pre_tasks:
     - name: use config file for stand
       debug: msg="{{ daas_vstand_config }}"
+      tags:
+        - stand
+        - env
+        - vagrant
 
     - name: use project file
       debug: msg="{{ daas_project_config }}"
+      tags:
+        - stand
+        - env
+        - vagrant
 
     - name: use project name
       debug: msg="{{ project.name }}"
+      tags:
+        - stand
+        - env
+        - vagrant
 
     - name: use project dir
       debug: msg="{{ vagrant_project_dir }}"
+      tags:
+        - stand
+        - env
+        - vagrant
 
     - name: 'setup password for ssh user'
       set_fact: ansible_ssh_pass="{{ daas_vstand.hostmachine.pass }}"
+      tags:
+        - stand
+        - env
+        - vagrant
 
   tasks:
     - name: Create project directory
       file: "path={{vagrant_project_dir}} state=directory mode=0777"
+      tags:
+        - env
 
     - name: Generate vagrant file
       template: "src={{daas_ansible_dir}}/templates/Vagrantfile.tpl dest={{vagrant_project_dir}}/Vagrantfile"
+      tags:
+        - vagrant
 
     - name: Generate bootstrap file
       template: "src={{daas_ansible_dir}}/templates/bootstrap.sh.tpl dest={{vagrant_project_dir}}/bootstrap.sh mode='a+x'"
+      tags:
+        - vagrant
     
     - local_action: stat path="{{daas_vstand.vagrant.box.url}}"
       register: vagrant_box
+      tags:
+        - vagrant
     
     - name: Copy vagrant box
       copy:
         dest: "{{ vagrant_boxes_dir }}/{{daas_vstand.vagrant.box.name}}.box"
         src: "{{daas_vstand.vagrant.box.url}}"
       when: vagrant_box.stat.exists == true
+      tags:
+        - vagrant
 
     - name: Create vagrant boxes (Very very long task)
       shell: |
@@ -63,11 +93,15 @@
              exit $?
           fi
           exit 0
+      tags:
+        - vagrant
 
     - name: run new vstand
       shell: vagrant up
       args:
           chdir: "{{vagrant_project_dir}}/"
+      tags:
+        - stand
 
     - name: get ip from new stand
       shell: |
@@ -76,27 +110,39 @@
       args:
           chdir: "{{vagrant_project_dir}}/"
       register: newstand
+      tags:
+        - stand
 
     - name: 'set variable ip'
       set_fact: 
         newstand_ip: "{{ newstand.stdout | regex_replace('\n','') | regex_replace(regexp,'\\2')  }}"
       vars:
         regexp: '(.*)IP: (.*)$'
+      tags:
+        - stand
 
     - name: 'set ip'
       debug: msg="{{ newstand_ip }}"
+      tags:
+        - stand
 
     - name: 'setup admin for new stand'
       shell: vagrant ssh -c "sudo useradd {{daas_vstand.user}}; echo '{{daas_vstand.user}}:{{daas_vstand.pass}}' | sudo chpasswd"
       args:
         chdir: "{{vagrant_project_dir}}/"      
+      tags:
+        - stand
 
     - name: "add admin to group 'wheel'"
       shell: vagrant ssh -c "sudo usermod -a -G wheel {{daas_vstand.user}}"
       args:
         chdir: "{{vagrant_project_dir}}/"      
+      tags:
+        - stand
 
     - name: save ip file information
       local_action: copy content="{{ item }}" dest="{{ daas_newstand_ip_file }}" 
       with_items: 
         - "{{newstand_ip}}"
+      tags:
+        - stand
