@@ -46,6 +46,8 @@ cp daas %buildroot%_bindir/
 subst 's|datadir=.|datadir=%_datadir/%name|g' %buildroot%_bindir/daas
 
 cp daas-project/daas-project %buildroot%_bindir/
+cp daas-config/daas-config %buildroot%_bindir/
+
 cp example-project.yml %buildroot%_datadir/%name/
 
 mkdir -p -m755 %buildroot%_datadir/%name/addons
