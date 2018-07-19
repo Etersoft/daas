@@ -129,7 +129,10 @@ daas-config project merge cfg1.yml cfg2.yml  - накладывает cfg2 на 
 
 можно так же сделать обработку параметров из командной строки (--env param.sub.sub2.val=xx)
 
-41. При развёртывании стендов можно сделать сценарии запрашивающие параметры (ansible module 
+41. При развёртывании стендов можно сделать сценарии запрашивающие параметры (и пароли)
+https://docs.ansible.com/ansible/2.5/user_guide/playbooks_prompts.html
+https://github.com/ansible/ansible-examples/blob/master/language_features/prompts.yml
+
 42. Расставить теги в сценариях, чтобы можно было вызывать частично
 
 43. В качестве работы с DNS
