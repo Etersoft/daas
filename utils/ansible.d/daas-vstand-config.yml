@@ -4,10 +4,12 @@
 daas_vstand:
 
   # Parameters for virtual stand (hostname,user,pass)
-  hostname: "{{ vstand.hostname 
-            if vstand is defined 
-            and vstand.hostname is defined 
-            else daas_defaults.vstand.hostname }}"
+  hostname: "{{ user_hostname
+                if user_hostname is defined 
+              else vstand.hostname 
+              if vstand is defined 
+              and vstand.hostname is defined 
+              else daas_defaults.vstand.hostname }}"
   user: "{{ vstand.user 
             if vstand is defined 
             and vstand.user is defined 
@@ -19,12 +21,14 @@ daas_vstand:
             else daas_defaults.vstand.pass }}"
 
   # first a user DNS servers, and then the default
-  dns_servers: "{{ vstand.dns_servers 
+  dns_servers: "{{ user_dns_servers 
+                    if user_dns_servers is defined 
+                    else [] }}
+                + {{ vstand.dns_servers 
                     if vstand is defined 
                     and vstand.dns_servers is defined
                     else [] }}
-                +
-                {{ daas_defaults.vstand.dns_servers 
+                + {{ daas_defaults.vstand.dns_servers 
                     if daas_defaults.vstand is defined
                     and daas_defaults.vstand.dns_servers is defined else [] }}"
 
@@ -160,21 +164,21 @@ daas_vstand:
                and vstand.consul.dc is defined 
                else daas_defaults.consul.log_level }}"
 
-     dns_servers: "{{ vstand.dns_servers 
+     dns_servers: "{{ user_dns_servers 
+                    if user_dns_servers is defined 
+                    else [] }}
+                + {{ vstand.dns_servers 
                     if vstand is defined 
                     and vstand.dns_servers is defined
                     else [] }}
-                +
-                {{ vstand.consul.dns_servers 
+                + {{ vstand.consul.dns_servers 
                     if vstand is defined 
                     and vstand.consul is defined 
                     and vstand.consul.dns_servers is defined
                     else [] }}
-                +
-                {{ daas_defaults.consul.dns_servers 
+                + {{ daas_defaults.consul.dns_servers 
                       if daas_defaults.consul.dns_servers is defined else [] }}
-                +
-                {{ daas_defaults.vstand.dns_servers 
+                + {{ daas_defaults.vstand.dns_servers 
                     if daas_defaults.vstand is defined
                     and daas_defaults.vstand.dns_servers is defined else [] }}"    
 

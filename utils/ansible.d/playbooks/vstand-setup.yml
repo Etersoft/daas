@@ -36,6 +36,10 @@
          - net
 
   tasks:
+
+    #  - debug: var=daas_vstand
+    #  - shell: /bin/false
+
      - name: configure vstand for "{{ project.name }}"
        include: "{{daas_ansible_dir}}/playbooks/vstand-setup-tasks.yml"
 

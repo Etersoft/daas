@@ -14,6 +14,8 @@ DAAS_VSTAND_CONFIG='.daas-vstand-config.yml'
 DAAS_PROJECT_CONFIG='.daas.yml'
 [ -z "$GITLAB_RUNNER_REGISTRATION_TOKEN" ] && GITLAB_RUNNER_REGISTRATION_TOKEN=''
 
+USER_DNS_SERVERS=''
+
 module_usage() {
     echo " "
     echo "Usage: vstand command [options]"
@@ -38,6 +40,8 @@ module_usage() {
     echo "-s|--stand-config vstand-config.yml  - config (yaml) for vstand"
     echo "-c|--config daas.yml                 - config (yaml) for project"
     echo "-v|--variable var=val                - added variable for ansible (can be used multiple times)"
+    echo "--hostname name                      - Set name for hostname"
+    echo "--dns nameserver                     - Add nameserver (can be used multiple times)"
     echo "--gitlab-token token                 - gitlab-runner registration token for gitlab. Default use from vstand config file"
     echo " "
 }
@@ -56,7 +60,7 @@ split_options() {
 
     DAAS_ANSIBLE_USER_VARS=''
 
-    TEMP=$(getopt -n $PROG -o c:,s:,u:,v: -l config:,stand-config:,user:,variable:,gitlab-token: -- "$@") || return 1
+    TEMP=$(getopt -n $PROG -o c:,s:,u:,v: -l config:,stand-config:,user:,variable:,gitlab-token:,dns:,hostname: -- "$@") || return 1
     eval set -- "$TEMP"
 
     while :; do
@@ -80,6 +84,16 @@ split_options() {
                 shift
                 [ "$1" == '--' ] && break
                 DAAS_ANSIBLE_USER_VARS="${DAAS_ANSIBLE_USER_VARS} -e $1"
+                ;;
+            --dns)
+                shift
+                [ "$1" == '--' ] && break
+                USER_DNS_SERVERS="${USER_DNS_SERVERS} $1"
+                ;;
+            --hostname)
+                shift
+                [ "$1" == '--' ] && break
+                DAAS_ANSIBLE_USER_VARS="${DAAS_ANSIBLE_USER_VARS} -e user_hostname=$1"
                 ;;
             --gitlab-token)
                 shift
@@ -163,7 +177,12 @@ do_create_stand() {
     local DAAS_NEWSTAND_IP=$(mktemp)
     DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_newstand_ip_file=$DAAS_NEWSTAND_IP"
 
-    ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l vstand $ANSIBLE_DEBUG $@ ${DAAS_ANSIBLE_D}/playbooks/vstand-create.yml
+    ansible-playbook -i $INVFILE -l vstand \
+        ${DAAS_ANSIBLE_EXTRA_ARGS} \
+        ${DAAS_ANSIBLE_USER_VARS} \
+        --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' \
+        $ANSIBLE_DEBUG $@ \
+        ${DAAS_ANSIBLE_D}/playbooks/vstand-create.yml
 
     RET=$?
     rm -rf $INVFILE
@@ -171,6 +190,20 @@ do_create_stand() {
     rm -rf $DAAS_NEWSTAND_IP
 
     return $RET
+}
+
+add_user_dns_servers() {
+    
+    [ -z "$USER_DNS_SERVERS" ] && return
+    [ -n "$1" ] && DNS_VAR_NAME="$1" || DNS_VAR_NAME='user_dns_servers'
+    
+    local DNS_VAR=''
+
+     for dns in $USER_DNS_SERVERS; do
+        [ -n "$DNS_VAR" ] && DNS_VAR="${DNS_VAR}, '$dns'" || DNS_VAR="'$dns'"
+    done
+    
+    echo "{'$DNS_VAR_NAME': [ $DNS_VAR ]}"
 }
 
 do_setup_stand() {
@@ -195,9 +228,17 @@ do_setup_stand() {
 
     DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_project_config=$(realpath $DAAS_PROJECT_CONFIG)"
 
+    DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS}"
+
     [ -n "$GITLAB_RUNNER_REGISTRATION_TOKEN" ] && DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e gitlab_runner_registration_token=$GITLAB_RUNNER_REGISTRATION_TOKEN"
 
-    ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l vstand $ANSIBLE_DEBUG $@ ${DAAS_ANSIBLE_D}/playbooks/vstand-setup.yml
+    ansible-playbook -i $INVFILE -l vstand \
+        ${DAAS_ANSIBLE_EXTRA_ARGS} \
+        ${DAAS_ANSIBLE_USER_VARS} \
+        --extra-vars "$(add_user_dns_servers)" \
+        --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' \
+        $ANSIBLE_DEBUG $@ \
+        ${DAAS_ANSIBLE_D}/playbooks/vstand-setup.yml
 
     RET=$?
     rm -rf $INVFILE
