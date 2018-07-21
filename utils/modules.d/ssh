@@ -1,5 +1,10 @@
 #!/bin/sh
 
+[ -n "$DAAS_DEBUG" ] && set -x
+[ -z "$DAAS_DATADIR" ] && DAAS_DATADIR='..'
+
+. $DAAS_DATADIR/modules.d/.daas-common
+
 DEFAULT_SSH_OPTIONS="-o StrictHostKeychecking=no"
 
 module_usage() {
@@ -15,10 +20,8 @@ module_help() {
 
 [ -z "$1" ] && module_help && exit 1
 
-CONFILE=.daas.yml
-
-[ "$2" == "-c" ] && shift && CONFILE="$1" && shift
-[ "$2" == "--confile" ] && shift && CONFILE="$1" && shift
+[ "$2" == "-c" ] && shift && DAAS_PROJECT_CONFIG="$1" && shift
+[ "$2" == "--confile" ] && shift && DAAS_PROJECT_CONFIG="$1" && shift
 
 CMD="$1"
 [ -z "$CMD" ] && module_help && exit 1
@@ -35,7 +38,7 @@ case $CMD in
 esac
 NODENAME="$CMD"
 shift
-SSH_PORT=$(daas-project ssh-port $NODENAME -c $CONFILE)
+SSH_PORT=$(daas-project ssh-port $NODENAME -c $DAAS_PROJECT_CONFIG)
 [ "$?" == "1" ] && echo "$SSH_PORT" && exit 1
 [ -z "$SSH_PORT" ] && echo $SSH_HELP && exit 1
 

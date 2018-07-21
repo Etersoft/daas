@@ -5,16 +5,10 @@
 
 . $DAAS_DATADIR/modules.d/.daas-common
 
-[ -z "$DAAS_ANSIBLE_D" ] && DAAS_ANSIBLE_D="$DAAS_DATADIR/ansible.d"
-[ -z "$DAAS_ANSIBLE_CONFIG" ] && DAAS_ANSIBLE_CONFIG="$DAAS_ANSIBLE_D/ansible.cfg"
-[ -z "$DAAS_ANSIBLE_PRIVATE" ] && DAAS_ANSIBLE_PRIVATE="$HOME/.daas/ansible_private"
+[ -z "$GITLAB_RUNNER_REGISTRATION_TOKEN" ] && GITLAB_RUNNER_REGISTRATION_TOKEN=''
+USER_DNS_SERVERS=''
 STAND_HOST=''
 SSH_USER=$USER
-DAAS_VSTAND_CONFIG='.daas-vstand-config.yml'
-DAAS_PROJECT_CONFIG='.daas.yml'
-[ -z "$GITLAB_RUNNER_REGISTRATION_TOKEN" ] && GITLAB_RUNNER_REGISTRATION_TOKEN=''
-
-USER_DNS_SERVERS=''
 
 module_usage() {
     echo " "
@@ -111,6 +105,19 @@ split_options() {
     OTHER=$@
 }
 
+add_user_dns_servers() {
+
+    [ -z "$USER_DNS_SERVERS" ] && return
+    [ -n "$1" ] && DNS_VAR_NAME="$1" || DNS_VAR_NAME='user_dns_servers'
+
+    local DNS_VAR=''
+
+    for dns in $USER_DNS_SERVERS; do
+        [ -n "$DNS_VAR" ] && DNS_VAR="${DNS_VAR},'$dns'" || DNS_VAR="'$dns'"
+    done
+    echo "-e $DNS_VAR_NAME=[$DNS_VAR]"
+}
+
 prepare_ansible_environment() {
 
     export ANSIBLE_CONFIG=$DAAS_ANSIBLE_CONFIG
@@ -119,20 +126,9 @@ prepare_ansible_environment() {
 
     local ANSIBLE_ENV="-e daas_vstand_config=$(realpath $DAAS_VSTAND_CONFIG) -e daas_data_dir=$(realpath $DAAS_DATADIR) -e daas_ansible_dir=$(realpath $DAAS_ANSIBLE_D)"
 
-    DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS $ANSIBLE_ENV"
-}
+    local DNS_SERVERS=$(add_user_dns_servers)
 
-check_config_files() {
-
-    local FUNC="$1"
-
-    if ! test -f "$DAAS_VSTAND_CONFIG"; then
-        module_error "($FUNC): Not found vstand config file '$DAAS_VSTAND_CONFIG'"
-    fi
-
-    if ! test -f "$DAAS_PROJECT_CONFIG"; then
-        module_error "($FUNC): Not found project config file '$DAAS_PROJECT_CONFIG'"
-    fi
+    DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS $DNS_SERVERS $ANSIBLE_ENV"
 }
 
 do_prepare_host() {
@@ -192,20 +188,6 @@ do_create_stand() {
     return $RET
 }
 
-add_user_dns_servers() {
-    
-    [ -z "$USER_DNS_SERVERS" ] && return
-    [ -n "$1" ] && DNS_VAR_NAME="$1" || DNS_VAR_NAME='user_dns_servers'
-    
-    local DNS_VAR=''
-
-     for dns in $USER_DNS_SERVERS; do
-        [ -n "$DNS_VAR" ] && DNS_VAR="${DNS_VAR}, '$dns'" || DNS_VAR="'$dns'"
-    done
-    
-    echo "{'$DNS_VAR_NAME': [ $DNS_VAR ]}"
-}
-
 do_setup_stand() {
 
     check_config_files "setup"
@@ -235,7 +217,6 @@ do_setup_stand() {
     ansible-playbook -i $INVFILE -l vstand \
         ${DAAS_ANSIBLE_EXTRA_ARGS} \
         ${DAAS_ANSIBLE_USER_VARS} \
-        --extra-vars "$(add_user_dns_servers)" \
         --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' \
         $ANSIBLE_DEBUG $@ \
         ${DAAS_ANSIBLE_D}/playbooks/vstand-setup.yml
@@ -253,7 +234,11 @@ do_show_configs() {
         DAAS_PROJECT_CONFIG="$DAAS_VSTAND_CONFIG"
     fi
 
-    check_config_files
+    check_vstand_config_file "show"
+
+    if ! test -f "$DAAS_PROJECT_CONFIG"; then
+        DAAS_PROJECT_CONFIG="$DAAS_ANSIBLE_D/daas-dummy-config.yml"
+    fi
 
     PROJECT_NAME=$(daas-project name -c $DAAS_PROJECT_CONFIG)
 

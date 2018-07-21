@@ -20,7 +20,7 @@ module_error() {
 
 run_compose() {
     WORKDIR=$(pwd)
-    prepare_environment || return 1
+    prepare_project_environment || return 1
     cd $DAAS_OUTDIR
     docker-compose $@
     RET=$?

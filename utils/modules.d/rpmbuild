@@ -55,7 +55,7 @@ prepare_sources() {
 prepare_build_environment() {
     WORKDIR=$(pwd)
 
-    prepare_environment
+    prepare_project_environment "build"
 
     if ! test -d "$DAAS_OUTDIR/$BUILDER"; then
         module_error "(${FUNCNAME[0]}): Not found builder '$BUILDER'"
@@ -171,7 +171,7 @@ run_build() {
 cleanup_build() {
     echo "Clean..."
 
-    prepare_build_environment
+    prepare_build_environment "clean"
     cd $BUILDER_DIR
     docker-compose run --rm ${VOLUMES} -v ${SOURCEDIR}:/$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR -u root -T $BUILDER rm -rf /home/$DAAS_BUILD_USER/RPM/ - 2>/dev/null
     docker-compose down

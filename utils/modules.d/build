@@ -48,7 +48,7 @@ prepare_sources() {
 prepare_build_environment() {
     WORKDIR=$(pwd)
 
-    prepare_environment
+    prepare_project_environment
 
     if ! test -d $DAAS_OUTDIR/$BUILDER; then
         module_error "(${FUNCNAME[0]}): Not found builder '$BUILDER'"

@@ -37,7 +37,7 @@
 
   tasks:
 
-    #  - debug: var=daas_vstand
+    #  - debug: var=vars
     #  - shell: /bin/false
 
      - name: configure vstand for "{{ project.name }}"

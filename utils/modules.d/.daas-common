@@ -1,5 +1,14 @@
 #!/bin/sh
 
+[ -z "$DAAS_VSTAND_CONFIG" ] && DAAS_VSTAND_CONFIG='.daas-vstand-config.yml'
+[ -z "$DAAS_PROJECT_CONFIG" ] && DAAS_PROJECT_CONFIG='.daas.yml'
+[ -z "$DAAS_ANSIBLE_D" ] && DAAS_ANSIBLE_D="$DAAS_DATADIR/ansible.d"
+[ -z "$DAAS_ANSIBLE_CONFIG" ] && DAAS_ANSIBLE_CONFIG="$DAAS_ANSIBLE_D/ansible.cfg"
+[ -z "$DAAS_ANSIBLE_PRIVATE" ] && DAAS_ANSIBLE_PRIVATE="$HOME/.daas/ansible_private"
+
+DAAS_SYSCONF_DIR='/etc/daas'
+DAAS_VSTAND_DEFAULT_CONFIG="$DAAS_ANSIBLE_D/daas-vstand-default-config.yml"
+
 daas_tools_bindir()
 {
     echo "/daas"
@@ -19,13 +28,80 @@ daas_tools_volume()
     echo "-v $TOOLS_DIR:$DDIR"
 }
 
-prepare_environment()
+check_vstand_config_file() {
+
+    local FUNC="$1"
+
+    if ! test -f "$DAAS_VSTAND_CONFIG"; then
+        module_error "($FUNC): Not found vstand config file '$DAAS_VSTAND_CONFIG'"
+    fi
+}
+
+check_project_config_file() {
+
+    local FUNC="$1"
+
+    if ! test -f "$DAAS_PROJECT_CONFIG"; then
+        module_error "($FUNC): Not found project config file '$DAAS_PROJECT_CONFIG'"
+    fi
+}
+
+check_config_files() {
+
+    check_vstand_config_file $@
+    check_project_config_file $@
+}
+
+prepare_project_environment()
 {
-   PROJECT_NAME=$( daas-project name )
+   check_project_config_file $@
+
+   PROJECT_NAME=$( daas-project name -c $DAAS_PROJECT_CONFIG )
    DAAS_TOOLS_VOLUME=$( daas_tools_volume )
    DAAS_TOOLS_BINDIR=$( daas_tools_bindir )
 
    [ -z "$DAAS_OUTDIR" ] && export DAAS_OUTDIR="daas-${PROJECT_NAME}" 
    
-   daas-project gen || return 1
+   daas-project gen -c $DAAS_PROJECT_CONFIG || return 1
 }
+
+set_vstand_config() {
+
+    [ -z "$DAAS_VSTAND_CONFIG" ] && DAAS_PROJECT_CONFIG="$DAAS_VSTAND_DEFAULT_CONFIG" && return
+
+    # check current dir
+    [ -f "./$DAAS_VSTAND_CONFIG" ] && DAAS_VSTAND_CONFIG="./$DAAS_VSTAND_CONFIG" && return
+
+    # check home dir
+    [ -f "$HOME/$DAAS_VSTAND_CONFIG" ] && DAAS_VSTAND_CONFIG="$HOME/$DAAS_VSTAND_CONFIG" && return
+
+    # check system dir
+    [ -f "$DAAS_SYSCONF_DIR/$DAAS_VSTAND_CONFIG" ] && DAAS_VSTAND_CONFIG="$DAAS_SYSCONF_DIR/$DAAS_VSTAND_CONFIG" && return
+
+    # use default
+    DAAS_VSTAND_CONFIG="$DAAS_VSTAND_DEFAULT_CONFIG"
+}
+
+set_project_config() {
+
+    [ -z "$DAAS_PROJECT_CONFIG" ] && return
+
+    # check current dir
+    [ -f "./$DAAS_PROJECT_CONFIG" ] && DAAS_PROJECT_CONFIG="./$DAAS_PROJECT_CONFIG" && return
+
+    # check home dir
+    [ -f "$HOME/$DAAS_PROJECT_CONFIG" ] && DAAS_PROJECT_CONFIG="$HOME/$DAAS_PROJECT_CONFIG" && return
+
+    # check system dir
+    [ -f "$DAAS_SYSCONF_DIR/$DAAS_PROJECT_CONFIG" ] && DAAS_PROJECT_CONFIG="$DAAS_SYSCONF_DIR/$DAAS_PROJECT_CONFIG" && return
+
+    DAAS_PROJECT_CONFIG='.daas.yml'
+}
+
+make_default_environment() {
+    set_vstand_config
+    set_project_config
+}
+
+make_default_environment
+
