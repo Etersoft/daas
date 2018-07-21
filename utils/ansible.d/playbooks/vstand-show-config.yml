@@ -13,6 +13,10 @@
   tasks:
      - name: use vstand-config
        debug: msg="{{daas_vstand_config}}"
+       tags:
+         - always     
 
      - name: show result config for vstand
        debug: msg="{{daas_vstand}}"
+       tags:
+         - always     

@@ -5,6 +5,7 @@
 [ -z "$DAAS_ANSIBLE_D" ] && DAAS_ANSIBLE_D="$DAAS_DATADIR/ansible.d"
 [ -z "$DAAS_ANSIBLE_CONFIG" ] && DAAS_ANSIBLE_CONFIG="$DAAS_ANSIBLE_D/ansible.cfg"
 [ -z "$DAAS_ANSIBLE_PRIVATE" ] && DAAS_ANSIBLE_PRIVATE="$HOME/.daas/ansible_private"
+[ -z "$DAAS_REPOSITORY_D" ] && DAAS_REPOSITORY_D="$DAAS_DATADIR/repository.d"
 
 DAAS_SYSCONF_DIR='/etc/daas'
 DAAS_VSTAND_DEFAULT_CONFIG="$DAAS_ANSIBLE_D/daas-default-vstand-config.yml"

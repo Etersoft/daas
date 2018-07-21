@@ -142,10 +142,10 @@
 
 - name: copy gitlab-runner from local file
   copy:
-    dest: /usr/local/bin/gitlab-runner
     src: "{{daas_vstand.gitlab.runner_download_url}}"
+    dest: /usr/local/bin/gitlab-runner
     mode: 'a+x'
-  when: daas_vstand.gitlab.runner_download_url is defined and grunner_file.stat.exists == true
+  when: grunner_file.stat.exists == true
   tags:
     - gitlab
 

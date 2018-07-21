@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.3
-Release: alt4
+Release: alt5
 
 Group: System/Utilities
 License: MIT
@@ -31,6 +31,7 @@ Group of utilities for the organization of the devops
 Summary: Utilities for stands administation
 Group: System/Utilities
 Requires: %name = %EVR
+Requires: ansible
 %description admin
 Utilities for stands administation
 
@@ -66,12 +67,18 @@ cp -r ansible.d %buildroot%_datadir/%name/
 mkdir -p -m755 %buildroot%_datadir/%name/tools
 cp -r tools %buildroot%_datadir/%name/
 
+mkdir -p -m755 %buildroot%_datadir/%name/repository.d
+cp -r repository.d %buildroot%_datadir/%name/
+
 %files
 %_bindir/daas*
-%dir %_datadir/%name/
+%dir %_datadir/%name
 %_datadir/%name/*
+
 %exclude %_datadir/%name/modules.d/vstand
 %exclude %_datadir/%name/ansible.d
+%exclude %_datadir/%name/repository.d
+%exclude %_datadir/%name/repository.d/*
 # %doc README.md
 
 %files admin
@@ -80,8 +87,14 @@ cp -r tools %buildroot%_datadir/%name/
 %dir %_datadir/%name/ansible.d
 %_datadir/%name/ansible.d/*
 
+%dir %_datadir/%name/repository.d
+%_datadir/%name/repository.d/*
 
 %changelog
+* Sat Jul 21 2018 Pavel Vainerman <pv@altlinux.ru> 0.3-alt5
+- added repository.d
+- refactoring modules
+
 * Tue Jul 17 2018 Pavel Vainerman <pv@altlinux.ru> 0.3-alt4
 - structure refactring (added 'admin' package) 
 

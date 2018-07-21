@@ -22,9 +22,9 @@ vstand:
   vagrant:
      box: 
        name: "vstand-p8"
-       url: "{{ daas_data_dir }}/vstand/vagrant/boxes/p8/vstand.box"
+       url: "{{ daas_repository_dir }}/vagrant/boxes/p8/vstand.box"
 
   gitlab:
     url: "http://192.168.1.76:30080/"
     runner_registration_token: "xsmZtVJpEhbuxTp1JAys"
-    runner_download_url: "{{ daas_ansible_dir}}/addons/gitlab-runner-linux-amd64"
+    runner_download_url: "{{ daas_repository_dir}}/gitlab-runner/gitlab-runner-linux-amd64"

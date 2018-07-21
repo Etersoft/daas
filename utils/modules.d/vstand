@@ -152,7 +152,7 @@ prepare_ansible_environment() {
 
     DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS"
 
-    local ANSIBLE_ENV="-e daas_vstand_config=$(realpath $DAAS_VSTAND_CONFIG) -e daas_data_dir=$(realpath $DAAS_DATADIR) -e daas_ansible_dir=$(realpath $DAAS_ANSIBLE_D)"
+    local ANSIBLE_ENV="-e daas_vstand_config=$(realpath $DAAS_VSTAND_CONFIG) -e daas_data_dir=$(realpath $DAAS_DATADIR) -e daas_ansible_dir=$(realpath $DAAS_ANSIBLE_D) -e daas_repository_dir=$(realpath $DAAS_REPOSITORY_D)"
 
     [ -n "$VADMIN_USER" ] && ANSIBLE_ENV="$ANSIBLE_ENV -e vstand_user_login=$VADMIN_USER"
     [ -n "$VADMIN_PASS" ] && ANSIBLE_ENV="$ANSIBLE_ENV -e vstand_user_pass=$VADMIN_PASS"

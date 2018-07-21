@@ -26,8 +26,8 @@ daas_defaults:
        memory: 2048
 
   vagrant:
-     rpm_url: "{{ daas_data_dir }}/vstand/vagrant/distrib/p8/vagrant.rpm"
-     patch: "{{ daas_data_dir }}/vstand/vagrant/distrib/p8/network_fix_ipv6.rb.patch"
+     rpm_url: "{{daas_repository_dir}}/vagrant/distrib/p8/vagrant.rpm"
+     patch: "{{daas_repository_dir}}/vagrant/distrib/p8/network_fix_ipv6.rb.patch"
      box: 
        name: "vstand-p8"
        url: "vpavel/vstand-altlinux-p8"
@@ -49,7 +49,7 @@ daas_defaults:
              docker_image: 'fotengauer/altlinux-p8'
              extra_options: '--docker-cap-add ALL --docker-volumes /var/run/docker.sock:/var/run/docker.sock --docker-privileged'
 
-  daas_url: "{{daas_ansible_dir}}/addons/daas-0.3-alt3.noarch.rpm"
+  daas_url: "{{daas_repository_dir}}/daas/daas-0.3-alt3.noarch.rpm"
   
   consul:
      url: "https://releases.hashicorp.com/consul/1.2.1/consul_1.2.1_linux_amd64.zip"
