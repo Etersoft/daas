@@ -18,6 +18,16 @@ daas_vstand:
             and vstand.pass is defined 
             else daas_defaults.vstand.pass }}"
 
+  # first a user DNS servers, and then the default
+  dns_servers: "{{ vstand.dns_servers 
+                    if vstand is defined 
+                    and vstand.dns_servers is defined
+                    else [] }}
+                +
+                {{ daas_defaults.vstand.dns_servers 
+                    if daas_defaults.vstand is defined
+                    and daas_defaults.vstand.dns_servers is defined else [] }}"
+
   # Parameters for host machine for vstands (hostname,user,pass)
   hostmachine:
     hostname: "{{ vstand.hostmachine.hostname 
@@ -112,9 +122,81 @@ daas_vstand:
                if project is defined 
                and project.daas_url is defined 
                else daas_defaults.daas_url }}"
-       
+
+  consul:
+     url: "{{ vstand.consul.url 
+               if vstand is defined 
+               and vstand.consul is defined 
+               and vstand.consul.url is defined 
+               else daas_defaults.consul.url }}"
+
+     user:  "{{ vstand.consul.user 
+               if vstand is defined 
+               and vstand.consul is defined 
+               and vstand.consul.user is defined 
+               else daas_defaults.consul.user }}"
+
+     mode:  "{{ vstand.consul.mode 
+               if vstand is defined 
+               and vstand.consul is defined 
+               and vstand.consul.mode is defined 
+               else daas_defaults.consul.mode }}"
+
+     bind:  "{{ vstand.consul.bind 
+               if vstand is defined 
+               and vstand.consul is defined 
+               and vstand.consul.bind is defined 
+               else daas_defaults.consul.bind }}"
+
+     dc:  "{{ vstand.consul.dc 
+               if vstand is defined 
+               and vstand.consul is defined 
+               and vstand.consul.dc is defined 
+               else daas_defaults.consul.dc }}"
+
+     log_level:  "{{ vstand.consul.log_level
+               if vstand is defined 
+               and vstand.consul is defined 
+               and vstand.consul.dc is defined 
+               else daas_defaults.consul.log_level }}"
+
+     dns_servers: "{{ vstand.dns_servers 
+                    if vstand is defined 
+                    and vstand.dns_servers is defined
+                    else [] }}
+                +
+                {{ vstand.consul.dns_servers 
+                    if vstand is defined 
+                    and vstand.consul is defined 
+                    and vstand.consul.dns_servers is defined
+                    else [] }}
+                +
+                {{ daas_defaults.consul.dns_servers 
+                      if daas_defaults.consul.dns_servers is defined else [] }}
+                +
+                {{ daas_defaults.vstand.dns_servers 
+                    if daas_defaults.vstand is defined
+                    and daas_defaults.vstand.dns_servers is defined else [] }}"    
+
+     servers: "{{ daas_defaults.consul.servers 
+                    if daas_defaults.consul.servers is defined else [] }}
+                + 
+              {{ vstand.consul.servers 
+                    if vstand is defined 
+                    and vstand.consul is defined 
+                    and vstand.consul.servers is defined
+                    else [] }}" 
+
+     extra_args:  "{{ vstand.consul.extra_args
+               if vstand is defined 
+               and vstand.consul is defined 
+               and vstand.consul.extra_args is defined 
+               else daas_defaults.consul.extra_args }}"
+
   apt:
-    sources: "{{ daas_defaults.vstand.apt.sources if daas_defaults.vstand.apt.sources is defined else [] }}
+    sources: "{{ daas_defaults.vstand.apt.sources 
+                  if daas_defaults.vstand.apt.sources is defined 
+                  else [] }}
                 + 
               {{ vstand.apt.sources 
                     if vstand is defined 
@@ -122,7 +204,9 @@ daas_vstand:
                     and vstand.apt.sources is defined
                     else [] }}"
 
-    packages: "{{ daas_defaults.vstand.apt.packages if daas_defaults.vstand.apt.packages is defined else [] }}
+    packages: "{{ daas_defaults.vstand.apt.packages 
+                  if daas_defaults.vstand.apt.packages is defined 
+                  else [] }}
                 +
                {{ vstand.apt.packages 
                     if vstand is defined 

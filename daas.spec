@@ -21,6 +21,8 @@ BuildArch: noarch
 
 Requires: sshpass
 
+# Requires: jq
+
 %description
 daas - 'Devops As A Service'. 
 Group of utilities for the organization of the devops

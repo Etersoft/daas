@@ -11,6 +11,8 @@ daas_defaults:
      hostname: "vstand-{{project.name if project is defined else '1'}}"
      user: "vadmin"
      pass: "vadmin"
+     dns_servers:
+        - "8.8.8.8"
 
      apt:
        sources:
@@ -48,6 +50,19 @@ daas_defaults:
              extra_options: '--docker-cap-add ALL --docker-volumes /var/run/docker.sock:/var/run/docker.sock --docker-privileged'
 
   daas_url: "{{daas_ansible_dir}}/addons/daas-0.3-alt3.noarch.rpm"
+  
+  consul:
+     url: "https://releases.hashicorp.com/consul/1.2.1/consul_1.2.1_linux_amd64.zip"
+     user: "consul"
+     mode: 'agent'
+     bind: 'eth1'
+     dc: "dc1"
+     log_level: "INFO"
+     extra_args: '-syslog'
+#     dns_servers:
+#         - "8.8.8.8"
+#     servers:
+#         - "192.168.1.76"
        
   ntpd:
      servers:

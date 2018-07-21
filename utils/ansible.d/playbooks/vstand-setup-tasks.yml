@@ -10,6 +10,30 @@
 - name: use project name
   debug: msg="{{ project.name }}"
 
+# - name: set hostname
+#   hostname:
+#     name: "{{daas_vstand.hostname}}"
+
+- name: set hostname
+  shell: "{{ item }}"
+  with_items:
+      - "ps ax | grep -q 'systemd' && hostnamectl set-hostname {{daas_vstand.hostname}} || echo 'systemd skipped'"
+      - "subst 's|HOSTNAME=.*$|HOSTNAME={{daas_vstand.hostname}}|g' /etc/sysconfig/network"
+  tags: 
+    - net
+
+- name: setup dns servers
+  template: 
+     src: "{{daas_ansible_dir}}/templates/resolv.conf.tpl"
+     dest: "/etc/net/ifaces/lo/resolv.conf"
+  tags: 
+    - net
+
+- name: network restart
+  shell: "service network restart" 
+  tags: 
+    - net   
+
 - name: install programs
   apt_rpm: "package={{item}} state=present"
   with_items:

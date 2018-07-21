@@ -22,6 +22,8 @@
          - daas
          - user-setup         
          - install
+         - consul
+         - net
 
      - name: 'install python'
        raw: "if ! rpm -qa | grep -q 'python-module-simplejson'; then apt-get update && apt-get -y install python-module-simplejson python-module-distutils-extra; fi"
@@ -30,7 +32,12 @@
          - daas
          - user-setup         
          - install
+         - consul
+         - net
 
   tasks:
      - name: configure vstand for "{{ project.name }}"
        include: "{{daas_ansible_dir}}/playbooks/vstand-setup-tasks.yml"
+
+     - name: configure consul for vstand of "{{ project.name }}"
+       include: "{{daas_ansible_dir}}/playbooks/vstand-setup-consul-tasks.yml"

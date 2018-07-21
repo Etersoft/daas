@@ -8,6 +8,12 @@ vstand:
     pass: "123"
 
   hostname: "{{project.name}}-vs1"
+  dns_servers:
+     - "172.17.0.2"
+     
+  consul:
+     servers:
+       - "172.17.0.2"
 
   limits:
     cpu: 3

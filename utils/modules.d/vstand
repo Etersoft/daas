@@ -20,14 +20,16 @@ module_usage() {
     echo " "
     echo "Commads for host machine:"
     echo "-------------------------"
-    echo "prepare hostname [ext options] -- [ansible options]                  - setup host for stands control"
+    echo "prepare hostname [ext options] -- [ansible options]                  - preapre host for stands control"
     echo " "
     echo "Commands for virtual stand:"
     echo "---------------------------"
     echo "create hostname [ project.yml ] [ext options] -- [ansible options]   - create vstand for project"
     echo "                                                                       Default project file '.daas.yml'"
-    echo "setup hostname [ project.yml ] [ext options] -- [ansible options]    - prepare vstand for project"
+    echo " "
+    echo "setup hostname [ project.yml ] [ext options] -- [ansible options]    - setup vstand for project"
     echo "                                                                       Default project file '.daas.yml'"
+    echo " "
     echo "show [defaults|config] [ project.yml ]                               - Show config parameters"
     echo "                                                                       default - show default parameters"
     echo "                                                                       configs - show merged parameters"
@@ -307,5 +309,3 @@ case $1 in
         module_usage && exit 1
         ;;
 esac
-
-echo "Run ansible $@"

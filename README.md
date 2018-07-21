@@ -23,7 +23,8 @@
 - devops-api-server - REST API(единая точка входа для интерграции с jenkins, bugzilla, youtrack и т.п.)
 - какая-то backup система
 - мониторинг (grafana + netdata)
-- свой dns внутри ВМ для сервисов(?)
+- service discovery (dns и не только) внутри ВМ (consul, registrator, consul-template)
+- хранение приватной информации  (vault)
 
 Концепция:
 ----------

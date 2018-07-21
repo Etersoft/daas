@@ -1,0 +1,131 @@
+---
+# Настройка consul для машины
+# --------------------------------------------------------------------
+- name: install requires for consul
+  apt_rpm: "package={{item}} state=present update_cache=yes"
+  with_items:
+    - openresolv
+    - systemd-networkd
+
+- name: check consul source
+  local_action: stat path="{{daas_vstand.consul.url}}"
+  register: consul_file
+  tags: 
+    - consul
+
+- name: Check remote consul exist
+  stat:
+    path: /usr/local/bin/consul
+  register: consul_remote_file
+  tags: 
+    - consul
+
+- name: copy consul from local file
+  copy:
+    src: "{{daas_vstand.consul.url}}"
+    dest: /usr/local/bin/
+  when: consul_file.stat.exists == true and not consul_file.stat.exists | search("http")
+  tags: 
+    - consul
+
+- name: load consul from url
+  unarchive:
+    src: "{{daas_vstand.consul.url}}"
+    dest: /usr/local/bin
+    remote_src: yes
+  when: consul_remote_file.stat.exists == false and ( consul_file.stat.exists == false or consul_file.stat.exists | search("http") )
+  tags: 
+    - consul
+
+- name: create consul service file
+  template: "src={{daas_ansible_dir}}/templates/consul.service.tpl dest=/etc/systemd/system/consul.service owner=root"
+  tags: 
+    - consul
+
+- name: Check remote consul exist
+  shell: "getent passwd | grep -q '{{daas_vstand.consul.user}}'"
+  register: consul_remote_user
+  ignore_errors: yes
+  tags: 
+    - consul
+
+- name: add group 'consul'
+  group:
+    name: consul
+    state: present
+  tags: 
+    - consul
+
+- name: Add user '{{daas_vstand.consul.user}}'
+  command: "useradd -M -d /var/lib/consul -g consul {{daas_vstand.consul.user}}"
+  when: consul_remote_user.rc == 1
+  tags: 
+    - consul
+
+- name: create consul home directory
+  file:
+    path: /var/lib/consul
+    state: directory
+    owner: consul
+    group: consul
+
+- name: create consul conf directory
+  file:
+    path: /etc/consul.d
+    state: directory
+    owner: root
+    group: consul
+
+- name: create options config for consul
+  template: 
+    src: "{{ daas_ansible_dir }}/templates/consul.conf.tpl"
+    dest: "/etc/sysconfig/consul"
+    owner: root
+    group: consul
+    mode: 0640
+  tags: 
+    - consul
+
+- name: create local config for consul
+  template: 
+    src: "{{ daas_ansible_dir }}/templates/consul.conf.json.tpl"
+    dest: "/etc/consul.d/00-local.conf.json"
+    owner: root
+    group: consul
+    mode: 0640
+  tags: 
+    - consul
+
+#- name: create conf for dnsmasq
+#  template: "src={{daas_ansible_dir}}/templates/consul.dnsmasq.resolvconf.tpl dest=/etc/dnsmasq.conf.d/05-consul owner=root"
+#  tags: 
+#    - consul
+
+- name: systemctl daemon-reload
+  command: "systemctl daemon-reload"
+
+# - name: Start altlinux-openresolv service
+#   service: name=altlinux-openresolv state=started enabled=yes
+#   tags: 
+#     - consul
+
+- name: Start consul service
+  service: name=consul state=restarted enabled=yes
+  tags: 
+    - consul
+
+- name: Availability check consul 
+  shell: "consul members"
+  tags: 
+    - consul
+
+- name: join to consul server
+  shell: "consul join {{item}}"
+  register: result
+  until: result.rc == 0
+  retries: 2
+  with_items: "{{ daas_vstand.consul.servers }}"
+  tags: 
+    - consul
+
+# echo "nameserver 172.17.0.2" | resolvconf -a lo
