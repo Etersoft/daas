@@ -100,6 +100,12 @@ daas_vstand:
                 and vstand.vagrant.box is defined 
                 and vstand.vagrant.box.url is defined 
                 else daas_defaults.vagrant.box.url }}"
+      add_args: "{{ vstand.vagrant.box.add_args 
+                if vstand is defined 
+                and vstand.vagrant is defined
+                and vstand.vagrant.box is defined 
+                and vstand.vagrant.box.add_args is defined 
+                else daas_defaults.vagrant.box.add_args }}"
 
   # Parameters for gitlab
   gitlab:

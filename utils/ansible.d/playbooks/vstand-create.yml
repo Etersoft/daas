@@ -21,43 +21,34 @@
     - name: use config file for stand
       debug: msg="{{ daas_vstand_config }}"
       tags:
-        - stand
-        - env
-        - vagrant
+        - always
 
     - name: use project file
       debug: msg="{{ daas_project_config }}"
       tags:
-        - stand
-        - env
-        - vagrant
+        - always
 
     - name: use project name
       debug: msg="{{ project.name }}"
       tags:
-        - stand
-        - env
-        - vagrant
+        - always
 
     - name: use project dir
       debug: msg="{{ vagrant_project_dir }}"
       tags:
-        - stand
-        - env
-        - vagrant
+        - always
 
     - name: 'setup password for ssh user'
       set_fact: ansible_ssh_pass="{{ daas_vstand.hostmachine.pass }}"
       tags:
-        - stand
-        - env
-        - vagrant
+        - always
 
   tasks:
     - name: Create project directory
       file: "path={{vagrant_project_dir}} state=directory mode=0777"
       tags:
         - env
+        - vagrant
 
     - name: Generate vagrant file
       template: "src={{daas_ansible_dir}}/templates/Vagrantfile.tpl dest={{vagrant_project_dir}}/Vagrantfile"
@@ -70,7 +61,7 @@
         - vagrant
     
     - local_action: stat path="{{daas_vstand.vagrant.box.url}}"
-      register: vagrant_box
+      register: vagrant_box_file
       tags:
         - vagrant
     
@@ -78,17 +69,17 @@
       copy:
         dest: "{{ vagrant_boxes_dir }}/{{daas_vstand.vagrant.box.name}}.box"
         src: "{{daas_vstand.vagrant.box.url}}"
-      when: vagrant_box.stat.exists == true
+      when: vagrant_box_file.stat.exists == true
       tags:
         - vagrant
 
     - name: Create vagrant boxes (Very very long task)
       shell: |
-          if ! vagrant box list | grep -q '{{daas_vstand.vagrant.box.name}}'; then
-             if test -n "{{ '1' if vagrant_box.stat.exists == true else '' }}"; then
-                 vagrant box add {%- if daas_vstand.vagrant.box.add_args is defined %}{{daas_vstand.vagrant.box.add_args}}{%- endif %} {{vstand.vagrant.box.name}} {{ vagrant_boxes_dir }}/{{daas_vstand.vagrant.box.name}}.box 1>/dev/null
+          if ! vagrant box list | grep -q '{{daas_vstand.vagrant.box.name if daas_vstand.vagrant.box.name|length>0 else daas_vstand.vagrant.box.url}}'; then
+             if test -n "{{ '1' if vagrant_box_file.stat.exists == true else '' }}"; then
+                 vagrant box add {%- if daas_vstand.vagrant.box.add_args|length>0 %}{{daas_vstand.vagrant.box.add_args}}{%- endif %} --name {{daas_vstand.vagrant.box.name}} {{ vagrant_boxes_dir }}/{{daas_vstand.vagrant.box.name}}.box 1>/dev/null
              else
-                 vagrant box add {%- if daas_vstand.vagrant.box.add_args is defined %}{{daas_vstand.vagrant.box.add_args}}{%- endif %} {{vstand.vagrant.box.name}} {{daas_vstand.vagrant.box.url}}
+                 vagrant box add {%- if daas_vstand.vagrant.box.add_args|length>0 %}{{daas_vstand.vagrant.box.add_args}}{%- endif %} {{daas_vstand.vagrant.box.url}}
              fi
              exit $?
           fi

@@ -10,7 +10,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # config.ssh.password = "vagrant"
 
   config.vm.define "vstand" do |vn|
-     vn.vm.box = "{{daas_vstand.vagrant.box.name}}"
+     vn.vm.box = "{{daas_vstand.vagrant.box.name if daas_vstand.vagrant.box.name|length>0 else daas_vstand.vagrant.box.url}}"
      vn.vm.synced_folder ".", "/vagrant", disabled: true
      vn.vm.hostname = "{{ daas_vstand.hostname }}"
      vn.vm.network "public_network", :adapter=>2

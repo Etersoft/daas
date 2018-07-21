@@ -29,8 +29,9 @@ daas_defaults:
      rpm_url: "{{daas_repository_dir}}/vagrant/distrib/p8/vagrant.rpm"
      patch: "{{daas_repository_dir}}/vagrant/distrib/p8/network_fix_ipv6.rb.patch"
      box: 
-       name: "vstand-p8"
+       name: ''
        url: "vpavel/vstand-altlinux-p8"
+       add_args: ''
 
   gitlab:
      url: "http://gitlab.organization.ru"
@@ -57,7 +58,7 @@ daas_defaults:
      mode: 'agent'
      bind: 'eth1'
      dc: "dc1"
-     log_level: "INFO"
+     log_level: "WARN"
      extra_args: '-syslog'
 #     dns_servers:
 #         - "8.8.8.8"
