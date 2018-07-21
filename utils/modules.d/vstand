@@ -18,7 +18,7 @@ module_usage() {
     echo " "
     echo "Commads for host machine:"
     echo "-------------------------"
-    echo "prepare hostname [ext options] -- [ansible options]                  - preapre host for stands control"
+    echo "init hostname [ext options] -- [ansible options]                     - prepare a host for deployment of stands"
     echo " "
     echo "Commands for virtual stand:"
     echo "---------------------------"
@@ -165,10 +165,10 @@ prepare_ansible_environment() {
     DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS $DNS_SERVERS $CONSUL_SERVERS $ANSIBLE_ENV"
 }
 
-do_prepare_host() {
-    echo "Setup stand '$STAND_HOST'.."
+do_init_host() {
+    echo "init host '$STAND_HOST'.."
 
-    check_config_files "prepare"
+    check_config_files "init"
 
     if ! ping -c 1 -w 1 $STAND_HOST 1>/dev/null 2>/dev/null; then
         echo "ERROR: '$STAND_HOST' does not respond"
@@ -344,7 +344,7 @@ case $1 in
         module_usage
         exit 0
         ;;
-    --prepare | prepare)
+    --init | init)
         shift
         split_options $@
         eval set -- "$OTHER"
@@ -353,7 +353,7 @@ case $1 in
         STAND_HOST="$1"
         shift
 
-        do_prepare_host $@
+        do_init_host $@
         exit $?
         ;;
     --create | create)
