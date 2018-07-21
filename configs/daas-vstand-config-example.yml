@@ -7,7 +7,7 @@ vstand:
     user: "vagrant"
     pass: "123"
 
-  hostname: "{{project.name}}-vs1"
+  hostname: "{{project.name if project is defined else 'noname'}}-vs1"
   dns_servers:
      - "172.17.0.2"
      

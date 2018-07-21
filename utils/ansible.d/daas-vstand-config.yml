@@ -4,8 +4,7 @@
 daas_vstand:
 
   # Parameters for virtual stand (hostname,user,pass)
-  hostname: "{{ user_hostname
-                if user_hostname is defined 
+  hostname: "{{ user_hostname if user_hostname is defined 
               else vstand.hostname 
               if vstand is defined 
               and vstand.hostname is defined 
@@ -36,18 +35,21 @@ daas_vstand:
 
   # Parameters for host machine for vstands (hostname,user,pass)
   hostmachine:
-    hostname: "{{ vstand.hostmachine.hostname 
+    hostname: "{{ hostmachine_hostname if hostmachine_hostname is defined
+              else vstand.hostmachine.hostname 
               if vstand is defined 
               and vstand.hostmachine is defined 
               and vstand.hostmachine.hostname is defined 
               else daas_defaults.hostmachine.hostname }}"
-    user: "{{ vstand.hostmachine.user 
+    user: "{{ hostmachine_user_login if hostmachine_user_login is defined
+              else vstand.hostmachine.user 
               if vstand is defined 
               and vstand.hostmachine is defined 
               and vstand.hostmachine.user is defined 
               else daas_defaults.hostmachine.user }}"
 
-    pass: "{{ vstand.hostmachine.pass 
+    pass: "{{ hostmachine_user_pass if hostmachine_user_pass is defined
+              else vstand.hostmachine.pass 
               if vstand is defined 
               and vstand.hostmachine is defined 
               and vstand.hostmachine.pass is defined 

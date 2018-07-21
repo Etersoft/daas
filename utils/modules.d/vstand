@@ -11,6 +11,8 @@ USER_CONSUL_SERVERS=''
 STAND_HOST=''
 VADMIN_USER=''
 VADMIN_PASS=''
+HOST_USER=''
+HOST_PASS=''
 
 module_usage() {
     echo " "
@@ -35,12 +37,14 @@ module_usage() {
     echo "------------"
     echo "-s|--stand-config vstand-config.yml  - config (yaml) for vstand"
     echo "-c|--config daas.yml                 - config (yaml) for project"
+    echo "--host-user name                     - host user on the hostmachine. Default: use from config"
+    echo "--host-password pass                 - password of user on the hostmachine. Default: use from config"
     echo "-v|--variable var=val                - added variable for ansible (can be used multiple times)"
     echo "--hostname name                      - Set name for hostname"
     echo "--dns nameserver                     - Add nameserver (can be used multiple times)"
     echo "--consul-server server               - Consul server for registration (can be used multiple times)"
-    echo "-u|--user                            - admin user on the stand. Default: use from config"
-    echo "-p|--password                        - admin password on the stand. Default: use from config"
+    echo "-u|--user name                       - admin user on the stand. Default: use from config"
+    echo "-p|--password pass                   - admin password on the stand. Default: use from config"
     echo "--gitlab-token token                 - gitlab-runner registration token for gitlab. Default use from vstand config file"
     echo " "
 }
@@ -59,7 +63,7 @@ split_options() {
 
     DAAS_ANSIBLE_USER_VARS=''
 
-    TEMP=$(getopt -n $PROG -o c:,s:,u:,v:,p: -l config:,stand-config:,user:,password:,variable:,gitlab-token:,dns:,hostname:,consul-server: -- "$@") || return 1
+    TEMP=$(getopt -n $PROG -o c:,s:,u:,v:,p: -l config:,stand-config:,user:,password:,variable:,gitlab-token:,dns:,hostname:,consul-server:,host-user:,host-password: -- "$@") || return 1
     eval set -- "$TEMP"
 
     while :; do
@@ -73,6 +77,16 @@ split_options() {
                 shift
                 [ "$1" == '--' ] && break
                 VADMIN_PASS="$1"
+                ;;
+            --host-user)
+                shift
+                [ "$1" == '--' ] && break
+                HOST_USER="$1"
+                ;;
+            --host-password)
+                shift
+                [ "$1" == '--' ] && break
+                HOST_PASS="$1"
                 ;;
             -s | --stand-config)
                 shift
@@ -156,6 +170,8 @@ prepare_ansible_environment() {
 
     [ -n "$VADMIN_USER" ] && ANSIBLE_ENV="$ANSIBLE_ENV -e vstand_user_login=$VADMIN_USER"
     [ -n "$VADMIN_PASS" ] && ANSIBLE_ENV="$ANSIBLE_ENV -e vstand_user_pass=$VADMIN_PASS"
+    [ -n "$HOST_USER" ] && ANSIBLE_ENV="$ANSIBLE_ENV -e hostmachine_user_login=$HOST_USER"
+    [ -n "$HOST_PASS" ] && ANSIBLE_ENV="$ANSIBLE_ENV -e hostmachine_user_pass=$HOST_PASS"
 
     [ -n "$DAAS_DEBUG" ] && ANSIBLE_DEBUG="-vvv" || ANSIBLE_DEBUG=''
 
