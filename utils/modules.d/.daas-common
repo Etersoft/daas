@@ -7,7 +7,7 @@
 [ -z "$DAAS_ANSIBLE_PRIVATE" ] && DAAS_ANSIBLE_PRIVATE="$HOME/.daas/ansible_private"
 
 DAAS_SYSCONF_DIR='/etc/daas'
-DAAS_VSTAND_DEFAULT_CONFIG="$DAAS_ANSIBLE_D/daas-vstand-default-config.yml"
+DAAS_VSTAND_DEFAULT_CONFIG="$DAAS_ANSIBLE_D/daas-default-vstand-config.yml"
 
 daas_tools_bindir()
 {

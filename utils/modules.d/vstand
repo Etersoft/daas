@@ -7,8 +7,10 @@
 
 [ -z "$GITLAB_RUNNER_REGISTRATION_TOKEN" ] && GITLAB_RUNNER_REGISTRATION_TOKEN=''
 USER_DNS_SERVERS=''
+USER_CONSUL_SERVERS=''
 STAND_HOST=''
-SSH_USER=$USER
+VADMIN_USER=''
+VADMIN_PASS=''
 
 module_usage() {
     echo " "
@@ -36,6 +38,9 @@ module_usage() {
     echo "-v|--variable var=val                - added variable for ansible (can be used multiple times)"
     echo "--hostname name                      - Set name for hostname"
     echo "--dns nameserver                     - Add nameserver (can be used multiple times)"
+    echo "--consul-server server               - Consul server for registration (can be used multiple times)"
+    echo "-u|--user                            - admin user on the stand. Default: use from config"
+    echo "-p|--password                        - admin password on the stand. Default: use from config"
     echo "--gitlab-token token                 - gitlab-runner registration token for gitlab. Default use from vstand config file"
     echo " "
 }
@@ -54,7 +59,7 @@ split_options() {
 
     DAAS_ANSIBLE_USER_VARS=''
 
-    TEMP=$(getopt -n $PROG -o c:,s:,u:,v: -l config:,stand-config:,user:,variable:,gitlab-token:,dns:,hostname: -- "$@") || return 1
+    TEMP=$(getopt -n $PROG -o c:,s:,u:,v:,p: -l config:,stand-config:,user:,password:,variable:,gitlab-token:,dns:,hostname:,consul-server: -- "$@") || return 1
     eval set -- "$TEMP"
 
     while :; do
@@ -62,7 +67,12 @@ split_options() {
             -u | --user)
                 shift
                 [ "$1" == '--' ] && break
-                SSH_USER="$1"
+                VADMIN_USER="$1"
+                ;;
+            -p | --password)
+                shift
+                [ "$1" == '--' ] && break
+                VADMIN_PASS="$1"
                 ;;
             -s | --stand-config)
                 shift
@@ -88,6 +98,11 @@ split_options() {
                 shift
                 [ "$1" == '--' ] && break
                 DAAS_ANSIBLE_USER_VARS="${DAAS_ANSIBLE_USER_VARS} -e user_hostname=$1"
+                ;;
+            --consul-server)
+                shift
+                [ "$1" == '--' ] && break
+                USER_CONSUL_SERVERS="${USER_CONSUL_SERVERS} $1"
                 ;;
             --gitlab-token)
                 shift
@@ -118,6 +133,19 @@ add_user_dns_servers() {
     echo "-e $DNS_VAR_NAME=[$DNS_VAR]"
 }
 
+add_user_consul_servers() {
+
+    [ -z "$USER_CONSUL_SERVERS" ] && return
+    [ -n "$1" ] && CONSUL_VAR_NAME="$1" || CONSUL_VAR_NAME='user_consul_servers'
+
+    local CONSUL_VAR=''
+
+    for srv in $USER_CONSUL_SERVERS; do
+        [ -n "$CONSUL_VAR" ] && CONSUL_VAR="${CONSUL_VAR},'$srv'" || CONSUL_VAR="'$srv'"
+    done
+    echo "-e $CONSUL_VAR_NAME=[$CONSUL_VAR]"
+}
+
 prepare_ansible_environment() {
 
     export ANSIBLE_CONFIG=$DAAS_ANSIBLE_CONFIG
@@ -126,9 +154,15 @@ prepare_ansible_environment() {
 
     local ANSIBLE_ENV="-e daas_vstand_config=$(realpath $DAAS_VSTAND_CONFIG) -e daas_data_dir=$(realpath $DAAS_DATADIR) -e daas_ansible_dir=$(realpath $DAAS_ANSIBLE_D)"
 
-    local DNS_SERVERS=$(add_user_dns_servers)
+    [ -n "$VADMIN_USER" ] && ANSIBLE_ENV="$ANSIBLE_ENV -e vstand_user_login=$VADMIN_USER"
+    [ -n "$VADMIN_PASS" ] && ANSIBLE_ENV="$ANSIBLE_ENV -e vstand_user_pass=$VADMIN_PASS"
 
-    DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS $DNS_SERVERS $ANSIBLE_ENV"
+    [ -n "$DAAS_DEBUG" ] && ANSIBLE_DEBUG="-vvv" || ANSIBLE_DEBUG=''
+
+    local DNS_SERVERS=$(add_user_dns_servers)
+    local CONSUL_SERVERS=$(add_user_consul_servers)
+
+    DAAS_ANSIBLE_EXTRA_ARGS="$DAAS_ANSIBLE_EXTRA_ARGS $DNS_SERVERS $CONSUL_SERVERS $ANSIBLE_ENV"
 }
 
 do_prepare_host() {
@@ -165,8 +199,6 @@ do_create_stand() {
     echo "vstand ansible_host=$STAND_HOST" >>$INVFILE
 
     prepare_ansible_environment
-
-    [ -n "$DAAS_DEBUG" ] && ANSIBLE_DEBUG="-vvv" || ANSIBLE_DEBUG=''
 
     DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_project_config=$(realpath $DAAS_PROJECT_CONFIG)"
 
@@ -206,11 +238,7 @@ do_setup_stand() {
 
     prepare_ansible_environment
 
-    [ -n "$DAAS_DEBUG" ] && ANSIBLE_DEBUG="-vvv" || ANSIBLE_DEBUG=''
-
     DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_project_config=$(realpath $DAAS_PROJECT_CONFIG)"
-
-    DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS}"
 
     [ -n "$GITLAB_RUNNER_REGISTRATION_TOKEN" ] && DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e gitlab_runner_registration_token=$GITLAB_RUNNER_REGISTRATION_TOKEN"
 
@@ -220,6 +248,39 @@ do_setup_stand() {
         --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' \
         $ANSIBLE_DEBUG $@ \
         ${DAAS_ANSIBLE_D}/playbooks/vstand-setup.yml
+
+    RET=$?
+    rm -rf $INVFILE
+
+    return $RET
+}
+
+do_check() {
+
+    check_config_files "check"
+
+    PROJECT_NAME=$(daas-project name -c $DAAS_PROJECT_CONFIG)
+    echo "Check '$PROJECT_NAME' on '$STAND_HOST'.."
+
+    if ! ping -c 1 -w 1 $STAND_HOST 1>/dev/null 2>/dev/null; then
+        echo "ERROR: '$STAND_HOST' does not respond"
+        return 1
+    fi
+
+    local INVFILE=$(mktemp)
+    echo "[vstands]" >$INVFILE
+    echo "vstand ansible_host=$STAND_HOST" >>$INVFILE
+
+    prepare_ansible_environment
+
+    DAAS_ANSIBLE_EXTRA_ARGS="${DAAS_ANSIBLE_EXTRA_ARGS} -e daas_project_config=$(realpath $DAAS_PROJECT_CONFIG)"
+
+    ansible-playbook -i $INVFILE -l vstand \
+        ${DAAS_ANSIBLE_EXTRA_ARGS} \
+        ${DAAS_ANSIBLE_USER_VARS} \
+        --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' \
+        $ANSIBLE_DEBUG $@ \
+        ${DAAS_ANSIBLE_D}/playbooks/vstand-check.yml
 
     RET=$?
     rm -rf $INVFILE
@@ -329,6 +390,18 @@ case $1 in
         eval set -- "$OTHER"
 
         do_show_configs $@
+        exit $?
+        ;;
+    --check | check)
+        shift
+        split_options $@
+        eval set -- "$OTHER"
+
+        [ -z "$1" ] && module_error "Unknown hostname. Use: daas vstand --help for help"
+        STAND_HOST="$1"
+        shift
+
+        do_check $@
         exit $?
         ;;
     *)

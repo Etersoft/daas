@@ -1,11 +1,12 @@
 ---
 # Настройка consul для машины
 # --------------------------------------------------------------------
-- name: install requires for consul
-  apt_rpm: "package={{item}} state=present update_cache=yes"
-  with_items:
-    - openresolv
-    - systemd-networkd
+
+# - name: install requires for consul
+#   apt_rpm: "package={{item}} state=present update_cache=yes"
+#   with_items:
+#     - openresolv
+#     - systemd-networkd
 
 - name: check consul source
   local_action: stat path="{{daas_vstand.consul.url}}"

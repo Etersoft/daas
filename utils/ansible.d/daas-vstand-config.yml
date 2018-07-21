@@ -10,12 +10,14 @@ daas_vstand:
               if vstand is defined 
               and vstand.hostname is defined 
               else daas_defaults.vstand.hostname }}"
-  user: "{{ vstand.user 
+  user: "{{ vstand_user_login if vstand_user_login is defined
+            else vstand.user 
             if vstand is defined 
             and vstand.user is defined 
             else daas_defaults.vstand.user }}"
 
-  pass: "{{ vstand.pass 
+  pass: "{{ vstand_user_pass if vstand_user_pass is defined
+            else vstand.pass 
             if vstand is defined 
             and vstand.pass is defined 
             else daas_defaults.vstand.pass }}"
@@ -182,14 +184,16 @@ daas_vstand:
                     if daas_defaults.vstand is defined
                     and daas_defaults.vstand.dns_servers is defined else [] }}"    
 
-     servers: "{{ daas_defaults.consul.servers 
-                    if daas_defaults.consul.servers is defined else [] }}
-                + 
-              {{ vstand.consul.servers 
+     servers: "{{ user_consul_servers 
+                  if user_consul_servers is defined else [] }}
+                + {{ vstand.consul.servers 
                     if vstand is defined 
                     and vstand.consul is defined 
                     and vstand.consul.servers is defined
-                    else [] }}" 
+                    else [] }}
+                + {{ daas_defaults.consul.servers 
+                   if daas_defaults.consul.servers is defined else [] }}"
+                    
 
      extra_args:  "{{ vstand.consul.extra_args
                if vstand is defined 
