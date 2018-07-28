@@ -642,7 +642,7 @@ if __name__ == "__main__":
 
     if str(conf['version']) != str(FORMAT_VERSION):
         print "ERROR: Unsupported config file format '%s' ('%s'). Must be '%s'" % (
-            conf['version'], confile, FORMAT_VERSION)
+        conf['version'], confile, FORMAT_VERSION)
         exit(1)
 
     project = conf['project']

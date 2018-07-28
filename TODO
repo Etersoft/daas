@@ -166,5 +166,3 @@ docker network create --driver=bridge --subnet=192.168.44.0/24 --ip-range=192.16
 docker-compose:
 - поддержка hostname
 - поддерка переменных в названии (hostname)
-- 
-
