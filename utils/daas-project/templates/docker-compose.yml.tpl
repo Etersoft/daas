@@ -7,7 +7,7 @@ services:
            context: ./{{ node['node_name'] }}
            dockerfile: Dockerfile
         image: {{ node['image_name'] }}
-        hostname: {{ node['node_name'] }}
+        hostname: {{ node['hostname'] if 'hostname' in node and node['hostname']|length>0 else node['node_name'] }}
         {%- if 'start_command' in node %}
         command: {{ node['start_command'] }}
         {%- endif %}

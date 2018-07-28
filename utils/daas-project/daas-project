@@ -232,6 +232,22 @@ def get_vnc_environment(node):
     return ret
 
 
+def replace_env(text):
+    if not text:
+        return text
+
+    if len(text) == 0:
+        return text
+
+    ret = text
+    for ename in os.environ.keys():
+        param = '$%s' % ename
+        if param in text:
+            ret = ret.replace(param, os.environ[ename])
+
+    return ret
+
+
 def create_node(project, group, node):
     c = dict(node)
 
@@ -245,7 +261,11 @@ def create_node(project, group, node):
 
     c['Dockerfile.tpl'] = get_image_template(imagename)
     c['image'] = imagename
-    c['image_name'] = make_image_name(project, get_image_name(imagename))
+    c['image_name'] = replace_env(make_image_name(project, get_image_name(imagename)))
+
+    if 'hostname' in node:
+        c['hostname'] = replace_env(node['hostname'])
+
     c['start_command'] = get_param(project, group, node, 'start_command')
     c['apt'] = dict()
     c['apt']['sources'] = list()
@@ -613,7 +633,8 @@ if __name__ == "__main__":
         exit(1)
 
     if str(conf['version']) != str(FORMAT_VERSION):
-        print "ERROR: Unsupported config file format '%s' ('%s'). Must be '%s'" % (conf['version'], confile, FORMAT_VERSION)
+        print "ERROR: Unsupported config file format '%s' ('%s'). Must be '%s'" % (
+            conf['version'], confile, FORMAT_VERSION)
         exit(1)
 
     project = conf['project']

@@ -65,6 +65,8 @@ project:
             - /cache
        
         tester:
+          hostname: "TEST-$CI"
+
           image: x64.p8-tester
           ip: 101
           start_command: "start-tester.sh"
