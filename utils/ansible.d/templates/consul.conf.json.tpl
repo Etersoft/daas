@@ -1,19 +1,20 @@
 {
     {% if daas_vstand.consul.mode == 'server' %}
-    "server": true,
+    "server": true
+    , "bootstrap": true
     {% endif %}
 {% if daas_vstand.consul.bind != '' %}
-    "bind_addr": {% raw %}"{{GetInterfaceIP \"eth1\"}}"{% endraw %},
+    , "bind_addr": {% raw %}"{{GetInterfaceIP \"eth1\"}}"{% endraw %}
 {% else %}
-    "bind_addr": {% raw %}"{{GetPrivateIP}}"{% endraw %},
+    , "bind_addr": {% raw %}"{{GetPrivateIP}}"{% endraw %}
 {% endif %}
-    "client_addr": "0.0.0.0"
+    , "client_addr": "0.0.0.0"
     , "data_dir": "/var/lib/consul"
-    ,"datacenter": "{{daas_vstand.consul.dc}}"
+    , "datacenter": "{{daas_vstand.consul.dc}}"
     , "log_level": "{{daas_vstand.consul.log_level}}"
     , "disable_update_check": true
-    , "leave_on_terminate": {% 'true' if daas_vstand.consul.mode == 'server' else 'false' %}
-    , "skip_leave_on_interrupt": {% 'true' if daas_vstand.consul.mode == 'server' else 'false' %},
+    , "leave_on_terminate": {{ 'true' if daas_vstand.consul.mode == 'server' else 'false' }}
+    , "skip_leave_on_interrupt": {{ 'true' if daas_vstand.consul.mode == 'server' else 'false' }}
     , "rejoin_after_leave": true
     {% if daas_vstand.consul.dns_servers|length > 0 -%}
     , "recursors" : [

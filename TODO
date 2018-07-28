@@ -142,6 +142,7 @@ https://docs.ansible.com/ansible/2.5/modules/nsupdate_module.html
 А так же посмотреть на это: https://github.com/mantl/consul-cli
 И может на это: https://github.com/ncbi/consul-announcer
 https://hub.docker.com/r/progrium/consul/
+официальный образ consul: https://hub.docker.com/_/consul/
 
 На тему registrator:
 https://ru.stackoverflow.com/questions/712148/%D0%9C%D0%B8%D0%BA%D1%80%D0%BE%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%BD%D0%B0%D1%8F-%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0-%D0%BF%D1%80%D0%B8-%D0%BF%D0%BE%D0%BC%D0%BE%D1%89%D0%B8-docker-consul-consul-template-%D0%B8-%D0%B1%D0%B0%D0%BB%D0%B0%D0%BD%D1%81%D0%B8%D1%80
@@ -151,4 +152,8 @@ https://apm-linux.blogspot.com/2015/09/consul-registrator-docker.html
 docker run  -d  --name=registrator  --net=host  --volume=/var/run/docker.sock:/tmp/docker.sock  gliderlabs/registrator:latest -internal consul://localhost:8500
 
 запуск consul как сервиса
-docker run -d --name=consul --net=host gliderlabs/consul-server -bootstrap
+docker run --rm -e 'CONSUL_ALLOW_PRIVILEGED_PORTS=' consul agent -dns-port=53 -recursor=8.8.8.8 -server -ui -client=0.0.0.0
+
+docker container run --rm --net host --name node1 -e 'CONSUL_LOCAL_CONFIG={"skip_leave_on_interrupt": true}' -e CONSUL_BIND_INTERFACE='wlo1' consul agent -server -client 0.0.0.0 -bootstrap-expect 1 --bootstrap=1 -ui -datacenter dc1
+
+docker run  -d  --name=registrator  --net=host  --volume=/var/run/docker.sock:/tmp/docker.sock  gliderlabs/registrator:latest -internal consul://localhost:8500 --restart always

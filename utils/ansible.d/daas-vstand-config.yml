@@ -171,7 +171,7 @@ daas_vstand:
      log_level:  "{{ vstand.consul.log_level
                if vstand is defined 
                and vstand.consul is defined 
-               and vstand.consul.dc is defined 
+               and vstand.consul.log_level is defined 
                else daas_defaults.consul.log_level }}"
 
      dns_servers: "{{ user_dns_servers 

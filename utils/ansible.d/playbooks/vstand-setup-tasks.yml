@@ -44,6 +44,7 @@
     - eepm
     - apt-repo
     - docker-ce
+    - docker-compose
     - python-module-docker
     - python-module-pip
     - python-module-jinja2
@@ -53,16 +54,12 @@
     - etersoft-build-utils
     - etcgit
     - su
+    - jq
   tags: 
     - install
 
 - name: control su
   shell: control su public
-
-- name: install docker-compose
-  pip: name=docker-compose
-  tags: 
-    - install
 
 - name: "add {{ daas_vstand.user }} to group 'docker'"
   user:
