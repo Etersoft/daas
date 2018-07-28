@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
-Version: 0.3
-Release: alt5
+Version: 0.4
+Release: alt1
 
 Group: System/Utilities
 License: MIT
@@ -91,6 +91,11 @@ cp -r repository.d %buildroot%_datadir/%name/
 %_datadir/%name/repository.d/*
 
 %changelog
+* Sat Jul 28 2018 Pavel Vainerman <pv@altlinux.ru> 0.4-alt1
+- added daas-admin package
+- added new modules (vstand)
+- supported hostname
+
 * Sat Jul 21 2018 Pavel Vainerman <pv@altlinux.ru> 0.3-alt5
 - added repository.d
 - refactoring modules
