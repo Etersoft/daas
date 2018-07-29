@@ -266,6 +266,11 @@ def create_node(project, group, node):
     if 'hostname' in node:
         c['hostname'] = replace_env(node['hostname'])
 
+    if 'context' in node:
+        c['context'] = replace_env(node['context'])
+    else:
+        c['context'] = node['node_name']
+
     c['start_command'] = get_param(project, group, node, 'start_command')
     c['apt'] = dict()
     c['apt']['sources'] = list()
@@ -576,14 +581,13 @@ def usage():
     print
     print "Environment:"
     print "------------"
-    print "DAAS_OUTDIR - output directory for generate files. Default: 'projectname-compose'"
+    print "DAAS_OUTDIR - output directory for generate files. Default: 'daas-projectname'"
     print "   supported variables:"
     print "      {PROJECT} - replace to project name. Example: DAAS_OUTDIR='{PROJECT}-my-postfix' --> 'projectname-my-postfix'"
     print ""
     print "DAAS_IMAGE_REGISTRY   - see --image-registry"
     print "DAAS_IMAGE_POSTFIX    - see --image-postfix"
     print "DAAS_VSTAND_HOSTNAME  - set stand hostname. Default: use hostinfo"
-    print "DAAS_OUTDIR           - output directory for generate configs 'gen'. Default: daas-projectname"
 
 
 if __name__ == "__main__":
@@ -801,7 +805,7 @@ if __name__ == "__main__":
 
     # make directories and configs
     for n in project['nodes']:
-        dirname = os.path.join(outdir, n['node_name'])
+        dirname = os.path.join(outdir, n['context'])
         if not os.path.exists(dirname):
             mkdir_p(dirname)
 

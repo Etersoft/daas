@@ -4,7 +4,7 @@ services:
     {%- for node in project['nodes'] if not 'skip_compose' in node %}
     {{ node['node_name'] }}:
         build: 
-           context: ./{{ node['node_name'] }}
+           context: ./{{ node['context'] }}
            dockerfile: Dockerfile
         image: {{ node['image_name'] }}
         hostname: {{ node['hostname'] if 'hostname' in node and node['hostname']|length>0 else node['node_name'] }}
