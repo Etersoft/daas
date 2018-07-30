@@ -554,7 +554,10 @@ def copy_addons(todirname):
             for f in os.listdir(addonsdir):
                 src = os.path.join(addonsdir, f)
                 dest = os.path.join(todirname, f)
-                shutil.copy(src, dest)
+                if not os.path.isdir(src):
+                    shutil.copy(src, dest)
+                else:
+                    shutil.copytree(src, dest)
 
 
 def usage():
