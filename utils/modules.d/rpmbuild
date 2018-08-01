@@ -147,7 +147,7 @@ run_build() {
     fi
 
     cd $DAAS_OUTDIR/$BUILDER
-    docker-compose build --force-rm || return 1
+    docker-compose build --build-arg USER_UID=$(id -u) --force-rm || return 1
 
     # test ccache directory permissions
     if [ -n "$BUILD_CCACHE_DIR" ]; then

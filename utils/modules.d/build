@@ -111,7 +111,7 @@ do_build() {
     BUILD_ENV="-e DAAS_BUILD_USER=$DAAS_BUILD_USER -e DATADIR=$DATADIR -e SOURCE=$DATADIR/source.tar -e DAAS_DEBUG=$DAAS_DEBUG $ENVOPTS"
 
     cd $DAAS_OUTDIR/$BUILDER
-    docker-compose build --force-rm || return 1
+    docker-compose build --build-arg USER_UID=$(id -u) --force-rm || return 1
     docker-compose run $BUILD_ENV ${DAAS_TOOLS_VOLUME} $VOLUMES -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER ${DAAS_TOOLS_BINDIR}/daas-build-helper.sh prepare || return 1
     docker-compose run --rm $BUILD_ENV $VOLUMES -v ${SOURCEDIR}:$DATADIR -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
     # cleanup sources from container

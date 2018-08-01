@@ -2,7 +2,7 @@
 FROM fotengauer/altlinux-p8
 MAINTAINER Pavel Vainerman <pv@etersoft.ru>
 RUN apt-get update && apt-get -y install etersoft-build-utils git-core libuniset2-extension-common-devel libuniset2-utils ccache gcc5-c++ sudo su \
-	apt-repo-tools  console-scripts \
+	apt-repo-tools console-scripts \
     && rm -rf /usr/share/doc/* \
     && rm -rf /usr/share/man/* \
     && apt-get clean \
@@ -19,7 +19,9 @@ ARG USER=builder
 ARG HOME=/home/$USER
 ARG TMPDIR=$HOME/tmp
 
-RUN useradd builder
+ARG USER_UID=''
+RUN test -n "$USER_UID" && useradd -u $USER_UID builder || useradd builder
+
 RUN control su public
 COPY .rpmmacros $HOME/
 
