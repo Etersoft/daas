@@ -24,10 +24,11 @@ RUN test -n "$USER_UID" && useradd -u $USER_UID builder || useradd builder
 
 RUN control su public
 COPY .rpmmacros $HOME/
+COPY .gitconfig $HOME/
 
 RUN mkdir -p $TMPDIR
 
-RUN chown $USER:$USER $HOME/.rpmmacros $TMPDIR
+RUN chown $USER:$USER $HOME/.rpmmacros $HOME/.gitconfig $TMPDIR
 ENV USER="$USER" TMP="$TMPDIR" TMPDIR="$TMPDIR" GCC_USE_CCACHE=1 CCACHE_DIR="$HOME/ccache"
 
 USER "$USER"

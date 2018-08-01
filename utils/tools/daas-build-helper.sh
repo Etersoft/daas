@@ -21,8 +21,8 @@ case $1 in
     ;;
 
     exec)
-	[ -z "$DAAS_EXEC" ] && echo "Unknown exec command. Use DAAS_EXEC=''" && exit 1
-	exec $DAAS_EXEC
+		[ -z "$DAAS_EXEC" ] && echo "Unknown exec command. Use DAAS_EXEC=''" && exit 1
+		exec $DAAS_EXEC
     ;;
 
     *)

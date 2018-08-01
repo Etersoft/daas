@@ -26,6 +26,7 @@ module_usage() {
     echo "-v|--volume dir       - bind mount a volume (can be used multiple times)"
     echo "-c|--ccache dir       - Use 'dir' for ccache."
     echo "--use-ccache          - Use env variable CCACHE_DIR for ccache"
+    echo "--copy-sources        - Build with a copy of the source code. Default: build with current git directory"
 }
 
 module_help() {
@@ -73,9 +74,10 @@ split_options() {
     VOLUMES=''
     OTHER=''
     BUILD_CCACHE_DIR=''
+    BUILD_COPY_SOURCES=''
     [ -z "$PROG" ] && PROG="${0##*/}"
 
-    TEMP=$(getopt -n $PROG -o d:,e:,c: -l directory:,environment:,ccache:,use-ccache -- "$@") || return 1
+    TEMP=$(getopt -n $PROG -o d:,e:,c: -l directory:,environment:,ccache:,use-ccache,copy-sources -- "$@") || return 1
     eval set -- "$TEMP"
 
     while :; do
@@ -103,6 +105,9 @@ split_options() {
             --use-ccache)
                 BUILD_CCACHE_DIR="${CCACHE_DIR}"
                 ;;
+            --copy-sources)
+                BUILD_COPY_SOURCES="1"
+                ;;
             --)
                 shift
                 break
@@ -127,13 +132,19 @@ run_build() {
     chmod a+rw ${RPMDIR}
     chmod a+rw ${SOURCEDIR}
 
+    BUILD_ENV="-e DAAS_BUILD_USER=$DAAS_BUILD_USER -e DATADIR=$DATADIR"
+
+
     COMMIT=$(git log -1 --pretty=format:"%h")
     GIT_ROOT=$(git rev-parse --show-toplevel)
-    cd $GIT_ROOT
-    prepare_sources "$COMMIT" "$SOURCEDIR"
-    cd -
-
-    BUILD_ENV="-e DAAS_BUILD_USER=$DAAS_BUILD_USER -e DATADIR=$DATADIR -e SOURCE=$DATADIR/source.tar -e DAAS_DEBUG=$DAAS_DEBUG $ENVOPTS"
+    if [ -n "$BUILD_COPY_SOURCES" ]; then
+        cd $GIT_ROOT
+        prepare_sources "$COMMIT" "$SOURCEDIR"
+        cd -
+        BUILD_ENV="$BUILD_ENV -e SOURCE=$DATADIR/source.tar"
+    else
+        VOLUMES="$VOLUMES -v $GIT_ROOT:$DATADIR/src"
+    fi
 
     if [ -n "$BUILD_CCACHE_DIR" ]; then
 
@@ -157,11 +168,19 @@ run_build() {
         fi
     fi
 
-    docker-compose run $BUILD_ENV ${VOLUMES} ${DAAS_TOOLS_VOLUME} -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER ${DAAS_TOOLS_BINDIR}/daas-build-helper.sh prepare || return 1
+    # prepare sources
+    if [ -n "$BUILD_COPY_SOURCES" ]; then 
+        docker-compose run $BUILD_ENV ${VOLUMES} ${DAAS_TOOLS_VOLUME} -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER ${DAAS_TOOLS_BINDIR}/daas-build-helper.sh prepare || return 1
+    fi
+
+    # build
     docker-compose run --rm $BUILD_ENV ${VOLUMES} -v ${SOURCEDIR}:$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
+
     # cleanup sources from container
-    docker-compose run --rm -v ${SOURCEDIR}:/$DATADIR -w $DATADIR -u root $BUILDER rm -rf $DATADIR/src
-    rm -rf $SOURCEDIR
+    if [ -n "$BUILD_COPY_SOURCES" ]; then 
+        docker-compose run --rm -v ${SOURCEDIR}:/$DATADIR -w $DATADIR -u root $BUILDER rm -rf $DATADIR/src
+        rm -rf $SOURCEDIR
+    fi
     docker-compose down
     cd -
 
