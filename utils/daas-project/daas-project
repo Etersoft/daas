@@ -10,6 +10,7 @@ import os
 import socket
 import shutil
 import errno
+from distutils.dir_util import copy_tree
 
 daas_user_dirs = ['./', '.daas']
 daas_system_dirs = ['/usr/share/daas']
@@ -557,7 +558,7 @@ def copy_addons(todirname):
                 if not os.path.isdir(src):
                     shutil.copy(src, dest)
                 else:
-                    shutil.copytree(src, dest)
+                    copy_tree(src, dest)
 
 
 def usage():
