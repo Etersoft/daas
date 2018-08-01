@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------
 - hosts: all
   become: yes
-  gather_facts: no 
+  gather_facts: no
   vars_files:
      - "{{ daas_vstand_config }}"
      - "{{ daas_project_config }}"
@@ -14,9 +14,9 @@
      - name: use vstand-config
        debug: msg="{{daas_vstand_config}}"
        tags:
-         - always     
+         - always
 
      - name: show result config for vstand
        debug: msg="{{daas_vstand}}"
        tags:
-         - always     
+         - always

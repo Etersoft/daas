@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------
 - hosts: all
   become: yes
-  gather_facts: no 
+  gather_facts: no
   vars_files:
      - "{{ daas_vstand_config }}"
      - "{{ daas_project_config }}"
@@ -22,7 +22,7 @@
 
      - name: 'install python'
        raw: "if ! rpm -qa | grep -q 'python-module-simplejson'; then apt-get update && apt-get -y install python-module-simplejson python-module-distutils-extra; fi"
-       tags: 
+       tags:
          - always
 
   tasks:

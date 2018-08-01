@@ -19,26 +19,26 @@
   with_items:
       - "ps ax | grep -q 'systemd' && hostnamectl set-hostname {{daas_vstand.hostname}} || echo 'systemd skipped'"
       - "subst 's|HOSTNAME=.*$|HOSTNAME={{daas_vstand.hostname}}|g' /etc/sysconfig/network"
-  tags: 
+  tags:
     - net
 
 - name: setup dns servers
-  template: 
+  template:
      src: "{{daas_ansible_dir}}/templates/resolv.conf.tpl"
      dest: "/etc/net/ifaces/lo/resolv.conf"
-  tags: 
+  tags:
     - net
 
 - name: network restart
-  shell: "service network restart" 
-  tags: 
-    - net   
+  shell: "service network restart"
+  tags:
+    - net
 
 - name: install programs
   apt_rpm: "package={{item}} state=present"
   with_items:
     - mc
-    - wget 
+    - wget
     - htop
     - curl
     - eepm
@@ -48,14 +48,14 @@
     - python-module-docker
     - python-module-pip
     - python-module-jinja2
-    - cgroup 
+    - cgroup
     - iptables
     - git-core
     - etersoft-build-utils
     - etcgit
     - su
     - jq
-  tags: 
+  tags:
     - install
 
 - name: control su
@@ -66,28 +66,28 @@
     name: "{{ daas_vstand.user }}"
     groups: docker
     append: yes
-  tags: 
+  tags:
     - user-setup
 
 - name: "set TERM environment variable"
   become: no
   shell: |
-      if ! grep -q 'TERM=' /home/{{daas_vstand.user}}/.bashrc; then 
+      if ! grep -q 'TERM=' /home/{{daas_vstand.user}}/.bashrc; then
           echo 'export TERM=xterm' >>  /home/{{daas_vstand.user}}/.bashrc;
       fi
-  tags: 
+  tags:
     - user-setup
 
 - name: "create rpmmacros for {{ daas_vstand.user }}"
   become: no
   template: "src={{daas_ansible_dir}}/templates/rpmmacros.tpl dest=/home/{{daas_vstand.user}}/.rpmmacros"
-  tags: 
+  tags:
     - user-setup
 
 - name: install daas from package
   apt_rpm: "package={{item}} state=present"
   when: daas_vstand.daas_url is undefined
-  tags: 
+  tags:
     - daas
     - install
 
@@ -95,7 +95,7 @@
   local_action: stat path="{{daas_vstand.daas_url}}"
   register: daas_rpm
   when: daas_vstand.daas_url is defined
-  tags: 
+  tags:
     - daas
     - install
 
@@ -104,7 +104,7 @@
     src: "{{daas_vstand.daas_url}}"
     dest: "/tmp/"
   when: daas_vstand.daas_url is defined and daas_rpm.stat.exists == true
-  tags: 
+  tags:
     - daas
     - install
 
@@ -113,21 +113,21 @@
     url: "{{daas_vstand.daas_url}}"
     dest: /tmp/
   when: daas_vstand.daas_url is defined and daas_rpm.stat.exists == false
-  tags: 
+  tags:
     - daas
     - install
 
 - name: "install daas from local rpm"
   shell: "rpm -qa | grep -q daas || sudo epmi --auto /tmp/daas*.rpm"
   when: daas_vstand.daas_url is defined
-  tags: 
+  tags:
     - daas
     - install
 
 - name: "remove daas local rpm"
   shell: rm -rf /tmp/daas*.rpm
   when: daas_vstand.daas_url is defined
-  tags: 
+  tags:
     - daas
     - install
 
@@ -152,12 +152,12 @@
     dest: /usr/local/bin/gitlab-runner
     mode: 'a+x'
   when: daas_vstand.gitlab.runner_download_url is defined and grunner_file.stat.exists == false
-  tags: 
+  tags:
     - gitlab
 
 - name: create gitlab-runner service file
   template: "src={{daas_ansible_dir}}/templates/gitlab-runner.service.tpl dest=/etc/systemd/system/gitlab-runner.service owner=root"
-  tags: 
+  tags:
     - gitlab
 
 - name: List configured runners
@@ -165,7 +165,7 @@
   command: gitlab-runner list --config '/home/{{daas_vstand.user}}/.gitlab-runner/config.toml'
   register: configured_runners
   changed_when: False
-  tags: 
+  tags:
     - gitlab
 
 - name: Register runners to GitLab
@@ -181,12 +181,12 @@
     --docker-image '{{ item.runner.docker_image if item.runner.docker_image is defined else '' }}'
     --env 'TERM=xterm'
     {{ item.runner.extra_options if item.runner.extra_options is defined else '' }}
-  when: "item.runner.description is defined and configured_runners.stderr.find('\n{{ item.runner.description }}') == -1" 
+  when: "item.runner.description is defined and configured_runners.stderr.find('\n{{ item.runner.description }}') == -1"
   with_items: "{{daas_vstand.gitlab.runners}}"
-  tags: 
+  tags:
     - gitlab
 
 - name: Start gitlab-runner service
   service: name=gitlab-runner state=started enabled=yes
-  tags: 
+  tags:
     - gitlab

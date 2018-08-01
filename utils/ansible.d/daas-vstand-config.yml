@@ -201,7 +201,7 @@ daas_vstand:
                     else [] }}
                 + {{ daas_defaults.consul.servers 
                    if daas_defaults.consul.servers is defined else [] }}"
-                    
+
 
      extra_args:  "{{ vstand.consul.extra_args
                if vstand is defined 

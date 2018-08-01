@@ -10,17 +10,17 @@ vstand:
   hostname: "{{project.name if project is defined else 'noname'}}-vs1"
   dns_servers:
      - "172.17.0.2"
-     
+
   consul:
      servers:
        - "172.17.0.2"
 
   limits:
     cpu: 3
-    memory: 1024 
-    
+    memory: 1024
+
   vagrant:
-     box: 
+     box:
        name: "vstand-p8"
        url: "{{ daas_repository_dir }}/vagrant/boxes/p8/vstand.box"
 

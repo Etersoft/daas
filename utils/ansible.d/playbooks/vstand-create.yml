@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------
 - hosts: all
   become: no
-  gather_facts: no 
+  gather_facts: no
   vars_files:
      - "{{ daas_vstand_config }}"
      - "{{ daas_project_config }}"
@@ -59,12 +59,13 @@
       template: "src={{daas_ansible_dir}}/templates/bootstrap.sh.tpl dest={{vagrant_project_dir}}/bootstrap.sh mode='a+x'"
       tags:
         - vagrant
-    
-    - local_action: stat path="{{daas_vstand.vagrant.box.url}}"
+
+    - name: check vagrant box file
+      local_action: stat path="{{daas_vstand.vagrant.box.url}}"
       register: vagrant_box_file
       tags:
         - vagrant
-    
+
     - name: Copy vagrant box
       copy:
         dest: "{{ vagrant_boxes_dir }}/{{daas_vstand.vagrant.box.name}}.box"
@@ -105,7 +106,7 @@
         - stand
 
     - name: 'set variable ip'
-      set_fact: 
+      set_fact:
         newstand_ip: "{{ newstand.stdout | regex_replace('\n','') | regex_replace(regexp,'\\2')  }}"
       vars:
         regexp: '(.*)IP: (.*)$'
@@ -120,20 +121,20 @@
     - name: 'setup admin for new stand'
       shell: vagrant ssh -c "sudo useradd {{daas_vstand.user}}; echo '{{daas_vstand.user}}:{{daas_vstand.pass}}' | sudo chpasswd"
       args:
-        chdir: "{{vagrant_project_dir}}/"      
+        chdir: "{{vagrant_project_dir}}/"
       tags:
         - stand
 
     - name: "add admin to group 'wheel'"
       shell: vagrant ssh -c "sudo usermod -a -G wheel {{daas_vstand.user}}"
       args:
-        chdir: "{{vagrant_project_dir}}/"      
+        chdir: "{{vagrant_project_dir}}/"
       tags:
         - stand
 
     - name: save ip file information
-      local_action: copy content="{{ item }}" dest="{{ daas_newstand_ip_file }}" 
-      with_items: 
+      local_action: copy content="{{ item }}" dest="{{ daas_newstand_ip_file }}"
+      with_items:
         - "{{newstand_ip}}"
       tags:
         - stand

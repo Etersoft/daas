@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------
 - hosts: new-vstand
   become: yes
-  gather_facts: no 
+  gather_facts: no
   vars_files:
      - "{{ daas_vstand_config }}"
      - "{{daas_ansible_dir}}/daas-defaults.yml"
@@ -22,30 +22,30 @@
 
      - name: 'install python'
        raw: "if ! rpm -qa | grep -q 'python-module-simplejson'; then apt-get update && apt-get -y install python-module-simplejson python-module-distutils-extra; fi"
-     
+
      - name: Setup apt sources
-       template: 
+       template:
           src: "{{ daas_ansible_dir }}/templates/sources.list.tpl"
           dest: "/etc/apt/sources.list.d/daas.list"
-          owner: root 
-          group: wheel 
+          owner: root
+          group: wheel
           mode: 0640
           backup: yes
-       when: "daas_vstand.apt.sources is defined and daas_vstand.apt.sources|length > 0" 
+       when: "daas_vstand.apt.sources is defined and daas_vstand.apt.sources|length > 0"
 
   tasks:
      - name: install admin utils
        apt_rpm: "package={{item}} state=present"
        with_items:
           - mc
-          - wget 
+          - wget
           - htop
           - iotop
           - tmux
           - tcpdump
           - openntpd
-          - rsync 
-          - iproute2 
+          - rsync
+          - iproute2
           - patch
           - eepm
           - apt-repo
@@ -53,14 +53,14 @@
      - name: install user defined packages
        apt_rpm: "package={{item}} state=present"
        with_items: "{{ daas_vstand.apt.packages }}"
-       when: "daas_vstand.apt.packages is defined and daas_vstand.apt.packages|length > 0" 
+       when: "daas_vstand.apt.packages is defined and daas_vstand.apt.packages|length > 0"
 
      - name: install virtualbox packages
        apt_rpm: "package={{item}} state=present"
        with_items:
-          - virtualbox 
+          - virtualbox
           - kernel-modules-virtualbox-std-def
-          
+
      - name: virtualbox enable service
        shell: 'chkconfig virtualbox on'
        when: docker is undefined
@@ -73,14 +73,14 @@
        shell: rpm -qa | grep -q 'vagrant' && echo 'ok' || echo 'fail'
        register: vagrant_exist
        ignore_errors: True
-    
+
      - name: Copy vagrant package to stand
        copy:
           dest: /tmp/vagrant.rpm
           src: "{{ daas_vstand.vagrant.rpm_url }}"
           force: yes
        when: "'fail' in vagrant_exist.stdout"
-          
+
      - name: install vagrant
        shell: "apt-get install -y /tmp/vagrant.rpm"
        when: "'fail' in vagrant_exist.stdout"
@@ -94,7 +94,7 @@
          src: "{{ daas_vstand.vagrant.patch }}"
          basedir: /
        when: "'{{ daas_vstand.vagrant.patch }}' is defined and 'fail' in vagrant_exist.stdout"
-       
+
      - name: setup sudoers for '{{daas_vstand.hostmachine.user}}'
        template: "src={{daas_ansible_dir}}/templates/sudoers.tpl dest=/etc/sudoers.d/{{item}} owner=root"
        with_items:
@@ -105,14 +105,14 @@
           if ! grep -q 'alias vg' /home/{{daas_vstand.hostmachine.user}}/.bashrc; then 
               echo 'alias vg=\"vagrant\"' >>  /home/{{daas_vstand.hostmachine.user}}/.bashrc; 
           fi
-   
+
      - name: "add {{vstand.hostmachine.user}} to group 'vboxusers'"
        user:
          name: "{{daas_vstand.hostmachine.user}}"
          groups: vboxusers
          append: yes
 
-     - name: add vagrant to KillExcludeUsers (systemd) 
+     - name: add vagrant to KillExcludeUsers (systemd)
        replace:
          dest: /etc/systemd/logind.conf
          regexp: '^(.*)KillExcludeUsers=(.*)$'
@@ -141,19 +141,19 @@
        when: "daas_vstand.hostmachine.hostname is defined and daas_vstand.hostmachine.hostname|length>0"
 
      - name: Setup NTP daemon
-       template: 
+       template:
           src: "{{ daas_ansible_dir }}/templates/ntpd.conf.tpl"
           dest: "/etc/ntpd.conf"
-          owner: root 
-          group: wheel 
+          owner: root
+          group: wheel
           mode: 0640
           backup: yes
        when: "daas_vstand.ntpd.servers is defined and daas_vstand.ntpd.servers|length > 0"
-     
+
      - name: NTP daemon enable service
        shell: 'chkconfig ntpd on'
        when: "daas_vstand.ntpd.servers is defined and daas_vstand.ntpd.servers|length > 0"
-       
+
      - name: Start the ntp service
        service: name=ntpd state=started enabled=yes
        when: "daas_vstand.ntpd.servers is defined and daas_vstand.ntpd.servers|length > 0"
