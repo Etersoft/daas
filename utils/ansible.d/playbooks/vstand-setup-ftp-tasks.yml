@@ -1,0 +1,52 @@
+---
+# Настройка ftp на vstand
+# --------------------------------------------------------------------
+- name: install vsftpd
+  apt_rpm: "package={{item}} state=present"
+  with_items:
+    - vsftpd
+    - anonftp
+  tags:
+    - ftp
+
+- name: make ftp directory
+  file: path="{{ daas_vstand.ftp.directory }}" state=directory owner=root group=ftpadmin mode='u=rwx,g=srwx,o=rx'
+  tags:
+    - ftp
+
+- name: make config for vsftpd
+  template:
+    src: "{{ daas_ansible_dir }}/templates/vsftpd.conf.tpl"
+    dest: "/etc/vsftpd/conf"
+    owner: root
+    group: root
+    mode: 0640
+    backup: yes
+  tags:
+    - ftp
+
+- name: make xinetd config
+  template:
+    src: "{{ daas_ansible_dir }}/templates/xinetd.conf.tpl"
+    dest: "/etc/xinetd.conf"
+    owner: root
+    group: root
+    mode: 0640
+    backup: yes
+  tags:
+    - ftp
+
+- name: enable vsftpd
+  template:
+    src: "{{ daas_ansible_dir }}/templates/vsftpd.tpl"
+    dest: "/etc/xinetd.d/vsftpd"
+    owner: vsftpd
+    group: root
+    mode: 0640
+  tags:
+    - ftp
+
+- name: Start the xinetd service
+  service: name=xinetd state=started enabled=yes
+  tags:
+    - ftp

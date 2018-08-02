@@ -12,6 +12,7 @@ vstand:
      - "172.17.0.2"
 
   consul:
+     mode: 'server'
      servers:
        - "172.17.0.2"
 

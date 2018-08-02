@@ -2,6 +2,8 @@
     {% if daas_vstand.consul.mode == 'server' %}
     "server": true
     , "bootstrap": true
+    {% else %}
+    "server": false
     {% endif %}
 {% if daas_vstand.consul.bind != '' %}
     , "bind_addr": {% raw %}"{{GetInterfaceIP \"eth1\"}}"{% endraw %}

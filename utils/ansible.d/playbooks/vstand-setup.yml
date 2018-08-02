@@ -17,11 +17,16 @@
   pre_tasks:
      - name: 'setup password for ssh user'
        set_fact: ansible_ssh_pass="{{ daas_vstand.pass }}"
-       tags: 
+       tags:
          - always
 
      - name: 'install python'
        raw: "if ! rpm -qa | grep -q 'python-module-simplejson'; then apt-get update && apt-get -y install python-module-simplejson python-module-distutils-extra; fi"
+       tags:
+         - always
+
+     - name: apt-get update
+       raw: "apt-get update"
        tags:
          - always
 
@@ -35,3 +40,6 @@
 
      - name: configure consul for vstand of "{{ project.name }}"
        include: "{{daas_ansible_dir}}/playbooks/vstand-setup-consul-tasks.yml"
+
+     - name: setup ftp for vstand of "{{ project.name }}"
+       include: "{{daas_ansible_dir}}/playbooks/vstand-setup-ftp-tasks.yml"

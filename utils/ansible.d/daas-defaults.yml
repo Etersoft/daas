@@ -17,10 +17,10 @@ daas_defaults:
      apt:
        sources:
          - "rpm http://ftp.etersoft.ru/pub ALTLinux/p8/branch/x86_64 classic"
-         - "rpm http://ftp.etersoft.ru/pub ALTLinux/p8/branch/noarch classic" 
+         - "rpm http://ftp.etersoft.ru/pub ALTLinux/p8/branch/noarch classic"
          - "rpm http://ftp.etersoft.ru/pub/Etersoft/LINUX@Etersoft/p8 branch/x86_64 addon"
          - "rpm http://ftp.etersoft.ru/pub/Etersoft/LINUX@Etersoft/p8 branch/noarch addon"
-  
+
      limits:
        cpu: 3
        memory: 2048
@@ -28,7 +28,7 @@ daas_defaults:
   vagrant:
      rpm_url: "{{daas_repository_dir}}/vagrant/distrib/p8/vagrant.rpm"
      patch: "{{daas_repository_dir}}/vagrant/distrib/p8/network_fix_ipv6.rb.patch"
-     box: 
+     box:
        name: ''
        url: "vpavel/vstand-altlinux-p8"
        add_args: ''
@@ -42,8 +42,8 @@ daas_defaults:
              description: "shell runner for {{project.name if project is defined else 'unknown-project'}}"
              tags: "build, {{ project.name if project is defined else 'unknown-project' }}-vstand-runner"
              executor: "shell"
-             
-       - runner: 
+
+       - runner:
              description: "docker runner for {{project.name if project is defined else 'unknown-project'}}"
              tags: "docker-build, {{project.name if project is defined else 'unknown-project'}}-vstand-docker-runner"
              executor: "docker"
@@ -51,7 +51,7 @@ daas_defaults:
              extra_options: '--docker-cap-add ALL --docker-volumes /var/run/docker.sock:/var/run/docker.sock --docker-privileged'
 
   daas_url: "{{daas_repository_dir}}/daas/daas-0.3-alt3.noarch.rpm"
-  
+
   consul:
      url: "https://releases.hashicorp.com/consul/1.2.1/consul_1.2.1_linux_amd64.zip"
      user: "consul"
@@ -64,8 +64,12 @@ daas_defaults:
 #         - "8.8.8.8"
 #     servers:
 #         - "192.168.1.76"
-       
+
   ntpd:
      servers:
        - "0.ru.pool.ntp.org"
        - "1.ru.pool.ntp.org"
+
+  ftp:
+     directory: "/srv/ftp"
+     only_from: "0.0.0.0"

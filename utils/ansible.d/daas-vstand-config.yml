@@ -114,19 +114,19 @@ daas_vstand:
              and vstand.gitlab is defined
              and vstand.gitlab.url is defined 
              else daas_defaults.gitlab.url }}"
-    
+
     runner_registration_token: "{{ vstand.gitlab.runner_registration_token 
              if vstand is defined 
              and vstand.gitlab is defined
              and vstand.gitlab.runner_registration_token 
              is defined else '' }}"
-             
+
     runner_download_url: "{{ vstand.gitlab.runner_download_url 
              if vstand is defined 
              and vstand.gitlab is defined
              and vstand.gitlab.runner_download_url is defined 
              else daas_defaults.gitlab.runner_download_url }}"
-             
+
     runners: "{{ vstand.runners 
              if vstand is defined 
              and vstand.runners is defined 
@@ -236,3 +236,15 @@ daas_vstand:
                 and vstand.ntpd is defined
                 and vstand.ntpd.servers is defined 
                 else daas_defaults.ntpd.servers }}"
+
+  ftp:
+    directory: "{{ vstand.ftp.directory 
+                if vstand is defined 
+                and vstand.ftp is defined
+                and vstand.ftp.directory is defined 
+                else daas_defaults.ftp.directory }}"
+    only_from: "{{ vstand.ftp. only_from 
+                if vstand is defined 
+                and vstand.ftp is defined
+                and vstand.ftp. only_from is defined 
+                else daas_defaults.ftp. only_from }}"

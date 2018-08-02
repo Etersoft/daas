@@ -1,0 +1,11 @@
+anon_root={{ daas_vstand.ftp.directory }}
+no_anon_password=YES
+anon_other_write_enable=NO
+anonymous_enable=YES
+local_enable=NO
+write_enable=NO
+anon_mkdir_write_enable=NO
+dirmessage_enable=YES
+xferlog_enable=YES
+connect_from_port_20=YES
+listen=NO
