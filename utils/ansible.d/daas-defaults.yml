@@ -9,6 +9,7 @@ daas_defaults:
 
   vstand:
      hostname: "vstand-{{project.name if project is defined else '1'}}"
+     ip: ''
      user: "vadmin"
      pass: "vadmin"
      dns_servers:

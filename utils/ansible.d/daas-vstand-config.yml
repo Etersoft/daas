@@ -9,6 +9,13 @@ daas_vstand:
               if vstand is defined 
               and vstand.hostname is defined 
               else daas_defaults.vstand.hostname }}"
+
+  ip: "{{ user_ip if user_ip is defined 
+              else vstand.ip
+              if vstand is defined 
+              and vstand.ip is defined 
+              else daas_defaults.vstand.ip }}"
+              
   user: "{{ vstand_user_login if vstand_user_login is defined
             else vstand.user 
             if vstand is defined 
