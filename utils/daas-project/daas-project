@@ -589,6 +589,7 @@ def usage():
     print "   supported variables:"
     print "      {PROJECT} - replace to project name. Example: DAAS_OUTDIR='{PROJECT}-my-postfix' --> 'projectname-my-postfix'"
     print ""
+    print "DAAS_TEMPLATE_DIR     - directory with templates"
     print "DAAS_IMAGE_REGISTRY   - see --image-registry"
     print "DAAS_IMAGE_POSTFIX    - see --image-postfix"
     print "DAAS_VSTAND_HOSTNAME  - set stand hostname. Default: use hostinfo"
@@ -612,6 +613,10 @@ if __name__ == "__main__":
     # пользовательские
     for d in daas_user_dirs:
         tpldirs.append(os.path.join(d, 'templates'))
+
+    if 'DAAS_TEMPLATE_DIR' in os.environ:
+        tpldirs.append(os.environ['DAAS_TEMPLATE_DIR'])
+
     # плагины 'dir.d')
     for d in daas_system_dirs:
         tpldirs.append(os.path.join(d, 'templates.d'))
@@ -642,7 +647,7 @@ if __name__ == "__main__":
 
     if str(conf['version']) != str(FORMAT_VERSION):
         print "ERROR: Unsupported config file format '%s' ('%s'). Must be '%s'" % (
-        conf['version'], confile, FORMAT_VERSION)
+            conf['version'], confile, FORMAT_VERSION)
         exit(1)
 
     project = conf['project']
