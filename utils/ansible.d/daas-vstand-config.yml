@@ -75,13 +75,13 @@ daas_vstand:
             and vstand.limits is defined 
             and vstand.limits.cpu is defined 
             else daas_defaults.vstand.limits.cpu }}"
-            
+
     memory: "{{ vstand.limits.memory 
             if vstand is defined 
             and vstand.limits is defined 
             and vstand.limits.memory is defined 
             else daas_defaults.vstand.limits.memory }}"
-    
+
   # Parameters for vagrant
   vagrant:
     rpm_url: "{{ vstand.vagrant.rpm_url 

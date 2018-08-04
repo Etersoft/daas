@@ -6,7 +6,7 @@
   vars_files:
      - "{{ daas_vstand_config }}"
      - "{{daas_ansible_dir}}/daas-defaults.yml"
-     # обязательно должен быть последним (т.к. переопределяет свойства проекта и умолчательные настройки)
+     # обязательно должен быть последним (т.к. объединяет свойства проекта и умолчательные настройки)
      - "{{daas_ansible_dir}}/daas-vstand-config.yml"
 
   vars:
@@ -93,7 +93,7 @@
        patch:
          src: "{{ daas_vstand.vagrant.patch }}"
          basedir: /
-       when: "'{{ daas_vstand.vagrant.patch }}' is defined and 'fail' in vagrant_exist.stdout"
+       when: "daas_vstand.vagrant.patch is defined and daas_vstand.vagrant.patch != '' and 'fail' in vagrant_exist.stdout"
 
      - name: setup sudoers for '{{daas_vstand.hostmachine.user}}'
        template: "src={{daas_ansible_dir}}/templates/sudoers.tpl dest=/etc/sudoers.d/{{item}} owner=root"
