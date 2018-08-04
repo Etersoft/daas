@@ -4,7 +4,7 @@ version: 0.1
 vstand:
   hostmachine:
     hostname: "vstand1"
-    user: "vagrant"
+    user: "vadmin"
     pass: "123"
 
   hostname: "{{project.name if project is defined else 'noname'}}-vs1"

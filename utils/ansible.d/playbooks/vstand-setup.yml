@@ -41,5 +41,8 @@
      - name: configure consul for vstand of "{{ project.name }}"
        include: "{{daas_ansible_dir}}/playbooks/vstand-setup-consul-tasks.yml"
 
+     - name: configure registrator for vstand of "{{ project.name }}"
+       include: "{{daas_ansible_dir}}/playbooks/vstand-setup-registrator-tasks.yml"
+
      - name: setup ftp for vstand of "{{ project.name }}"
        include: "{{daas_ansible_dir}}/playbooks/vstand-setup-ftp-tasks.yml"

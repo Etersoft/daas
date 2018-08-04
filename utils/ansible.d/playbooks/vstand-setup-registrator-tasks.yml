@@ -1,0 +1,20 @@
+---
+# Настройка registrator для машины
+# --------------------------------------------------------------------
+- name: Start docker service
+  service: name=docker state=started enabled=yes
+  tags:
+    - registrator
+
+- name: Check remote registrator exist
+  shell: "docker ps | grep -q 'gliderlabs/registrator' && echo 'OK' || echo 'FAIL'"
+  register: registrator
+  ignore_errors: yes
+  tags:
+    - registrator
+
+- name: run registrator
+  shell: "docker run -d --name=registrator --restart always --net=host  --volume=/var/run/docker.sock:/tmp/docker.sock  gliderlabs/registrator:latest -internal consul://localhost:8500"
+  when: "'FAIL' in registrator.stdout"
+  tags:
+    - registrator

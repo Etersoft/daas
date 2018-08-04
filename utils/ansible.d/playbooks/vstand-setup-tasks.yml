@@ -17,7 +17,7 @@
 - name: set hostname
   shell: "{{ item }}"
   with_items:
-      - "ps ax | grep -q 'systemd' && hostnamectl set-hostname {{daas_vstand.hostname}} || echo 'systemd skipped'"
+      - "hostnamectl set-hostname {{daas_vstand.hostname}} || echo 'ignore systemd error'"
       - "subst 's|HOSTNAME=.*$|HOSTNAME={{daas_vstand.hostname}}|g' /etc/sysconfig/network"
   tags:
     - net
