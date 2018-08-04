@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.4
-Release: alt2
+Release: alt3
 
 Group: System/Utilities
 License: MIT
@@ -28,12 +28,12 @@ daas - 'Devops As A Service'.
 Group of utilities for the organization of the devops
 
 %package admin
-Summary: Utilities for stands administation
+Summary: daas: Utilities for stands administration
 Group: System/Utilities
 Requires: %name = %EVR
 Requires: ansible
 %description admin
-Utilities for stands administation
+(daas): Utilities for stands administration
 
 %prep
 %setup
@@ -91,6 +91,11 @@ cp -r repository.d %buildroot%_datadir/%name/
 %_datadir/%name/repository.d/*
 
 %changelog
+* Sat Aug 04 2018 Pavel Vainerman <pv@altlinux.ru> 0.4-alt3
+- added ftp setup
+- added registratot setup
+- update docs
+
 * Thu Aug 02 2018 Pavel Vainerman <pv@altlinux.ru> 0.4-alt2
 - minor fixes
 
