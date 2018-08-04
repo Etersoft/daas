@@ -53,7 +53,7 @@ vstand:
              description: "shell runner for {{project.name}}"
              tags: "build, {{project.name}}-vstand-runner"
              executor: "shell"
-             
+
        - runner: 
              description: "docker runner for {{project.name}}"
              tags: "docker-build, {{project.name}}-vstand-docker-runner"

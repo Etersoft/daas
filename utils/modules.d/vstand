@@ -197,7 +197,7 @@ do_init_host() {
 
     prepare_ansible_environment
 
-    ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l new-vstand $@ ${DAAS_ANSIBLE_D}/playbooks/host-setup.yml
+    ansible-playbook -i $INVFILE ${DAAS_ANSIBLE_EXTRA_ARGS} ${DAAS_ANSIBLE_USER_VARS} --ssh-extra-args '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -l new-vstand $@ ${DAAS_ANSIBLE_D}/playbooks/host-init.yml
 
     RET=$?
     rm -rf $INVFILE
