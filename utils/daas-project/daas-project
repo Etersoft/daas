@@ -547,6 +547,9 @@ def copy_addons(todirname):
     for d in reversed(daas_system_dirs):
         cdirs.append(os.path.join(d, "addons.d"))
 
+    if 'DAAS_ADDONS_DIR' in os.environ:
+        cdirs.append(os.environ['DAAS_ADDONS_DIR'])
+
     for d in reversed(daas_user_dirs):
         cdirs.append(os.path.join(d, "addons"))
 
@@ -589,7 +592,8 @@ def usage():
     print "   supported variables:"
     print "      {PROJECT} - replace to project name. Example: DAAS_OUTDIR='{PROJECT}-my-postfix' --> 'projectname-my-postfix'"
     print ""
-    print "DAAS_TEMPLATE_DIR     - directory with templates"
+    print "DAAS_TEMPLATES_DIR     - directory with templates"
+    print "DAAS_ADDONS_DIR       - directory with addons"
     print "DAAS_IMAGE_REGISTRY   - see --image-registry"
     print "DAAS_IMAGE_POSTFIX    - see --image-postfix"
     print "DAAS_VSTAND_HOSTNAME  - set stand hostname. Default: use hostinfo"
@@ -614,8 +618,8 @@ if __name__ == "__main__":
     for d in daas_user_dirs:
         tpldirs.append(os.path.join(d, 'templates'))
 
-    if 'DAAS_TEMPLATE_DIR' in os.environ:
-        tpldirs.append(os.environ['DAAS_TEMPLATE_DIR'])
+    if 'DAAS_TEMPLATES_DIR' in os.environ:
+        tpldirs.append(os.environ['DAAS_TEMPLATES_DIR'])
 
     # плагины 'dir.d')
     for d in daas_system_dirs:
