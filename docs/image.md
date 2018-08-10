@@ -9,12 +9,12 @@
 # daas image -h
 image [command] [params]
 Command: 
-ls                                          - list images
-old N ['days'|'hours'|'months'|'years']     - list of images older than N ['days']. Default: 'days'
-rm N ['days'|'hours'|'months'|'years'] [-f] - remove images older than N ['days']. Default: 'days'
-                                              -f - force remove
+ls                                                     - list images
+old N ['days'|'hours'|'months'|'years'|'minutes']      - list of images older than N ['days']. Default: 'days'
+rm  N ['days'|'hours'|'months'|'years'|'minutes'] [-f] - remove images older than N ['days']. Default: 'days'
+                                                         -f - force remove
 ```
 
 * *ls* - просто вывести список доступных образов. Повторяет команду ```docker image ls```
-* *old* - позволяет вывести список образов старее *N* дней(часов, месяцев,лет).
-* *rm* - позволяет удалить образы старее *N* дней(часов, месяцев,лет).
+* *old* - позволяет вывести список образов старее *N* дней(минут, часов, месяцев, лет).
+* *rm* - позволяет удалить образы старее *N* дней(минут, часов, месяцев, лет).

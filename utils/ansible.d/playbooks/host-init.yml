@@ -102,8 +102,8 @@
 
      - name: "make user {{daas_vstand.hostmachine.user}} aliases"
        shell: |
-          if ! grep -q 'alias vg' /home/{{daas_vstand.hostmachine.user}}/.bashrc; then 
-              echo 'alias vg=\"vagrant\"' >>  /home/{{daas_vstand.hostmachine.user}}/.bashrc; 
+          if ! grep -q 'alias vg' /home/{{daas_vstand.hostmachine.user}}/.bashrc; then
+              echo 'alias vg=\"vagrant\"' >>  /home/{{daas_vstand.hostmachine.user}}/.bashrc;
           fi
 
      - name: "add {{vstand.hostmachine.user}} to group 'vboxusers'"

@@ -12,10 +12,10 @@ module_usage() {
 module_help() {
     echo "image [command] [params]"
     echo "Command: "
-    echo "ls                                          - list images"
-    echo "old N ['days'|'hours'|'months'|'years']     - list of images older than N ['days']. Default: 'days'"
-    echo "rm N ['days'|'hours'|'months'|'years'] [-f] - remove images older than N ['days']. Default: 'days'"
-    echo "                                              -f - force remove"
+    echo "ls                                                     - list images"
+    echo "old N ['days'|'hours'|'months'|'years'|'minutes']      - list of images older than N ['days']. Default: 'days'"
+    echo "rm  N ['days'|'hours'|'months'|'years'|'minutes'] [-f] - remove images older than N ['days']. Default: 'days'"
+    echo "                                                         -f - force remove"
 }
 
 module_error() {
