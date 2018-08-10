@@ -264,6 +264,10 @@ def create_node(project, group, node):
     c['image'] = imagename
     c['image_name'] = replace_env(make_image_name(project, get_image_name(imagename)))
 
+    c['node_compose_template'] = get_param(project, group, node, 'node_compose_template')
+    if not c['node_compose_template']:
+        c['node_compose_template'] = 'docker-compose-simple.yml.tpl'
+
     if 'hostname' in node:
         c['hostname'] = replace_env(node['hostname'])
 
@@ -669,6 +673,9 @@ if __name__ == "__main__":
         project['image-postfix'] = os.environ['DAAS_IMAGE_POSTFIX']
     project['image-postfix'] = get_arg_param(['--image-postfix'], project['image-postfix'])
 
+    if 'project_compose_template' not in project:
+        project['project_compose_template'] = 'docker-compose.yml.tpl'
+
     project['sorted_networks'] = sorted_networks(project)
     project['extra_hosts'] = make_hosts(project)
     project['nodes'] = make_project_nodes(project)
@@ -814,7 +821,7 @@ if __name__ == "__main__":
     # make docker-compose.yml
     dc_file = os.path.join(outdir, 'docker-compose.yml')
     with open(dc_file, 'w') as wfile:
-        wfile.write(env.get_template('docker-compose.yml.tpl').render(project=project))
+        wfile.write(env.get_template(project['project_compose_template']).render(project=project))
 
     # make directories and configs
     for n in project['nodes']:
@@ -843,7 +850,7 @@ if __name__ == "__main__":
         if 'skip_compose' in n:
             dc_file = os.path.join(dirname, 'docker-compose.yml')
             with open(dc_file, 'w') as wfile:
-                wfile.write(env.get_template('docker-compose-simple.yml.tpl').render(project=project, node=n))
+                wfile.write(env.get_template(n['node_compose_template']).render(project=project, node=n))
                 wfile.write("\n")
 
     if not quite:
