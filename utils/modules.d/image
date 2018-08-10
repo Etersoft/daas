@@ -1,5 +1,10 @@
 #!/bin/sh
 
+[ -n "$DAAS_DEBUG" ] && set -x
+[ -z "$DAAS_DATADIR" ] && DAAS_DATADIR='..'
+
+. $DAAS_DATADIR/modules.d/.daas-common
+
 module_usage() {
     module_help
 }
@@ -7,9 +12,10 @@ module_usage() {
 module_help() {
     echo "image [command] [params]"
     echo "Command: "
-    echo "ls            - list images"
-    echo "old N [name]  - list of images older than N days"
-    echo "                name - filter name (grep)"
+    echo "ls                                          - list images"
+    echo "old N ['days'|'hours'|'months'|'years']     - list of images older than N ['days']. Default: 'days'"
+    echo "rm N ['days'|'hours'|'months'|'years'] [-f] - remove images older than N ['days']. Default: 'days'"
+    echo "                                              -f - force remove"
 }
 
 module_error() {
@@ -18,25 +24,31 @@ module_error() {
 }
 
 function list_old_images() {
-    [ -z "$1" ] && module_error "Unknown 'older days'"
+    
+    [ -n "$2" ] && FILTER="$2" || FILTER='days'
+
+    [ -z "$1" ] && module_error "Unknown number 'older $FILTER ago'"
     DAYSAGO="$1"
-    FILTER="$2"
 
     tmpfile=$(mktemp)
 
-    docker images | grep -e 'days ago' | grep -v regis | awk '{print $4 " " $1 " " $3}' > $tmpfile
+    docker images | grep "$FILTER ago" | awk '{print $4 " " $1 " " $3}' > $tmpfile
 
     while read -r D N ID; do
-
-        if [ -n "$FILTER" ]; then
-            echo $N | grep -q "$FILTER" || continue
-        fi
 
         [ "$D" -gt $DAYSAGO ] && echo "$ID $N $D"
 
     done<$tmpfile
 
     rm -rf $tmpfile
+}
+
+function rm_old_images() {
+    FORCE=''
+    [ "$2" == "-f" ] && FORCE='-f'
+    [ "$3" == "-f" ] && FORCE='-f'
+
+    docker image rm $FORCE $(list_old_images $@ | awk '{print $1}')
 }
 
 [ -z "$1" ] && module_help && exit 1
@@ -60,6 +72,12 @@ case $1 in
     --old | old)
         shift
         list_old_images $@
+        exit $?
+        ;;
+
+    --rm | rm)
+        shift
+        rm_old_images $@
         exit $?
         ;;
 esac
