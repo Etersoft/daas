@@ -2,19 +2,17 @@
 version: 0.1
 
 vstand:
+  pass: "123"
+
   hostmachine:
     hostname: "vstand1"
     user: "vadmin"
     pass: "123"
 
   hostname: "{{project.name if project is defined else 'noname'}}-vs1"
-  dns_servers:
-     - "172.17.0.2"
 
   consul:
      mode: 'server'
-     servers:
-       - "172.17.0.2"
 
   limits:
     cpu: 3

@@ -2,7 +2,7 @@
 # Настройка ftp на vstand
 # --------------------------------------------------------------------
 - name: install vsftpd
-  apt_rpm: "package={{item}} state=present"
+  apt_rpm: "package={{item}} state=present update_cache=no"
   with_items:
     - vsftpd
     - anonftp

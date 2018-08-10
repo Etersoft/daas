@@ -35,7 +35,7 @@
 
   tasks:
      - name: install admin utils
-       apt_rpm: "package={{item}} state=present"
+       apt_rpm: "package={{item}} state=present update_cache=no"
        with_items:
           - mc
           - wget
@@ -51,12 +51,12 @@
           - apt-repo
 
      - name: install user defined packages
-       apt_rpm: "package={{item}} state=present"
+       apt_rpm: "package={{item}} state=present update_cache=no"
        with_items: "{{ daas_vstand.apt.packages }}"
        when: "daas_vstand.apt.packages is defined and daas_vstand.apt.packages|length > 0"
 
      - name: install virtualbox packages
-       apt_rpm: "package={{item}} state=present"
+       apt_rpm: "package={{item}} state=present update_cache=no"
        with_items:
           - virtualbox
           - kernel-modules-virtualbox-std-def

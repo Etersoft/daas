@@ -3,7 +3,7 @@
 # --------------------------------------------------------------------
 
 # - name: install requires for consul
-#   apt_rpm: "package={{item}} state=present update_cache=yes"
+#   apt_rpm: "package={{item}} state=present update_cache=no"
 #   with_items:
 #     - openresolv
 #     - systemd-networkd

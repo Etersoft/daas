@@ -1,0 +1,75 @@
+---
+# Настройка мониторинга (netdata + grafana + influxdb + nginx)
+# --------------------------------------------------------------------
+- name: install netdata
+  apt_rpm: "package={{item}} state=present update_cache=no"
+  with_items:
+    - netdata
+    - influxdb
+    - grafana
+    - nginx
+  tags:
+    - monitoring
+
+- name: make config for netdata
+  template:
+    src: "{{ daas_ansible_dir }}/templates/netdata.conf.tpl"
+    dest: "/etc/netdata/netdata.conf"
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  tags:
+    - monitoring
+
+- name: Start netdata service
+  service: name=netdata state=started enabled=yes
+  tags:
+    - monitoring
+
+- name: make config for nginx
+  template:
+    src: "{{ daas_ansible_dir }}/templates/nginx.conf.tpl"
+    dest: "/etc/nginx/sites-enabled.d/vstand.conf"
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  tags:
+    - monitoring
+
+- name: make config for nginx
+  template:
+    src: "{{ daas_ansible_dir }}/templates/nginx.conf.tpl"
+    dest: "/etc/nginx/sites-enabled.d/vstand.conf"
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  tags:
+    - monitoring
+
+- name: create nginx services dir
+  file: "path=/etc/nginx/services.d state=directory mode=0777"
+  tags:
+    - monitoring
+
+- name: make config for nginx
+  template:
+    src: "{{ daas_ansible_dir }}/templates/{{item}}.tpl"
+    dest: "/etc/nginx/services.d/{{item}}"
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  with_items:
+    - netdata-location.conf
+    - netdata-upstream.conf
+  tags:
+    - monitoring
+
+- name: Start nginx service
+  service: name=nginx state=started enabled=yes
+  tags:
+    - monitoring
+

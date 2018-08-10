@@ -46,3 +46,6 @@
 
      - name: setup ftp for vstand of "{{ project.name }}"
        include: "{{daas_ansible_dir}}/playbooks/vstand-setup-ftp-tasks.yml"
+
+     - name: setup monitoring for vstand of "{{ project.name }}"
+       include: "{{daas_ansible_dir}}/playbooks/vstand-setup-monitoring-tasks.yml"

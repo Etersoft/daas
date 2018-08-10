@@ -35,7 +35,7 @@
     - net
 
 - name: install programs
-  apt_rpm: "package={{item}} state=present"
+  apt_rpm: "package={{item}} state=present update_cache=no"
   with_items:
     - mc
     - wget
@@ -85,7 +85,7 @@
     - user-setup
 
 - name: install daas from package
-  apt_rpm: "package={{item}} state=present"
+  apt_rpm: "package={{item}} state=present update_cache=no"
   when: daas_vstand.daas_url is undefined
   tags:
     - daas
