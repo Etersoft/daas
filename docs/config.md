@@ -112,6 +112,9 @@ project:
 ```yaml
 ...
 
+project_compose_template: 'my-compose-template.yml.tpl'
+node_compose_template: 'my-node-compose-template.yml.tpl'
+
 volumes:
   - /var/run/docker.sock:/var/run/docker.sock
 
@@ -182,6 +185,10 @@ ports:
        ...
 ```
 Такой узел или группа узлов не будут включены в итоговый docker-compose.yml
+
+* **project_compose_template** - позволяет задать свой шаблон для docker-compose.yml файла. Не является обязательным параметром.
+
+* **node_compose_template** - позволяет задать свой шаблон для docker-compose.yml файла генерируемого, для конкретного узла. Этот параметр может быть задан 'глобально', 'для группы', 'для конкретного узла'. Это параметр не является обязательным.
 
 Параметры узла (node)
 ---------------------
