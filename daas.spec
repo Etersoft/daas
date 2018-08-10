@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.4
-Release: alt3
+Release: alt4
 
 Group: System/Utilities
 License: MIT
@@ -91,9 +91,12 @@ cp -r repository.d %buildroot%_datadir/%name/
 %_datadir/%name/repository.d/*
 
 %changelog
+* Fri Aug 10 2018 Pavel Vainerman <pv@altlinux.ru> 0.4-alt4
+- new release
+
 * Sat Aug 04 2018 Pavel Vainerman <pv@altlinux.ru> 0.4-alt3
 - added ftp setup
-- added registratot setup
+- added registrator setup
 - update docs
 
 * Thu Aug 02 2018 Pavel Vainerman <pv@altlinux.ru> 0.4-alt2
