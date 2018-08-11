@@ -1,5 +1,5 @@
 
-    location /netdata {
+    location /netdata/ {
         rewrite ^/netdata/(.*)$ /$1 break;
         proxy_pass http://netdata/;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

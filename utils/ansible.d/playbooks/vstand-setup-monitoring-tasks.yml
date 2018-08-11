@@ -104,18 +104,47 @@
     - monitoring
 
 - name: create grafana data sources dir
-  file: "path=/var/lib/grafana/provisioning/datasources/ group=grafana owner=grafana state=directory mode=0775"
+  file: "path=/etc/grafana/provisioning/datasources/ group=grafana owner=grafana state=directory mode=0775"
   tags:
     - monitoring
 
 - name: make datasources for grafana
   template:
     src: "{{ daas_ansible_dir }}/templates/grafana-datasources.tpl"
-    dest: "/var/lib/grafana/provisioning/datasources/vstand.yaml"
+    dest: "/etc/grafana/provisioning/datasources/vstand.yaml"
     owner: grafana
     group: grafana
     mode: 0640
     backup: yes
+  tags:
+    - monitoring
+
+- name: make dashboards for grafana
+  template:
+    src: "{{ daas_ansible_dir }}/templates/grafana-dashboards.tpl"
+    dest: "/etc/grafana/provisioning/dashboards/vstand-dashboards.yaml"
+    owner: grafana
+    group: grafana
+    mode: 0640
+    backup: yes
+  tags:
+    - monitoring
+
+- name: create directory for grafana dashboards
+  file: "path=/var/lib/grafana/dashboards group=grafana owner=grafana state=directory mode=0775"
+  tags:
+    - monitoring
+
+- name: make dashboards for grafana
+  template:
+    src: "{{ daas_ansible_dir }}/templates/{{item}}.tpl"
+    dest: "/var/lib/grafana/dashboards/{{item}}"
+    owner: grafana
+    group: grafana
+    mode: 0644
+    backup: yes
+  with_items:
+    - grafana-dashboard-netdata.json
   tags:
     - monitoring
 

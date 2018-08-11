@@ -4,3 +4,4 @@
 # chmod 0700 /home/vagrant/.ssh
 # sudo chown -R vagrant: /home/vagrant/.ssh
 
+sudo service network restart

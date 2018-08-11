@@ -90,6 +90,7 @@ vstand:
          - "main-consul-server2"
 
   grafana:
+     org_name: 'Org.Name'
      admin:
         login: "admin"
         pass: "123"
@@ -184,3 +185,4 @@ vstand:
 осуществляется вход на стендовую машину.
 * **login** - логин для входа при первом запуске grafana
 * **pass** - пароль для входа при первом запуска grafana
+* **org_name** - Название организации. которое используется в grafana.

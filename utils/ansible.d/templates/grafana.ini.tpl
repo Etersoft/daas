@@ -23,7 +23,7 @@ logs = /var/log/grafana
 #
 plugins = /var/lib/grafana/plugins
 
-provisioning = /var/lib/grafana/provisioning
+provisioning = /etc/grafana/provisioning
 
 #
 #################################### Server ####################################
@@ -46,8 +46,8 @@ http_port = 3000
 
 # The full public facing url you use in browser, used for redirects and emails
 # If you use reverse proxy and sub path specify full url (with sub path)
-;root_url = http://localhost:3000
-root_url = %(protocol)s://%(domain)s/grafana/
+root_url = http://localhost:3000/grafana/
+# root_url = %(protocol)s://%(domain)s/grafana/
 
 # Log web requests
 ;router_logging = false
@@ -214,7 +214,7 @@ admin_password = {{ daas_vstand.grafana.admin.pass }}
 ;enabled = false
 
 # specify organization name that should be used for unauthenticated users
-;org_name = Main Org.
+org_name = {{ daas_vstand.grafana.org_name }}
 
 # specify role for unauthenticated users
 ;org_role = Viewer

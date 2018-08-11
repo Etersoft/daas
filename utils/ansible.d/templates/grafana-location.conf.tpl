@@ -1,5 +1,5 @@
 
-    location /grafana {
+    location /grafana/ {
         rewrite ^/grafana/(.*)$ /$1 break;
         proxy_pass http://grafana/;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

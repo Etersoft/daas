@@ -116,7 +116,7 @@
     - consul
 
 - name: Availability check consul
-  shell: "sleep 5 && consul members"
+  shell: "sleep 10 && consul members"
   tags:
     - consul
 

@@ -261,6 +261,13 @@ daas_vstand:
                 and vstand.ftp. only_from is defined 
                 else daas_defaults.ftp. only_from }}"
   grafana:
+    org_name: "{{ grafana_org_name if grafana_org_name is defined
+               else vstand.grafana.org_name
+               if vstand is defined 
+               and vstand.grafana is defined 
+               and vstand.grafana.org_name is defined 
+               else project.name if project is defined
+               else 'Org.Name' }}"
     admin:
        login: "{{ grafana_admin_login if grafana_admin_login is defined
                else vstand.grafana.admin.login 
