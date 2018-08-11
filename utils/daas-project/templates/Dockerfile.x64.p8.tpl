@@ -1,5 +1,3 @@
-# DAAS: THIS IS DEFAULT Dockerfile template! Are you sure you wanted this?
-
 # Version: 0.0.1
 FROM fotengauer/altlinux-p8
 MAINTAINER Pavel Vainerman <pv@etersoft.ru>
