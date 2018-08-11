@@ -134,7 +134,6 @@ run_build() {
 
     BUILD_ENV="-e DAAS_BUILD_USER=$DAAS_BUILD_USER -e DATADIR=$DATADIR"
 
-
     COMMIT=$(git log -1 --pretty=format:"%h")
     GIT_ROOT=$(git rev-parse --show-toplevel)
     if [ -n "$BUILD_COPY_SOURCES" ]; then
@@ -169,7 +168,7 @@ run_build() {
     fi
 
     # prepare sources
-    if [ -n "$BUILD_COPY_SOURCES" ]; then 
+    if [ -n "$BUILD_COPY_SOURCES" ]; then
         docker-compose run $BUILD_ENV ${VOLUMES} ${DAAS_TOOLS_VOLUME} -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER ${DAAS_TOOLS_BINDIR}/daas-build-helper.sh prepare || return 1
     fi
 
@@ -177,7 +176,7 @@ run_build() {
     docker-compose run --rm $BUILD_ENV ${VOLUMES} -v ${SOURCEDIR}:$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
 
     # cleanup sources from container
-    if [ -n "$BUILD_COPY_SOURCES" ]; then 
+    if [ -n "$BUILD_COPY_SOURCES" ]; then
         docker-compose run --rm -v ${SOURCEDIR}:/$DATADIR -w $DATADIR -u root $BUILDER rm -rf $DATADIR/src
         rm -rf $SOURCEDIR
     fi

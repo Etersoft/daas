@@ -126,10 +126,10 @@ do_build() {
     if [ -n "$BUILD_COPY_SOURCES" ]; then
         docker-compose run $BUILD_ENV ${DAAS_TOOLS_VOLUME} $VOLUMES -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER ${DAAS_TOOLS_BINDIR}/daas-build-helper.sh prepare || return 1
     fi
-    
+
     # build
     docker-compose run --rm $BUILD_ENV $VOLUMES -v ${SOURCEDIR}:$DATADIR -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
-    
+
     # cleanup sources from container
     if [ -n "$BUILD_COPY_SOURCES" ]; then
         docker-compose run --rm -v ${SOURCEDIR}:/$DATADIR -w $DATADIR -u root $BUILDER rm -rf $DATADIR/src

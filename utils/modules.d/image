@@ -24,7 +24,7 @@ module_error() {
 }
 
 function list_old_images() {
-    
+
     [ -n "$2" ] && FILTER="$2" || FILTER='days'
 
     [ -z "$1" ] && module_error "Unknown number 'older $FILTER ago'"
@@ -32,13 +32,13 @@ function list_old_images() {
 
     tmpfile=$(mktemp)
 
-    docker images | grep "$FILTER ago" | awk '{print $4 " " $1 " " $3}' > $tmpfile
+    docker images | grep "$FILTER ago" | awk '{print $4 " " $1 " " $3}' >$tmpfile
 
     while read -r D N ID; do
 
         [ "$D" -gt $DAYSAGO ] && echo "$ID $N $D"
 
-    done<$tmpfile
+    done <$tmpfile
 
     rm -rf $tmpfile
 }
