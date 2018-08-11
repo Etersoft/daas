@@ -2,13 +2,12 @@
 FROM fotengauer/altlinux-p8
 MAINTAINER Pavel Vainerman <pv@etersoft.ru>
 RUN apt-get update && apt-get -y install uniset2-testsuite python-module-pip libuniset2-utils mc \
-    openssh-clients openssh-server expect glibc-locales hostinfo pssh console-scripts \
+    openssh-clients openssh-server expect glibc-locales hostinfo pssh console-scripts docker-compose \
     && rm -rf /usr/share/doc/* \
     && rm -rf /usr/share/man/* \
     && apt-get clean \
     && rm -rf /etc/apt/sources.list.d/* \
-    && apt-get update \
-    && pip install docker-compose
+    && apt-get update
 
 {% include "base/Dockerfile.basic.tpl" %}
 
