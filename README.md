@@ -64,3 +64,4 @@ devops-api-server (*необходимость под вопросом*)
 * [Работа с docker image](docs/image.md)
 * Администрирование стендов
  * [Управление виртуальными стендами](docs/admin.md)
+ * [Мониторинг](docs/monitoring.md)

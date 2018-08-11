@@ -1,6 +1,19 @@
 ---
 # Final vstand config 
 # (merge project config and user vstand config and defaults)
+
+daas_vstand_user: "{{ vstand_user_login if vstand_user_login is defined
+                    else vstand.user 
+                    if vstand is defined 
+                    and vstand.user is defined 
+                    else daas_defaults.vstand.user }}"
+
+daas_vstand_pass: "{{ vstand_user_pass if vstand_user_pass is defined
+                      else vstand.pass 
+                      if vstand is defined 
+                      and vstand.pass is defined 
+                      else daas_defaults.vstand.pass }}"
+
 daas_vstand:
 
   # Parameters for virtual stand (hostname,user,pass)
@@ -15,18 +28,10 @@ daas_vstand:
               if vstand is defined 
               and vstand.ip is defined 
               else daas_defaults.vstand.ip }}"
-              
-  user: "{{ vstand_user_login if vstand_user_login is defined
-            else vstand.user 
-            if vstand is defined 
-            and vstand.user is defined 
-            else daas_defaults.vstand.user }}"
+  
+  user: "{{ daas_vstand_user }}"
 
-  pass: "{{ vstand_user_pass if vstand_user_pass is defined
-            else vstand.pass 
-            if vstand is defined 
-            and vstand.pass is defined 
-            else daas_defaults.vstand.pass }}"
+  pass: "{{ daas_vstand_pass }}"
 
   # first a user DNS servers, and then the default
   dns_servers: "{{ user_dns_servers 
@@ -255,3 +260,20 @@ daas_vstand:
                 and vstand.ftp is defined
                 and vstand.ftp. only_from is defined 
                 else daas_defaults.ftp. only_from }}"
+  grafana:
+    admin:
+       login: "{{ grafana_admin_login if grafana_admin_login is defined
+               else vstand.grafana.admin.login 
+               if vstand is defined 
+               and vstand.grafana is defined 
+               and vstand.grafana.admin is defined 
+               and vstand.grafana.admin.login is defined 
+               else daas_vstand_user }}"
+
+       pass: "{{ grafana_admin_pass if grafana_admin_pass is defined
+               else vstand.grafana.admin.pass 
+               if vstand is defined 
+               and vstand.grafana is defined 
+               and vstand.grafana.admin is defined 
+               and vstand.grafana.admin.pass is defined 
+               else daas_vstand_pass }}"

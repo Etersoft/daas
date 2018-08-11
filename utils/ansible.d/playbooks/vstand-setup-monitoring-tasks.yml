@@ -1,13 +1,30 @@
 ---
 # Настройка мониторинга (netdata + grafana + influxdb + nginx)
 # --------------------------------------------------------------------
-- name: install netdata
+- name: install monitoring services
   apt_rpm: "package={{item}} state=present update_cache=no"
   with_items:
     - netdata
     - influxdb
     - grafana
+    - sqlite3
     - nginx
+  tags:
+    - monitoring
+
+- name: make config for influxdb
+  template:
+    src: "{{ daas_ansible_dir }}/templates/influxdb.conf.tpl"
+    dest: "/etc/influxdb/influxdb.conf"
+    owner: root
+    group: influxdb
+    mode: 0640
+    backup: yes
+  tags:
+    - monitoring
+
+- name: Start influxdb service
+  service: name=influxdb state=started enabled=yes
   tags:
     - monitoring
 
@@ -65,6 +82,8 @@
   with_items:
     - netdata-location.conf
     - netdata-upstream.conf
+    - grafana-location.conf
+    - grafana-upstream.conf
   tags:
     - monitoring
 
@@ -73,3 +92,34 @@
   tags:
     - monitoring
 
+- name: make config for grafana
+  template:
+    src: "{{ daas_ansible_dir }}/templates/grafana.ini.tpl"
+    dest: "/etc/grafana/grafana.ini"
+    owner: root
+    group: grafana
+    mode: 0640
+    backup: yes
+  tags:
+    - monitoring
+
+- name: create grafana data sources dir
+  file: "path=/var/lib/grafana/provisioning/datasources/ group=grafana owner=grafana state=directory mode=0775"
+  tags:
+    - monitoring
+
+- name: make datasources for grafana
+  template:
+    src: "{{ daas_ansible_dir }}/templates/grafana-datasources.tpl"
+    dest: "/var/lib/grafana/provisioning/datasources/vstand.yaml"
+    owner: grafana
+    group: grafana
+    mode: 0640
+    backup: yes
+  tags:
+    - monitoring
+
+- name: Start grafana service
+  service: name=grafana-server state=started enabled=yes
+  tags:
+    - monitoring
