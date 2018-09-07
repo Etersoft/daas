@@ -173,7 +173,7 @@ run_build() {
     fi
 
     # build
-    docker-compose run --rm $BUILD_ENV ${VOLUMES} -v ${SOURCEDIR}:$DATADIR -v ${RPMDIR}:/home/$DAAS_BUILD_USER/RPM -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
+    docker-compose run --rm $BUILD_ENV ${VOLUMES} -v ${SOURCEDIR}:$DATADIR -v ${RPMDIR}:/home/builder/RPM -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
 
     # cleanup sources from container
     if [ -n "$BUILD_COPY_SOURCES" ]; then
