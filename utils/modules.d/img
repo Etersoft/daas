@@ -48,7 +48,7 @@ function rm_old_images() {
     [ "$2" == "-f" ] && FORCE='-f'
     [ "$3" == "-f" ] && FORCE='-f'
 
-    docker image rm $FORCE $(list_old_images $@ | awk '{print $1}')
+    docker image rm $FORCE $(list_old_images $@ | awk '{print $2}')
 }
 
 [ -z "$1" ] && module_help && exit 1
