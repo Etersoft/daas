@@ -19,8 +19,7 @@ BuildArch: noarch
 
 %py_requires yaml jinja2
 
-Requires: sshpass
-
+# Requires: sshpass
 # Requires: jq
 
 %description
