@@ -434,6 +434,9 @@ def make_nginx_node(dirname, project):
     
     if 'port' not in project['nginx']:
        project['nginx']['port'] = '8080'
+
+    if 'internal_port' not in project['nginx']:
+       project['nginx']['internal_port'] = '80'
     
     create_apt_configs(nginx)
 
@@ -718,6 +721,7 @@ if __name__ == "__main__":
     if project['required_nginx'] and 'nginx' not in project:
         project['nginx'] = dict()
         project['nginx']['port'] = '8080'
+        project['nginx']['intrernal_port'] = '80'
 
     if project['required_logdb'] and 'logdb' not in project:
         project['logdb'] = dict()
