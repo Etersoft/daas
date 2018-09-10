@@ -85,7 +85,7 @@ services:
         image: {{ project['name'] }}-nginx
         hostname: nginx
         ports:
-            - "80:80"
+            - "{{ project['nginx']['port'] }}:{{ project['nginx']['port'] }}"
         tty: true
         networks:
             - {{ project['net_name'] }}

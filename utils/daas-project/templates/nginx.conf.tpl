@@ -7,7 +7,7 @@ include any.d/*-upstream.conf;
 
 # default server
 server {
-	listen  *:80 default_server;
+	listen  *:{{ project['nginx']['port'] }} default_server;
 	server_name {{project['stand_hostname']}} localhost;
 
 	# vnc
