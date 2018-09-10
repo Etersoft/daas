@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.4
-Release: alt4
+Release: alt5
 
 Group: System/Utilities
 License: MIT
@@ -90,6 +90,9 @@ cp -r repository.d %buildroot%_datadir/%name/
 %_datadir/%name/repository.d/*
 
 %changelog
+* Mon Sep 10 2018 Pavel Vainerman <pv@altlinux.ru> 0.4-alt5
+- nginx port
+
 * Fri Aug 10 2018 Pavel Vainerman <pv@altlinux.ru> 0.4-alt4
 - new release
 
