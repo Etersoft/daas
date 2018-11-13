@@ -1,7 +1,7 @@
 # DAAS: THIS IS DEFAULT Dockerfile template! Are you sure you wanted this?
 
 # Version: 0.0.1
-FROM fotengauer/altlinux-p8
+FROM alt:p8
 MAINTAINER Pavel Vainerman <pv@etersoft.ru>
 RUN apt-get update \
 	&& apt-get -y install mc openssh-clients openssh-server console-scripts \

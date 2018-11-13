@@ -1,5 +1,5 @@
 # Version: 0.0.1
-FROM fotengauer/altlinux-p8
+FROM alt:p8
 MAINTAINER Pavel Vainerman <pv@etersoft.ru>
 RUN rm -rf /usr/share/doc/* \
 	&& rm -rf /usr/share/man/* \
