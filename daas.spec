@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.4
-Release: alt6
+Release: alt7
 
 Group: System/Utilities
 License: MIT
@@ -90,6 +90,9 @@ cp -r repository.d %buildroot%_datadir/%name/
 %_datadir/%name/repository.d/*
 
 %changelog
+* Mon Dec 17 2018 Pavel Vainerman <pv@altlinux.ru> 0.4-alt7
+- supported envirounment variable for rpmbuild
+
 * Wed Nov 14 2018 Pavel Vainerman <pv@altlinux.ru> 0.4-alt6
 - use official altlinux docker images
 

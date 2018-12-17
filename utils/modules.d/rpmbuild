@@ -25,6 +25,7 @@ module_usage() {
     echo "-d|--directory pubdir - use pubdir for RPM directory. Default 'container_name/RPM'"
     echo "-v|--volume dir       - bind mount a volume (can be used multiple times)"
     echo "-c|--ccache dir       - Use 'dir' for ccache."
+    echo "-e var=val            - Set an environment variable (can be used multiple times)"
     echo "--use-ccache          - Use env variable CCACHE_DIR for ccache"
     echo "--copy-sources        - Build with a copy of the source code. Default: build with current git directory"
 }
@@ -132,7 +133,7 @@ run_build() {
     chmod a+rw ${RPMDIR}
     chmod a+rw ${SOURCEDIR}
 
-    BUILD_ENV="-e DAAS_BUILD_USER=$DAAS_BUILD_USER -e DATADIR=$DATADIR"
+    BUILD_ENV="-e DAAS_BUILD_USER=$DAAS_BUILD_USER -e DATADIR=$DATADIR $ENVOPTS"
 
     COMMIT=$(git log -1 --pretty=format:"%h")
     GIT_ROOT=$(git rev-parse --show-toplevel)
@@ -161,7 +162,7 @@ run_build() {
 
     # test ccache directory permissions
     if [ -n "$BUILD_CCACHE_DIR" ]; then
-        if ! docker-compose run --rm $BUILD_ENV ${VOLUMES} -T $BUILDER touch /daas-ccache/test 2>/dev/null; then
+        if ! docker-compose run --rm ${BUILD_ENV} ${VOLUMES} -T $BUILDER touch /daas-ccache/test 2>/dev/null; then
             echo "Can't write to ccache directory '$BUILD_CCACHE_DIR' from container. Use: 'chmod a+rw $BUILD_CCACHE_DIR'"
             return 1
         fi
@@ -169,11 +170,11 @@ run_build() {
 
     # prepare sources
     if [ -n "$BUILD_COPY_SOURCES" ]; then
-        docker-compose run $BUILD_ENV ${VOLUMES} ${DAAS_TOOLS_VOLUME} -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER ${DAAS_TOOLS_BINDIR}/daas-build-helper.sh prepare || return 1
+        docker-compose run ${BUILD_ENV} ${VOLUMES} ${DAAS_TOOLS_VOLUME} -v ${SOURCEDIR}:$DATADIR -w $DATADIR $BUILDER ${DAAS_TOOLS_BINDIR}/daas-build-helper.sh prepare || return 1
     fi
 
     # build
-    docker-compose run --rm $BUILD_ENV ${VOLUMES} -v ${SOURCEDIR}:$DATADIR -v ${RPMDIR}:/home/builder/RPM -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
+    docker-compose run --rm ${BUILD_ENV} ${VOLUMES} -v ${SOURCEDIR}:$DATADIR -v ${RPMDIR}:/home/builder/RPM -w $DATADIR/src $BUILDER $BUILD_CMD || return 1
 
     # cleanup sources from container
     if [ -n "$BUILD_COPY_SOURCES" ]; then
