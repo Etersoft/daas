@@ -700,23 +700,23 @@ if __name__ == "__main__":
     if 'nginx' in project and 'any' in project['nginx'] and len(project['nginx']['any']) > 0:
         project['required_nginx'] = True
 
-    for node in project['nodes']:
-        if 'novnc_port' in node:
-            project['required_nginx'] = True
-            project['nginx']['vnc'] = True
-            break
+#    for node in project['nodes']:
+#        if 'novnc_port' in node:
+#            project['required_nginx'] = True
+#            project['nginx']['vnc'] = True
+#            break
 
     # check require 'logdb'
     project['required_logdb'] = False
-    if 'logdb' in project and 'disable' not in project['logdb']:
-        for node in project['nodes']:
-            if 'logservers' in node and len(node['logservers']) > 0:
-                project['required_logdb'] = True
-                project['nginx']['logdb'] = True
-                break
+#    if 'logdb' in project and 'disable' not in project['logdb']:
+#        for node in project['nodes']:
+#            if 'logservers' in node and len(node['logservers']) > 0:
+#                project['required_logdb'] = True
+#                project['nginx']['logdb'] = True
+#                break
 
-    if project['required_logdb']:
-        project['required_nginx'] = True
+#    if project['required_logdb']:
+#        project['required_nginx'] = True
 
     if project['required_nginx'] and 'nginx' not in project:
         project['nginx'] = dict()
