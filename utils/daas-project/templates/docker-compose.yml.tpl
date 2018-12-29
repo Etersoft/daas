@@ -26,7 +26,7 @@ services:
             - "{{ node['ssh_port'] }}:{{ node['ssh_internal_port'] }}"
         {%- endif %}
         {%- for p in node['ports'] %}
-            - "{{ p }}{% endfor %}"
+            - "{{ p }}"{% endfor %}
         {%- endif %}
         {%- if 'cap_add' in node and node['cap_add']|length > 0 %}
         cap_add:
