@@ -9,14 +9,14 @@
 
 case $1 in
     prepare)
-        mkdir -p $SRCDIR
-        chown $BUILD_USER:$BUILD_USER $SRCDIR
-
         if [ "$UID" == "0" ]; then
+            su - -c "mkdir -p $SRCDIR" $BUILD_USER
             su - -c "tar xf $SOURCE -C $SRCDIR" $BUILD_USER
         else
+            mkdir -p $SRCDIR
             tar xf $SOURCE -C $SRCDIR
         fi
+
         exit $?
     ;;
 

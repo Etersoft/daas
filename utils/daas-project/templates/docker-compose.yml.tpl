@@ -1,4 +1,4 @@
-version: '2'
+version: '2.2'
 
 services:
     {%- for node in project['nodes'] if not 'skip_compose' in node %}

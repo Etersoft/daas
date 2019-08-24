@@ -71,3 +71,5 @@ api-server (*необходимость под вопросом*)
  * [Мониторинг](docs/monitoring.md)
  * [Работа с docker image](docs/image.md)
  * [Общее описание конфигурационного файла для стенда](docs/vstand-config.md)
+* Локальная сборка проектов в докер
+ * [Сборка](docs/build.md)
