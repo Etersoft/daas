@@ -19,17 +19,16 @@ project:
   # Project
   groups:
     builders:
-      apt:
-        sources:
-          - "rpm http://ftp.altlinux.org/pub/distributions ALTLinux/Sisyphus/x86_64 classic"
-          - "rpm http://ftp.altlinux.org/pub/distributions ALTLinux/Sisyphus/noarch classic"
-          - "rpm http://ftp.etersoft.ru/pub/Etersoft/LINUX@Etersoft/Sisyphus x86_64 addon"
-          - "rpm http://ftp.etersoft.ru/pub/Etersoft/LINUX@Etersoft/Sisyphus noarch addon"  
       nodes:
         builder1:
           skip_compose: yes
           image: x64.sisyphus-builder
           apt:
+            sources:
+              - "rpm http://ftp.altlinux.org/pub/distributions ALTLinux/Sisyphus/x86_64 classic"
+              - "rpm http://ftp.altlinux.org/pub/distributions ALTLinux/Sisyphus/noarch classic"
+              - "rpm http://ftp.etersoft.ru/pub/Etersoft/LINUX@Etersoft/Sisyphus x86_64 addon"
+              - "rpm http://ftp.etersoft.ru/pub/Etersoft/LINUX@Etersoft/Sisyphus noarch addon"  
             packages:
               - rpm-build-intro
               - boost-asio-devel 
