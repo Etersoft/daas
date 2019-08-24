@@ -18,7 +18,7 @@ project:
 
   # Project
   groups:
-    simple:
+    builders:
       apt:
         sources:
           - "rpm http://ftp.altlinux.org/pub/distributions ALTLinux/Sisyphus/x86_64 classic"
@@ -26,7 +26,7 @@ project:
           - "rpm http://ftp.etersoft.ru/pub/Etersoft/LINUX@Etersoft/Sisyphus x86_64 addon"
           - "rpm http://ftp.etersoft.ru/pub/Etersoft/LINUX@Etersoft/Sisyphus noarch addon"  
       nodes:
-        builder:
+        builder1:
           skip_compose: yes
           image: x64.sisyphus-builder
           apt:
@@ -44,7 +44,7 @@ project:
 ```
 
 #### Вторым шагом запускается команда сборки
-`daas rpmbuild builder`
+`daas rpmbuild builder1`
 
 где `builder` это название конкретного образа где будет производиться сборка (из списка `nodes`).
 
