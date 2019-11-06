@@ -9,10 +9,10 @@ PROG="${0##*/}"
 RPMS_NAME=''
 
 module_usage() {
-    echo "daas apt command [options]"
-    echo "Commands:"
-    echo "prepare RPMS.dir PUB.dir [--name ext ] - copy rpms from RPMS.dir to PUB.dir and generate apt base for 'RPMS.[ext]'"
-    echo "                          --name ext   - set name for PUB.dir/RPMS.[ext]. Default: RPMS.projectname"
+    echo "Usage: daas apt <command> [options]"
+    echo "Command:"
+    echo " prepare source.dir target.dir [--name ext] - copy rpms from source.dir to target.dir/RPMS.ext and generate apt base for 'target.dir/RPMS.ext'"
+    echo "                             -n|--name ext  - set component name for target.dir/RPMS.[ext]. (default: projectname)"
 }
 
 module_help() {
@@ -51,9 +51,9 @@ split_options() {
 }
 
 do_prepare() {
-    echo "Prepare.."
-    [ -z "$1" ] && module_error "(${FUNCNAME[0]}): ERROR: RPMS directory not defined. Use: daas apt --help"
-    [ -z "$2" ] && module_error "(${FUNCNAME[0]}): ERROR: Public RPMS directory not defined. Use: daas apt --help"
+    echo "Preparing... "
+    [ -z "$1" ] && module_error "(${FUNCNAME[0]}): ERROR: source RPMS directory not defined. Use: daas apt --help"
+    [ -z "$2" ] && module_error "(${FUNCNAME[0]}): ERROR: target RPMS directory not defined. Use: daas apt --help"
 
     [ -z "$RPMS_NAME" ] && RPMS_NAME=$(daas-project name)
 
