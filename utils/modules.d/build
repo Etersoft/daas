@@ -11,8 +11,8 @@ DAAS_BUILD_USER='builder'
 DATADIR='/data'
 
 module_usage() {
-    echo " "
-    echo "Usage: build container_name [ext options] [build_command ..options..]"
+    echo "daas build - run build command in the container"
+    echo "Usage: daas build container_name [ext options] [build_command ..options..]"
     echo "  "
     echo "container_name            - name of builder container (in daas.yml)"
     echo "build_command [options]   - command and options for build in container"

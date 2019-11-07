@@ -16,7 +16,7 @@ HOST_PASS=''
 
 module_usage() {
     echo " "
-    echo "Usage: vstand command [options]"
+    echo "Usage: daas vstand command [options]"
     echo " "
     echo "Commads for host machine:"
     echo "-------------------------"

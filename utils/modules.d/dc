@@ -6,7 +6,8 @@
 . $DAAS_DATADIR/modules.d/.daas-common
 
 module_usage() {
-    echo "Run docker-compose for this project. Run 'docker-compose --help' for help"
+    echo "daas dc - run docker-compose for this project. Run 'docker-compose --help' for help"
+    echo "Usage: daas dc [docker-compose params]"
 }
 
 module_help() {

@@ -15,8 +15,8 @@ BUILD_CCACHE_DIR=''
 DATADIR='/data'
 
 module_usage() {
-    echo " "
-    echo "Usage: rpmbuild container_name [ext options] [build_command | clean] [params...]"
+    echo "daas rpmbuild - build rpm package(s) by .daas.yml rules from current dir with git repository"
+    echo "Usage: daas rpmbuild container_name [ext options] [build_command | clean] [params...]"
     echo "  "
     echo "builder_name  - name of builder container (in daas.yml)"
     echo "build_command - command for build in container."
