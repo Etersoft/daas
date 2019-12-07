@@ -3,6 +3,10 @@ version: 0.3
 project:
   name: "myproject"
 
+  labels:
+    - { key1: "val1" }
+    - { key2: "val2" }
+
   net_name: testnet
   networks:
     # это не ip, это подсеть. Конкретный ip назначается у конкретного узла (см. ниже)

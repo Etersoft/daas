@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
-Version: 0.4
-Release: alt8
+Version: 0.5
+Release: alt1
 
 Group: System/Utilities
 License: MIT
@@ -90,6 +90,9 @@ cp -r repository.d %buildroot%_datadir/%name/
 %_datadir/%name/repository.d/*
 
 %changelog
+* Sun Dec 08 2019 Pavel Vainerman <pv@altlinux.ru> 0.5-alt1
+- supported "labels" in Dockerfile
+
 * Sat Aug 24 2019 Pavel Vainerman <pv@altlinux.ru> 0.4-alt8
 - minor fixes
 

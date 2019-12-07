@@ -117,6 +117,10 @@ project:
 project_compose_template: 'my-compose-template.yml.tpl'
 node_compose_template: 'my-node-compose-template.yml.tpl'
 
+labels:
+  - {key1: "val1"}
+  - {key2: "val2"}
+
 volumes:
   - /var/run/docker.sock:/var/run/docker.sock
 
@@ -155,6 +159,7 @@ ports:
    - port3:port3
    - port4:port5
 ```
+* **labels** - Задаёт список меток, которые будут добавлены в Dockerfile (LABEL key1=val1 key2=val2 ...)
 * **volumes** - Задаёт список подключаемых каталогов, который попадает в генерируемый docker-compose.yml (см. также [volumes](docs/volumes.md))
 * **devices** - Задаёт список подключаемых устройств, который попадает в генерируемый docker-compose.yml
 * **ports** - список пробрасываемых портов, который попадает в генерируемый docker-compose.yml

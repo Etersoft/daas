@@ -1,3 +1,7 @@
+{%- if 'labels' in node and node['labels']|length > 0 %}
+LABEL {% for lbl in node['labels'] %}{% for k, v in lbl.items() %}{{k}}={{v}} {% endfor %}{%- endfor %}
+{%- endif %}
+
 {% if lang_disabled is undefined %}
 # set LANG for root
 COPY root.i18n /root/.i18n

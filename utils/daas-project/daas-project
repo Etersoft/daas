@@ -216,7 +216,6 @@ def make_unique_list(srclist):
     # без сохранения порядка
     # return list(set(srclist))
 
-
 def get_vnc_ports(node):
     ret = list()
     if 'vnc_port' in node:
@@ -336,6 +335,10 @@ def create_node(project, group, node):
     c['apt']['packages'] = make_unique_list(get_apt_param(project, 'packages')
                                             + get_apt_param(group, 'packages')
                                             + get_apt_param(node, 'packages'))
+
+    c['labels'] = make_unique_list(get_list(project, 'labels')
+                                            + get_list(group, 'labels')
+                                            + get_list(node, 'labels'))
 
     return c
 
