@@ -8,7 +8,7 @@ services:
            dockerfile: Dockerfile
         image: {{ node['image_name'] }}
         hostname: {{ node['hostname'] if 'hostname' in node and node['hostname']|length>0 else node['node_name'] }}
-        {%- if 'start_command' in node %}
+        {%- if 'start_command' in node and node['start_command'] != None %}
         command: {{ node['start_command'] }}
         {%- endif %}
         networks:
