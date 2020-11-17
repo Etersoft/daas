@@ -257,7 +257,7 @@ def create_node(project, group, node):
 
     imagename = get_param(project, group, node, 'image')
     if not imagename:
-        imagename = 'default'
+        raise ValueError('Unknown image for %s' % node['node_name'])
 
     c['Dockerfile.tpl'] = get_image_template(imagename)
     c['image'] = imagename

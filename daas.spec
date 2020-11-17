@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
 Version: 0.5
-Release: alt2
+Release: alt3
 
 Group: System/Utilities
 License: MIT
@@ -90,6 +90,9 @@ cp -r repository.d %buildroot%_datadir/%name/
 %_datadir/%name/repository.d/*
 
 %changelog
+* Wed Nov 18 2020 Pavel Vainerman <pv@altlinux.ru> 0.5-alt3
+- the "image" field is now required
+
 * Mon Oct 26 2020 Pavel Vainerman <pv@altlinux.ru> 0.5-alt2
 - fix "command" processing in docker-compose
 
