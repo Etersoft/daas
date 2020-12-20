@@ -1,7 +1,7 @@
 Name: daas
 Summary: Devops As A Service
-Version: 0.5
-Release: alt3
+Version: 0.6.1
+Release: alt1
 
 Group: System/Utilities
 License: MIT
@@ -90,6 +90,9 @@ cp -r repository.d %buildroot%_datadir/%name/
 %_datadir/%name/repository.d/*
 
 %changelog
+* Mon Dec 21 2020 Pavel Vainerman <pv@altlinux.ru> 0.6.1-alt1
+- fix build image name (added node name)
+
 * Wed Nov 18 2020 Pavel Vainerman <pv@altlinux.ru> 0.5-alt3
 - the "image" field is now required
 

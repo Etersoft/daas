@@ -261,7 +261,8 @@ def create_node(project, group, node):
 
     c['Dockerfile.tpl'] = get_image_template(imagename)
     c['image'] = imagename
-    c['image_name'] = replace_env(make_image_name(project, get_image_name(imagename)))
+    c['image_name'] = replace_env(make_image_name(project, node, get_image_name(imagename)))
+
 
     c['node_compose_template'] = get_param(project, group, node, 'node_compose_template')
     if not c['node_compose_template']:
@@ -366,8 +367,8 @@ def make_nodes(project, group):
     return nlist
 
 
-def make_image_name(project, imgname):
-    name = "%s-%s" % (project['name'], get_image_name(imgname))
+def make_image_name(project, node, imgname):
+    name = "%s-%s-%s" % (project['name'], node['node_name'], get_image_name(imgname))
     if len(project['image-registry']) > 0:
         name = "%s/%s" % (project['image-registry'], name)
     if len(project['image-postfix']) > 0:
