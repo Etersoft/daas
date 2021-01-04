@@ -1,8 +1,7 @@
 # Version: 0.0.1
-FROM alt:sisyphus
+FROM ubuntu:18.04
 MAINTAINER Pavel Vainerman <pv@etersoft.ru>
-RUN apt-get update && apt-get -y install etersoft-build-utils git-core ccache gcc-c++ sudo su \
-	apt-repo-tools console-scripts \
+RUN apt-get update && apt-get -y install autoconf automake autogen libtool g++-8 ccache sudo \
     && rm -rf /usr/share/doc/* \
     && rm -rf /usr/share/man/* \
     && apt-get clean \
@@ -10,9 +9,6 @@ RUN apt-get update && apt-get -y install etersoft-build-utils git-core ccache gc
     && apt-get update
 
 {% include "base/Dockerfile.basic.tpl" %}
-
-# start default services
-RUN service consolesaver start
 
 # prepare build user
 ARG USER=builder
@@ -22,7 +18,6 @@ ARG TMPDIR=$HOME/tmp
 ARG USER_UID=''
 RUN test -n "$USER_UID" && useradd -u $USER_UID builder || useradd builder
 
-RUN control su public
 COPY .rpmmacros $HOME/
 COPY .gitconfig $HOME/
 

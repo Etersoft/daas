@@ -1,7 +1,7 @@
 # Version: 0.0.1
 FROM alt:p8
 MAINTAINER Pavel Vainerman <pv@etersoft.ru>
-RUN apt-get update && apt-get -y install etersoft-build-utils git-core libuniset2-extension-common-devel libuniset2-utils ccache gcc5-c++ sudo su \
+RUN apt-get update && apt-get -y install etersoft-build-utils git-core ccache gcc5-c++ sudo su \
 	apt-repo-tools console-scripts \
     && rm -rf /usr/share/doc/* \
     && rm -rf /usr/share/man/* \
